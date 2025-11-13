@@ -6,7 +6,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use App\Enums\UserRole;
+use App\Enums\{UserRole, LicenseType};
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
@@ -22,6 +22,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'type',
         'license_number'
     ];
 
@@ -46,8 +47,25 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'role' => UserRole::class,
+            'type' => LicenseType::class
 
         ];
+    }
+
+     /**
+     * Un utente può avere molti lavori di tipo AgencyWork.
+     */
+    public function agencyWorks()
+    {
+        return $this->hasMany(AgencyWork::class);
+    }
+
+    /**
+     * Un utente può avere molti lavori assegnati (WorkAssignment).
+     */
+    public function workAssignments()
+    {
+        return $this->hasMany(WorkAssignment::class, 'user_id');
     }
 
     // Metodi per verificare il ruolo

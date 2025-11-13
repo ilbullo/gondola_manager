@@ -1,0 +1,62 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class WorkAssignment extends Model
+{
+    use HasFactory;
+
+    protected $table = 'work_assignments';
+
+    protected $fillable = [
+        'license_id',
+        'agency_id',
+        'slot', //la colonna corrispondente al n-esimo lavoro (es. 1,2,3,4,5...ecc)
+        'value',
+        'voucher',
+        'timestamp',
+        'slots_occupied',
+    ];
+
+    protected $casts = [
+        'timestamp' => 'datetime',
+        'slots_occupied' => 'integer',
+        'slot' => 'integer',
+    ];
+
+
+    /**
+     * Relazione con l'utente.
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Relazione con l'agenzia (opzionale).
+     */
+    public function agency()
+    {
+        return $this->belongsTo(Agency::class);
+    }
+
+    /**
+     * Accessor per ottenere il nome effettivo dell'agenzia.
+     */
+    public function getAgencyNameAttribute(): ?string
+    {
+        return $this->custom_agency_name ?? $this->agency?->name;
+    }
+
+    /**
+     * Accessor per ottenere il nomcodee effettivo dell'agenzia.
+     */
+    public function getAgencyCodeAttribute(): ?string
+    {
+        return $this->custom_agency_name ?? $this->agency?->code;
+    }
+}

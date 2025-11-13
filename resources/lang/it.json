@@ -2,6 +2,11 @@
     "date"                                         : "data",
     "print works table"                            : "stampa tabella",
     "print agency resume"                          : "stampa riepilogo agenzie",
-    "print office resume"                          : "stampa riepilogo ufficio"         
+    "print office resume"                          : "stampa riepilogo ufficio",
+    "work type"                                    : "tipo lavoro",
+    "departure"                                    : "partenza",
+    "Agency created successfully"                  : "Agenzia creata con successo",
+    "Agency updated successfully"                  : "Agenzia aggiornata con successo",
+    "Agency deleted successfully"                  : "Agenzia cancellata con successo"
 
 }

@@ -68,6 +68,15 @@ class User extends Authenticatable
         return $this->hasMany(WorkAssignment::class, 'user_id');
     }
 
+    /**
+     * Un utente può esser stato al lavoro molte volte (LicenseTable)
+     */
+
+    public function atWork()
+    {
+        return $this->hasOne(LicenseTable::class, 'user_id');
+    }
+
     // Metodi per verificare il ruolo
     public function isAdmin()
     {

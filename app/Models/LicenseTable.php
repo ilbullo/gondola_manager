@@ -12,7 +12,8 @@ class LicenseTable extends Model
     protected $table = 'license_table';
 
     protected $fillable = [
-        'license_id',
+        'user_id',
+        'order',
         'date'
     ];
 

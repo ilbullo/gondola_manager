@@ -20,6 +20,7 @@ Route::group(
     function () {
 
         Route::view('agency-manager', 'livewire.pages.agency-manager')->name('agency-manager');
+        Route::view('table-manager', 'livewire.pages.table-manager')->name('table-manager');
 
     });
 

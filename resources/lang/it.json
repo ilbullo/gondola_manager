@@ -19,6 +19,9 @@
     "restore"                                      : "Ripristina",
     "edit"                                         : "Modifica",
     "delete"                                       : "Elimina",
-    "no agencies found"                            : "Nessuna agenzia trovata"
+    "no agencies found"                            : "Nessuna agenzia trovata",
+    "loading"                                      : "Caricamento",
+    "table"                                        : "Tabella",
+    "licenses at disposition"                      : "Licenze disponibili"
 
 }

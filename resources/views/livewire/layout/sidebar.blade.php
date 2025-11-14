@@ -27,7 +27,7 @@
         @endif
     </div>
 
-    @if ($config['sections']['custom_input']['enabled'])
+   {{--  @if ($config['sections']['custom_input']['enabled'])
         <div id="customInputContainer" class="{{ $workType !== 'C' ? 'hidden' : '' }} mt-2 space-y-1.5">
             <label class="block text-sm md:text-base font-bold text-gray-800 border-l-4 {{ $config['sections']['custom_input']['border_color'] }} pl-2">
                 {{ $config['sections']['custom_input']['label'] }}
@@ -35,7 +35,7 @@
             <input id="customInput" type="text" placeholder="{{ $config['sections']['custom_input']['placeholder'] }}"
                 class="w-full h-10 px-2 text-sm font-medium text-gray-900 bg-white border-2 {{ $config['sections']['custom_input']['input_border'] }} rounded-md placeholder:text-gray-500 placeholder:font-medium focus:ring-2 focus:outline-none transition-all duration-200" />
         </div>
-    @endif
+    @endif --}}
 
     @if ($config['sections']['notes']['enabled'])
         <div class="mt-2 space-y-1.5">

@@ -34,12 +34,12 @@ class Sidebar extends Component
                 'value' => 'A',
                 'classes' => 'text-white bg-blue-600 hover:bg-blue-700 focus:ring-blue-300 shadow-blue-500/40',
             ],
-            [
+           /*[
                 'id' => 'quickCustomButton',
                 'label' => 'CUSTOM',
                 'value' => 'C',
                 'classes' => 'text-white bg-purple-600 hover:bg-purple-700 focus:ring-purple-300 shadow-purple-500/40',
-            ],
+            ],*/
             [
                 'id' => 'quickPerdiVoltaButton',
                 'label' => 'PERDI VOLTA (P)',
@@ -54,13 +54,13 @@ class Sidebar extends Component
             ],
         ],
         'sections' => [
-            'custom_input' => [
+            /*'custom_input' => [
                 'enabled' => true,
                 'label' => 'NOME AGENZIA',
                 'placeholder' => 'Es: Agenzia TEST',
                 'border_color' => 'border-purple-500',
                 'input_border' => 'border-purple-300 focus:border-purple-600 focus:ring-purple-300',
-            ],
+            ],*/
             'agency_input' => [
                 'enabled' => true,
                 'label' => 'AGENZIA',

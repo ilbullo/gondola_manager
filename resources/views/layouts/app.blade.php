@@ -18,7 +18,7 @@
 </head>
 
 <body class="bg-gradient-to-br from-blue-50 to-purple-50 min-h-screen font-sans text-gray-900 flex flex-col">
-    @livewire('layout.header')
+    @livewire('layout.menu-header')
 
     <!-- {{--  @if (Route::has('login'))
             <livewire:welcome.navigation />

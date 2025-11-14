@@ -21,7 +21,6 @@ Route::group(
 
         Route::view('agency-manager', 'livewire.pages.agency-manager')->name('agency-manager');
 
-
     });
 
 

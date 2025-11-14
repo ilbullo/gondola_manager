@@ -1,6 +1,6 @@
 <!-- resources/views/livewire/crud/agency-manager.blade.php -->
 <div class="max-w-5xl mx-auto p-4 sm:p-6 md:p-8">
-    <h1 class="text-2xl md:text-3xl font-bold mb-6 text-gray-800">Gestione Agenzie</h1>
+    <h1 class="text-2xl md:text-3xl font-bold mb-6 text-gray-800">{{ __('agency manager')}}</h1>
 
     <!-- Messaggi di successo -->
     @if (session()->has('message'))
@@ -29,7 +29,7 @@
             </button>
             <button wire:click="toggleShowDeleted"
                 class="bg-gray-600 text-white px-4 py-2.5 rounded-lg hover:bg-gray-700 transition duration-200 text-sm font-medium">
-                {{ $showDeleted ? 'Nascondi Eliminati' : 'Mostra Eliminati' }}
+                {{ $showDeleted ? __('hide deleted') : __('show deleted') }}
             </button>
         </div>
     </div>
@@ -37,10 +37,10 @@
     <!-- Form di creazione -->
     @if ($showCreateForm)
         <div class="bg-white shadow-lg rounded-lg p-4 md:p-6 mb-6 border border-gray-100">
-            <h2 class="text-xl md:text-2xl font-semibold mb-4 text-gray-800">Crea Agenzia</h2>
+            <h2 class="text-xl md:text-2xl font-semibold mb-4 text-gray-800">{{__('create agency')}}</h2>
             <form wire:submit.prevent="create" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Nome</label>
+                    <label for="name" class="block text-sm font-medium text-gray-700 mb-1">{{__('name')}}</label>
                     <input wire:model="name" type="text" id="name"
                         class="block w-full border-gray-200 rounded-lg shadow-sm focus:ring-blue-400 focus:border-blue-400 py-2 px-3">
                     @error('name')
@@ -48,7 +48,7 @@
                     @enderror
                 </div>
                 <div>
-                    <label for="code" class="block text-sm font-medium text-gray-700 mb-1">Codice</label>
+                    <label for="code" class="block text-sm font-medium text-gray-700 mb-1">{{__('code')}}</label>
                     <input wire:model="code" type="text" id="code"
                         class="block w-full border-gray-200 rounded-lg shadow-sm focus:ring-blue-400 focus:border-blue-400 py-2 px-3">
                     @error('code')
@@ -68,10 +68,10 @@
     <!-- Form di modifica -->
     @if ($showEditForm)
         <div class="bg-white shadow-lg rounded-lg p-4 md:p-6 mb-6 border border-gray-100">
-            <h2 class="text-xl md:text-2xl font-semibold mb-4 text-gray-800">Modifica Agenzia</h2>
+            <h2 class="text-xl md:text-2xl font-semibold mb-4 text-gray-800">{{__('edit agency')}}</h2>
             <form wire:submit.prevent="update" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label for="edit_name" class="block text-sm font-medium text-gray-700 mb-1">Nome</label>
+                    <label for="edit_name" class="block text-sm font-medium text-gray-700 mb-1">{{__('name')}}</label>
                     <input wire:model="name" type="text" id="edit_name"
                         class="block w-full border-gray-200 rounded-lg shadow-sm focus:ring-blue-400 focus:border-blue-400 py-2 px-3">
                     @error('name')
@@ -79,7 +79,7 @@
                     @enderror
                 </div>
                 <div>
-                    <label for="edit_code" class="block text-sm font-medium text-gray-700 mb-1">Codice</label>
+                    <label for="edit_code" class="block text-sm font-medium text-gray-700 mb-1">{{__('code')}}</label>
                     <input wire:model="code" type="text" id="edit_code"
                         class="block w-full border-gray-200 rounded-lg shadow-sm focus:ring-blue-400 focus:border-blue-400 py-2 px-3">
                     @error('code')
@@ -108,13 +108,13 @@
                     <tr>
                         <th
                             class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider md:px-6">
-                            Nome</th>
+                            {{__('name')}}</th>
                         <th
                             class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider md:px-6">
-                            Codice</th>
+                            {{__('code')}}</th>
                         <th
                             class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider md:px-6">
-                            Azioni</th>
+                            {{__('actions')}}</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
@@ -133,7 +133,7 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                 d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                                         </svg>
-                                        Ripristina
+                                        {{__('restore')}}
                                     </button>
                                 @else
                                     <div class="flex flex-col md:flex-row md:space-x-3 space-y-2 md:space-y-0">
@@ -144,7 +144,7 @@
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                     d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15.414a2 2 0 01-2.828 0l-1.414-1.414a2 2 0 010-2.828z" />
                                             </svg>
-                                            Modifica
+                                            {{__('edit')}}
                                         </button>
                                        <button wire:click="confirmDelete({{ $agency->id }})"class="text-red-600 hover:text-red-900 flex items-center text-sm">
                                             <svg class="h-5 w-5 mr-1" xmlns="http://www.w3.org/2000/svg"
@@ -152,7 +152,7 @@
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                     d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5-4h4m-4 0h4m-7 4h12" />
                                             </svg>
-                                            Elimina
+                                            {{__('delete')}}
                                         </button>
                                     </div>
                                 @endif
@@ -160,8 +160,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="3" class="px-4 py-4 text-center text-sm text-gray-500 md:px-6">Nessuna
-                                agenzia trovata.</td>
+                            <td colspan="3" class="px-4 py-4 text-center text-sm text-gray-500 md:px-6">{{__('no agencies found')}}.</td>
                         </tr>
                     @endforelse
                 </tbody>

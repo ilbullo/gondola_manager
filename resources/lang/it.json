@@ -7,6 +7,18 @@
     "departure"                                    : "partenza",
     "Agency created successfully"                  : "Agenzia creata con successo",
     "Agency updated successfully"                  : "Agenzia aggiornata con successo",
-    "Agency deleted successfully"                  : "Agenzia cancellata con successo"
+    "Agency deleted successfully"                  : "Agenzia cancellata con successo",
+    "agency manager"                               : "Gestione Agenzie",
+    "hide deleted"                                 : "Nascondi Eliminati",
+    "show deleted"                                 : "Mostra Eliminati",
+    "create agency"                                : "Crea Agenzia",
+    "name"                                         : "Nome",
+    "code"                                         : "Codice",
+    "edit agency"                                  : "Modifica Agenzia",
+    "actions"                                      : "Azioni",
+    "restore"                                      : "Ripristina",
+    "edit"                                         : "Modifica",
+    "delete"                                       : "Elimina",
+    "no agencies found"                            : "Nessuna agenzia trovata"
 
 }

@@ -19,9 +19,32 @@ class DatabaseSeeder extends Seeder
 
         User::factory()->create([
             'name' => 'Test User',
-            'email' => 'test@example.com',
+            'email' => 'ilbullo@gmail.com',
             'password'  =>'password',
             'license_number'=> 140
         ]);
+
+        User::factory(40)->create();
+
+        $agencies = [
+            'ALBATRAVEL' => 'ALBA',
+            "ITC" => "ITC", 
+            "GONDOLIERI TRAVEL" => "GT", 
+            "VENEZIA SERVICE" => "VENS",
+            "BASSANI" => "BASS", 
+            "BUCINTORO" => "BUCI", 
+            "CONTIKI" => "CONT", 
+            "GLOBUS" => "GLOB", 
+            "COSMOS" => "COSM", 
+            "TRUMPY" => "TRUM",
+            "CLEMENTSON" => "CLEM",
+            "INSIGHT" => "INSI",
+            "TURIVE" => "TUVE"
+        ];
+
+        foreach($agencies as $name => $code) {
+            \App\Models\Agency::factory()->create(['name' => $name,'code' => $code]);
+        }
+        
     }
 }

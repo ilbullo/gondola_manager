@@ -16,7 +16,7 @@ class WorkAssignmentFactory extends Factory
         return [
             'user_id' => User::factory(),
             'agency_id' => Agency::factory(),
-            'slot' => $this->faker->numberBetween(1, 5),
+            'slot' => $this->faker->numberBetween(1, 25),
             'value' => $this->faker->word,
             'voucher' => $this->faker->uuid,
             'timestamp' => $this->faker->dateTime,

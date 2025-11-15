@@ -1,7 +1,4 @@
 <x-app-layout>
-    @if(true)
-    <livewire:table-manager.work-assignment-table/>
-    @else
-    <livewire:table-manager.license-manager />
-    @endif
+    @livewire('table-manager.table-manager')
+    @livewire('ui.agency-modal')
 </x-app-layout>

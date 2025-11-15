@@ -14,7 +14,9 @@ return new class extends Migration
         Schema::create('license_table', function (Blueprint $table) {
             $table->id();
             $table->date('date');
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');            
+            $table->index('date');
+            $table->unsignedBigInteger('user_id');
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');            
             $table->timestamps();
         });
     }

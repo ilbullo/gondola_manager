@@ -15,6 +15,7 @@ class LicenseManager extends Component
     public $selectedUsers = [];
     public $errorMessage = '';
 
+
     public function mount()
     {
         // Carica tutti gli utenti disponibili (escludendo quelli già selezionati)
@@ -124,6 +125,7 @@ class LicenseManager extends Component
 
         // Puoi aggiungere un redirect o altre azioni qui in futuro
         session()->flash('success', 'Selezione confermata con successo!');
+        $this->dispatch('confirmLicenses');
         $this->dispatch('stopLoading');
     }
 

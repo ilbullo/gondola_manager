@@ -1,4 +1,4 @@
-<div>
+<div wire:refresh>
     <!-- Modale caricamento -->
     <div id="loading-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
         <div class="bg-white p-4 rounded-lg shadow-lg flex items-center space-x-2">
@@ -13,7 +13,7 @@
     <!-- Layout principale -->
     <div class="flex flex-col md:flex-row gap-3 sm:gap-4 h-[calc(100vh-2rem)]">
         <!-- Sidebar -->
-           <livewire:layout.sidebar />
+        <livewire:layout.sidebar />
 
         <!-- Tabella -->
         <div class="w-full bg-white p-3 sm:p-4 shadow-md overflow-x-auto">
@@ -22,73 +22,64 @@
                     <thead>
                         <tr class="bg-gray-100">
                             <th class="p-2 text-left text-sm font-semibold text-gray-700 sticky left-0 bg-gray-100 border-b w-20 z-10">Licenza</th>
-                            <th class="p-2 text-center text-sm font-semibold text-gray-700 border-b w-10">1</th>
-                            <th class="p-2 text-center text-sm font-semibold text-gray-700 border-b w-10">2</th>
-                            <th class="p-2 text-center text-sm font-semibold text-gray-700 border-b w-10">3</th>
-                            <th class="p-2 text-center text-sm font-semibold text-gray-700 border-b w-10">4</th>
-                            <th class="p-2 text-center text-sm font-semibold text-gray-700 border-b w-10">5</th>
-                            <th class="p-2 text-center text-sm font-semibold text-gray-700 border-b w-10">6</th>
-                            <th class="p-2 text-center text-sm font-semibold text-gray-700 border-b w-10">7</th>
-                            <th class="p-2 text-center text-sm font-semibold text-gray-700 border-b w-10">8</th>
-                            <th class="p-2 text-center text-sm font-semibold text-gray-700 border-b w-10">9</th>
-                            <th class="p-2 text-center text-sm font-semibold text-gray-700 border-b w-10">10</th>
-                            <th class="p-2 text-center text-sm font-semibold text-gray-700 border-b w-10">11</th>
-                            <th class="p-2 text-center text-sm font-semibold text-gray-700 border-b w-10">12</th>
-                            <th class="p-2 text-center text-sm font-semibold text-gray-700 border-b w-10">13</th>
-                            <th class="p-2 text-center text-sm font-semibold text-gray-700 border-b w-10">14</th>
-                            <th class="p-2 text-center text-sm font-semibold text-gray-700 border-b w-10">15</th>
-                            <th class="p-2 text-center text-sm font-semibold text-gray-700 border-b w-10">16</th>
-                            <th class="p-2 text-center text-sm font-semibold text-gray-700 border-b w-10">17</th>
-                            <th class="p-2 text-center text-sm font-semibold text-gray-700 border-b w-10">18</th>
-                            <th class="p-2 text-center text-sm font-semibold text-gray-700 border-b w-10">19</th>
-                            <th class="p-2 text-center text-sm font-semibold text-gray-700 border-b w-10">20</th>
-                            <th class="p-2 text-center text-sm font-semibold text-gray-700 border-b w-10">21</th>
-                            <th class="p-2 text-center text-sm font-semibold text-gray-700 border-b w-10">22</th>
-                            <th class="p-2 text-center text-sm font-semibold text-gray-700 border-b w-10">23</th>
-                            <th class="p-2 text-center text-sm font-semibold text-gray-700 border-b w-10">24</th>
-                            <th class="p-2 text-center text-sm font-semibold text-gray-700 border-b w-10">25</th>
+                            @for ($i = 1; $i <= 25; $i++)
+                                <th class="p-2 text-center text-sm font-semibold text-gray-700 border-b w-10">{{ $i }}</th>
+                            @endfor
                         </tr>
                     </thead>
                     <tbody id="sortable">
                         @foreach($licenses as $license)
-                        <tr class="border-b" draggable="true" wire:sortable.item="item-{{ $license['id'] }}"
-                        wire:key="selected-item-{{ $license['id'] }}">
-                            <td wire:sortable.handle class="p-2 text-sm text-gray-900 font-medium sticky left-0 bg-white z-10">
-                                <div class="flex items-center space-x-2">
-                                    <svg class="drag-handle w-5 h-5 text-gray-500 cursor-grab active:cursor-grabbing" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"></path>
-                                    </svg>
-                                    <span>{{$license['user']->license_number}}</span>
-                                </div>
-                            </td>
-                            <td class="p-1 text-center text-xs border bg-gray-50 hover:bg-gray-100 cursor-pointer"><span class="text-gray-400">-</span></td>
-                            <td class="p-1 text-center text-xs border bg-gray-50 hover:bg-gray-100 cursor-pointer"><span class="text-gray-400">-</span></td>
-                            <td class="p-1 text-center text-xs border bg-gray-50 hover:bg-gray-100 cursor-pointer"><span class="text-gray-400">-</span></td>
-                            <td class="p-1 text-center text-xs border bg-gray-50 hover:bg-gray-100 cursor-pointer"><span class="text-gray-400">-</span></td>
-                            <td class="p-1 text-center text-xs border bg-gray-50 hover:bg-gray-100 cursor-pointer"><span class="text-gray-400">-</span></td>
-                            <td class="p-1 text-center text-xs border bg-gray-50 hover:bg-gray-100 cursor-pointer"><span class="text-gray-400">-</span></td>
-                            <td class="p-1 text-center text-xs border bg-gray-50 hover:bg-gray-100 cursor-pointer"><span class="text-gray-400">-</span></td>
-                            <td class="p-1 text-center text-xs border bg-gray-50 hover:bg-gray-100 cursor-pointer"><span class="text-gray-400">-</span></td>
-                            <td class="p-1 text-center text-xs border bg-gray-50 hover:bg-gray-100 cursor-pointer"><span class="text-gray-400">-</span></td>
-                            <td class="p-1 text-center text-xs border bg-gray-50 hover:bg-gray-100 cursor-pointer"><span class="text-gray-400">-</span></td>
-                            <td class="p-1 text-center text-xs border bg-gray-50 hover:bg-gray-100 cursor-pointer"><span class="text-gray-400">-</span></td>
-                            <td class="p-1 text-center text-xs border bg-gray-50 hover:bg-gray-100 cursor-pointer"><span class="text-gray-400">-</span></td>
-                            <td class="p-1 text-center text-xs border bg-gray-50 hover:bg-gray-100 cursor-pointer"><span class="text-gray-400">-</span></td>
-                            <td class="p-1 text-center text-xs border bg-gray-50 hover:bg-gray-100 cursor-pointer"><span class="text-gray-400">-</span></td>
-                            <td class="p-1 text-center text-xs border bg-gray-50 hover:bg-gray-100 cursor-pointer"><span class="text-gray-400">-</span></td>
-                            <td class="p-1 text-center text-xs border bg-gray-50 hover:bg-gray-100 cursor-pointer"><span class="text-gray-400">-</span></td>
-                            <td class="p-1 text-center text-xs border bg-gray-50 hover:bg-gray-100 cursor-pointer"><span class="text-gray-400">-</span></td>
-                            <td class="p-1 text-center text-xs border bg-gray-50 hover:bg-gray-100 cursor-pointer"><span class="text-gray-400">-</span></td>
-                            <td class="p-1 text-center text-xs border bg-gray-50 hover:bg-gray-100 cursor-pointer"><span class="text-gray-400">-</span></td>
-                            <td class="p-1 text-center text-xs border bg-gray-50 hover:bg-gray-100 cursor-pointer"><span class="text-gray-400">-</span></td>
-                            <td class="p-1 text-center text-xs border bg-gray-50 hover:bg-gray-100 cursor-pointer"><span class="text-gray-400">-</span></td>
-                            <td class="p-1 text-center text-xs border bg-gray-50 hover:bg-gray-100 cursor-pointer"><span class="text-gray-400">-</span></td>
-                            <td class="p-1 text-center text-xs border bg-gray-50 hover:bg-gray-100 cursor-pointer"><span class="text-gray-400">-</span></td>
-                            <td class="p-1 text-center text-xs border bg-gray-50 hover:bg-gray-100 cursor-pointer"><span class="text-gray-400">-</span></td>
-                            <td class="p-1 text-center text-xs border bg-gray-50 hover:bg-gray-100 cursor-pointer"><span class="text-gray-400">-</span></td>
-                        </tr>
-                        @endforeach
+                            <tr class="border-b" draggable="true" wire:sortable.item="item-{{ $license['id'] }}"
+                                wire:key="selected-item-{{ $license['id'] }}">
+                                <td wire:sortable.handle class="p-2 text-sm text-gray-900 font-medium sticky left-0 bg-white z-10">
+                                    <div class="flex items-center space-x-2">
+                                        <svg class="drag-handle w-5 h-5 text-gray-500 cursor-grab active:cursor-grabbing" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"></path>
+                                        </svg>
+                                        <span>{{ $license['user']['license_number'] ?? 'N/A' }}</span>
+                                    </div>
+                                </td>
+                                @for ($slot = 0; $slot <= 24; $slot++)
+                                    @php     
+                                        $index = $slot + 1;
+                                    @endphp
+                                    <td class="p-1 text-center text-xs border cursor-pointer"
+                                        @class([
+                                            'bg-gray-50 hover:bg-gray-100' => !isset($license['worksMap'][$slot]),
+                                            'bg-blue-100' => isset($license['worksMap'][$slot]) && $license['worksMap'][$slot]['value'] === 'A',
+                                            'bg-green-100' => isset($license['worksMap'][$slot]) && $license['worksMap'][$slot]['value'] === 'X',
+                                            'bg-red-100' => isset($license['worksMap'][$slot]) && $license['worksMap'][$slot]['value'] === 'P',
+                                            'bg-yellow-100' => isset($license['worksMap'][$slot]) && $license['worksMap'][$slot]['value'] === 'N',
+                                        ])
+                                        wire:click="@if (isset($license['worksMap'][$slot])) openConfirmRemove({{ $license['user_id'] }}, {{ $index }}) @else assignWork({{ $license['user_id'] }}, {{ $index }}) @endif">
+                                        @if (isset($license['worksMap'][$slot]))
+                                            <span class="text-gray-900 font-medium">
+                                                @if ($license['worksMap'][$slot]['value'] === 'A')
+                                                    {{ $license['worksMap'][$slot]['agency_code'] ?? 'N/A' }}
+                                                    @if ($license['worksMap'][$slot]['voucher'])
+                                                        ({{ Str::limit($license['worksMap'][$slot]['voucher'],4,'') }})
+                                                    @endif 
 
+                                                @elseif ($license['worksMap'][$slot]['value'] === 'X')
+                                                    X
+                                                    @if ($license['worksMap'][$slot]['voucher'])
+                                                       ({{ Str::limit($license['worksMap'][$slot]['voucher'],4,'') }})
+                                                    @endif
+                                                @elseif ($license['worksMap'][$slot]['value'] === 'P')
+                                                    P
+                                                @elseif ($license['worksMap'][$slot]['value'] === 'N')
+                                                    N
+                                                @else
+                                                    {{ $license['worksMap'][$slot]['value'] }} <!-- Fallback per valore sconosciuto -->
+                                                @endif
+                                            </span>
+                                        @else
+                                            <span class="text-gray-400">-</span>
+                                        @endif
+                                    </td>
+                                @endfor
+                            </tr>
+                        @endforeach
                     </tbody>
                 </table>
             </div>

@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Layout;
 
+use App\Models\Agency;
 use Livewire\Component;
 
 class Sidebar extends Component
@@ -13,6 +14,9 @@ class Sidebar extends Component
     public $agencyName = ''; // For work type 'A' (AGENZIA)
     public $customAgencyName = ''; // For work type 'C' (CUSTOM)
     public $slotsOccupied = 1; // Default to 1 slot
+    public $agencyId = null; // Store selected agency ID
+
+    protected $listeners = ['selectAgency' => 'selectAgency'];
 
     public $config = [
         'work_types' => [
@@ -34,12 +38,6 @@ class Sidebar extends Component
                 'value' => 'A',
                 'classes' => 'text-white bg-blue-600 hover:bg-blue-700 focus:ring-blue-300 shadow-blue-500/40',
             ],
-           /*[
-                'id' => 'quickCustomButton',
-                'label' => 'CUSTOM',
-                'value' => 'C',
-                'classes' => 'text-white bg-purple-600 hover:bg-purple-700 focus:ring-purple-300 shadow-purple-500/40',
-            ],*/
             [
                 'id' => 'quickPerdiVoltaButton',
                 'label' => 'PERDI VOLTA (P)',
@@ -54,13 +52,6 @@ class Sidebar extends Component
             ],
         ],
         'sections' => [
-            /*'custom_input' => [
-                'enabled' => true,
-                'label' => 'NOME AGENZIA',
-                'placeholder' => 'Es: Agenzia TEST',
-                'border_color' => 'border-purple-500',
-                'input_border' => 'border-purple-300 focus:border-purple-600 focus:ring-purple-300',
-            ],*/
             'agency_input' => [
                 'enabled' => true,
                 'label' => 'AGENZIA',
@@ -101,21 +92,43 @@ class Sidebar extends Component
                     'id' => 'redistributeButton',
                     'label' => 'RIPARTISCI',
                     'classes' => 'text-white bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-300 shadow-emerald-500/40',
+                    'wire' => "redistributeWorks"
                 ],
                 [
                     'id' => 'undoButton',
                     'label' => 'ANNULLA RIPARTIZIONE',
                     'classes' => 'text-white bg-orange-500 hover:bg-orange-600 focus:ring-orange-300 shadow-orange-500/40',
                     'hidden' => true,
+                    'wire' => "backToOriginal"
+                ],
+                [
+                    'id' => 'updateButton',
+                    'label' => 'MODIFICA TABELLA',
+                    'classes' => 'text-white bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-300 shadow-indigo-500/40',
+                    'wire' => 'editTable'
                 ],
                 [
                     'id' => 'resetButton',
                     'label' => 'RESET TABELLA',
                     'classes' => 'text-white bg-red-600 hover:bg-red-700 focus:ring-red-300 shadow-red-500/40',
+                    'wire' => 'resetTable'
                 ],
             ],
         ],
     ];
+
+    public function resetParams()
+    {
+        $this->workType = '';
+        $this->label = '';
+        $this->voucher = '';
+        $this->excludeSummary = false;
+        $this->agencyName = '';
+        $this->customAgencyName = '';
+        $this->slotsOccupied = 1;
+        $this->agencyId = null;
+        $this->dispatch('close-agency-modal');
+    }
 
     public function mount($config = [])
     {
@@ -123,33 +136,51 @@ class Sidebar extends Component
     }
 
     public function setWorkType($value)
-{
-    $this->resetFields();
-    // Cerca il workType corrispondente nel config
-    $workType = collect($this->config['work_types'])->firstWhere('value', $value);
+    {
+        $this->resetFields();
+        // Cerca il workType corrispondente nel config
+        $workType = collect($this->config['work_types'])->firstWhere('value', $value);
 
-    // Se il valore è "clear", resetta tutto
-    if ($value === 'clear') {
-        $this->workType = '';
-        $this->label = '';
-    } elseif ($workType) {
-        // Se trovato, imposta entrambi i campi
-        $this->workType = $workType['value'];
-        $this->label = $workType['label'];
-    } else {
-        // Se non trovato, metti valori vuoti di sicurezza
-        $this->workType = '';
-        $this->label = '';
+        if ($value === 'clear') {
+            $this->resetParams();
+        } elseif ($value === 'A') {
+            // Dispatch event to open modal with agencies
+            $agencies = Agency::all()->map(function ($agency) {
+                return ['id' => $agency->id, 'name' => $agency->name];
+            })->toArray();
+
+            $this->workType = 'A';
+            $this->label = 'AGENZIA';
+            $this->dispatch('open-agency-modal', data: ["agencies" => $agencies]);
+        } elseif ($workType) {
+            // Set work type and label for other types
+            $this->workType = $workType['value'];
+            $this->label = $workType['label'];
+            $this->agencyId = null;
+            $this->emitWorkSelected();
+        } else {
+            // Fallback
+            $this->workType = '';
+            $this->label = '';
+            $this->agencyId = null;
+        }
     }
 
-    $this->emitWorkSelected();
-}
-
+    public function selectAgency($agencyId)
+    {
+        $agency = Agency::find($agencyId);
+        if ($agency) {
+            $this->agencyId = $agency->id;
+            $this->agencyName = $agency->name;
+            $this->dispatch('close-agency-modal');
+            $this->emitWorkSelected();
+        }
+    }
 
     public function updated($propertyName)
     {
         // Emit event when any relevant property changes
-        if (in_array($propertyName, ['workType', 'voucher', 'excludeSummary', 'agencyName', 'customAgencyName', 'slotsOccupied'])) {
+        if (in_array($propertyName, ['workType', 'voucher', 'excludeSummary', 'agencyName', 'customAgencyName', 'slotsOccupied', 'agencyId'])) {
             $this->emitWorkSelected();
         }
     }
@@ -157,19 +188,38 @@ class Sidebar extends Component
     protected function emitWorkSelected()
     {
         $this->dispatch('workSelected', [
-            'value'             => $this->workType,
-            'label'             => $this->label,
-            'voucher'           => $this->voucher,
-            'excludeSummary'    => $this->excludeSummary,
-            'agencyName'        => $this->workType === 'A' ? $this->agencyName : null,
-            'customAgencyName'  => $this->workType === 'C' ? $this->customAgencyName : null,
-            'slotsOccupied'     => $this->slotsOccupied,
+            'value' => $this->workType,
+            'label' => $this->label,
+            'voucher' => $this->voucher,
+            'excludeSummary' => $this->excludeSummary,
+            'agencyName' => $this->workType === 'A' ? $this->agencyName : null,
+            'agencyId' => $this->workType === 'A' ? $this->agencyId : null,
+            'slotsOccupied' => $this->slotsOccupied,
         ]);
     }
 
-    public function resetFields() {
-        $this->voucher = ""; 
+    public function resetFields()
+    {
+        $this->voucher = '';
         $this->excludeSummary = false;
+        $this->agencyName = '';
+        $this->agencyId = null;
+    }
+
+    public function resetTable()
+    {
+        $this->dispatch('openConfirmModal', [
+            'message' => 'Resettare la tabella?',
+            'confirmEvent' => 'resetLicenses',
+        ]);
+    }
+
+    public function editTable()
+    {
+        $this->dispatch('openConfirmModal', [
+            'message' => 'Vuoi modificare la tabella?',
+            'confirmEvent' => 'editLicenses',
+        ]);
     }
 
     public function render()

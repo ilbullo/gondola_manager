@@ -29,4 +29,8 @@ class LicenseTable extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function works() {
+        return $this->hasMany(WorkAssignment::class,'user_id','user_id');
+    }
 }

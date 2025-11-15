@@ -12,7 +12,7 @@ class WorkAssignment extends Model
     protected $table = 'work_assignments';
 
     protected $fillable = [
-        'license_id',
+        'user_id',
         'agency_id',
         'slot', //la colonna corrispondente al n-esimo lavoro (es. 1,2,3,4,5...ecc)
         'value',
@@ -49,7 +49,7 @@ class WorkAssignment extends Model
      */
     public function getAgencyNameAttribute(): ?string
     {
-        return $this->custom_agency_name ?? $this->agency?->name;
+        return $this->agency?->name;
     }
 
     /**
@@ -57,6 +57,6 @@ class WorkAssignment extends Model
      */
     public function getAgencyCodeAttribute(): ?string
     {
-        return $this->custom_agency_name ?? $this->agency?->code;
+        return $this->agency?->code;
     }
 }

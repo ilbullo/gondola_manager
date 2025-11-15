@@ -11,9 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('license_table', function (Blueprint $table) {
-            $table->integer('order')->default(0);
-            $table->index('order');
+        Schema::table('work_assignments', function (Blueprint $table) {
+            $table->boolean('excluded')->default(false);
         });
     }
 
@@ -22,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('license_table', function (Blueprint $table) {
-            $table->dropColumn('order');
+        Schema::table('work_assignment', function (Blueprint $table) {
+            $table->dropColumn('excluded');
         });
     }
 };

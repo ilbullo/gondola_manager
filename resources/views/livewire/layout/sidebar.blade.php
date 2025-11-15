@@ -9,7 +9,7 @@
 
     <div class="space-y-2">
         <label class="block text-sm md:text-base font-bold text-gray-800 border-l-4 border-blue-500 pl-2">
-        {{ __('work type') }}
+            {{ __('work type') }}
         </label>
         <div class="grid gap-1.5">
             @foreach ($config['work_types'] as $button)
@@ -22,20 +22,10 @@
         @if ($label)
             <div id="currentSelection"
                 class="bg-gray-200 border-2 border-gray-500 rounded-md p-1.5 text-xs font-extrabold text-center">
-                Selezione: <span id="selectionText">{{ $label }}</span>
+                Selezione: <span id="selectionText">{{ $label }}{{ $workType === 'A' && $agencyName ? ' - ' . $agencyName : '' }}</span>
             </div>
         @endif
     </div>
-
-   {{--  @if ($config['sections']['custom_input']['enabled'])
-        <div id="customInputContainer" class="{{ $workType !== 'C' ? 'hidden' : '' }} mt-2 space-y-1.5">
-            <label class="block text-sm md:text-base font-bold text-gray-800 border-l-4 {{ $config['sections']['custom_input']['border_color'] }} pl-2">
-                {{ $config['sections']['custom_input']['label'] }}
-            </label>
-            <input id="customInput" type="text" placeholder="{{ $config['sections']['custom_input']['placeholder'] }}"
-                class="w-full h-10 px-2 text-sm font-medium text-gray-900 bg-white border-2 {{ $config['sections']['custom_input']['input_border'] }} rounded-md placeholder:text-gray-500 placeholder:font-medium focus:ring-2 focus:outline-none transition-all duration-200" />
-        </div>
-    @endif --}}
 
     @if ($config['sections']['notes']['enabled'])
         <div class="mt-2 space-y-1.5">
@@ -58,6 +48,7 @@
     <div class="mt-2 grid gap-1.5">
         @foreach ($config['sections']['actions'] as $action)
             <button id="{{ $action['id'] }}"
+                @if($action['wire']) wire:click="{{ $action['wire'] }}()" @endif
                 class="{{ $action['hidden'] ?? false ? 'hidden' : '' }} h-10 px-3 text-sm font-bold {{ $action['classes'] }} rounded-md shadow-sm focus:ring-2 focus:outline-none transition-all duration-200">
                 {{ $action['label'] }}
             </button>
@@ -80,8 +71,4 @@
             @endif
         </div>
     @endif
-
-    <div class="mt-2 grid gap-1.5">
-        <livewire:actions.logout-button />
-    </div>
 </div>

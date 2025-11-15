@@ -51,7 +51,7 @@
                                             'bg-red-100' => isset($license['worksMap'][$slot]) && $license['worksMap'][$slot]['value'] === 'P',
                                             'bg-yellow-100' => isset($license['worksMap'][$slot]) && $license['worksMap'][$slot]['value'] === 'N',
                                         ])
-                                        wire:click="@if (isset($license['worksMap'][$slot])) openConfirmRemove({{ $license['user_id'] }}, {{ $index }}) @else assignWork({{ $license['user_id'] }}, {{ $index }}) @endif">
+                                        wire:click="@if (isset($license['worksMap'][$slot])) openConfirmRemove({{ $license['id'] }}, {{ $index }}) @else assignWork({{ $license['id'] }}, {{ $index }}) @endif">
                                         @if (isset($license['worksMap'][$slot]))
                                             <span class="text-gray-900 font-medium">
                                                 @if ($license['worksMap'][$slot]['value'] === 'A')

@@ -31,6 +31,6 @@ class LicenseTable extends Model
     }
 
     public function works() {
-        return $this->hasMany(WorkAssignment::class,'user_id','user_id');
+        return $this->hasMany(WorkAssignment::class,'license_table_id','id');
     }
 }

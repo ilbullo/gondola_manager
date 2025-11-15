@@ -38,10 +38,10 @@
     @endif
 
     <div class="mt-2 flex items-center gap-1.5">
-        <input id="excludeSummary" type="checkbox" wire:model="excludeSummary"
+        <input id="excludeSummary" type="checkbox"  wire:model.live="excludeSummary"
             class="h-4 w-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-300 focus:outline-none" />
         <label class="text-sm font-bold text-gray-800">
-            ESCLUDI RIEPILOGO
+            ESCLUDI RIEPILOGO 
         </label>
     </div>
 

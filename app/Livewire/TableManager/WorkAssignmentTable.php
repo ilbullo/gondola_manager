@@ -32,10 +32,10 @@ public function loadLicenses()
 
     // Debug: Query diretta su WorkAssignment per verificare slot reali
     $debugAssignments = \App\Models\WorkAssignment::whereDate('timestamp', $currentDate)
-        ->orderBy('user_id')
+        ->orderBy('license_table_id')
         ->orderBy('slot')
-        ->get(['id', 'user_id', 'slot', 'value', 'slots_occupied', 'timestamp'])
-        ->groupBy('user_id');
+        ->get(['id', 'license_table_id', 'slot', 'value', 'slots_occupied', 'timestamp'])
+        ->groupBy('license_table_id');
 
     \Log::info('Debug: Raw WorkAssignments per user_id', [
         'current_date' => $currentDate,
@@ -52,7 +52,7 @@ public function loadLicenses()
         ->whereDate('date', $currentDate)
         ->with([
             'user' => fn ($query) => $query->select('id', 'license_number'),
-            'works' => fn ($query) => $query->select('id', 'user_id', 'slot', 'value', 'slots_occupied', 'timestamp', 'agency_id', 'voucher', 'created_at')
+            'works' => fn ($query) => $query->select('id', 'license_table_id', 'slot', 'value', 'slots_occupied', 'timestamp', 'agency_id', 'voucher', 'created_at')
                 ->whereDate('timestamp', $currentDate)
                 ->orderBy('slot') // Ordine per slot per processare correttamente
                 ->with(['agency' => fn ($subQuery) => $subQuery->select('id', 'name', 'code')])
@@ -90,16 +90,16 @@ public function loadLicenses()
         $this->errorMessage = '';
     }
 
-    public function openConfirmRemove($userId, $slot)
+    public function openConfirmRemove($licenseTableId, $slot)
     {
         $this->dispatch('openConfirmModal', [
             'message' => 'Vuoi rimuovere il valore da questa cella?',
             'confirmEvent' => 'confirmRemoveAssignment',
-            'payload' => ['userId' => $userId, 'slot' => $slot],
+            'payload' => ['licenseTableId' => $licenseTableId, 'slot' => $slot],
         ]);
     }
 
-public function assignWork($userId, $slot)
+public function assignWork($licenseTableId, $slot)
 {
     if (!$this->selectedWork || !isset($this->selectedWork['value']) || !in_array($this->selectedWork['value'], ['A', 'X', 'P', 'N'])) {
         $this->errorMessage = 'Seleziona un lavoro valido dalla sidebar prima di assegnare.';
@@ -112,7 +112,7 @@ public function assignWork($userId, $slot)
 
     // Debug: Log dello slot cliccato
     \Log::info('assignWork called', [
-        'user_id' => $userId,
+        'license_table_id' => $licenseTableId,
         'slot' => $slot,
         'selectedWork' => $this->selectedWork,
     ]);
@@ -120,7 +120,7 @@ public function assignWork($userId, $slot)
     $slotsOccupied = $this->selectedWork['slotsOccupied'] ?? 1;
 
     // Controllo di sovrapposizione migliorato
-    $existing = WorkAssignment::where('user_id', $userId)
+    $existing = WorkAssignment::where('license_table_id', $licenseTableId)
         ->whereDate('timestamp', today()->toDateString())
         ->where(function ($query) use ($slot, $slotsOccupied) {
             $query->where('slot', '<=', $slot + $slotsOccupied - 1)
@@ -134,19 +134,19 @@ public function assignWork($userId, $slot)
             'user_id' => $userId,
             'slot' => $slot,
             'slots_occupied' => $slotsOccupied,
-            'existing' => WorkAssignment::where('user_id', $userId)->whereDate('timestamp', today()->toDateString())->get(['slot'])->toArray(),
+            'existing' => WorkAssignment::where('license_table_id', $licenseTableId)->whereDate('timestamp', today()->toDateString())->get(['slot'])->toArray(),
         ]);
         $this->dispatch('stopLoading');
         return;
     }
 
-    $this->saveAssignment($userId, $slot);
+    $this->saveAssignment($licenseTableId, $slot);
 }
 
-protected function saveAssignment($userId, $slot)
+protected function saveAssignment($licenseTableId, $slot)
 {
     try {
-        $license = LicenseTable::where('user_id', $userId)
+        $license = LicenseTable::where('id', $licenseTableId)
             ->whereDate('date', today()->toDateString())
             ->firstOrFail();
 
@@ -161,19 +161,19 @@ protected function saveAssignment($userId, $slot)
         }
 
         \Log::info('Saving WorkAssignment', [
-            'user_id' => $userId,
+            'license_table_id' => $licenseTableId,
             'slot' => $slot,
             'agency_id' => $agencyId,
             'selectedWork' => $this->selectedWork,
         ]);
-
         $assignment = WorkAssignment::create([
-            'user_id' => $userId,
+            'license_table_id' => $licenseTableId,
             'agency_id' => $agencyId,
             'slot' => $slot, // Forzato esplicito
             'value' => $this->selectedWork['value'],
             'voucher' => $this->selectedWork['voucher'] ?? null,
             'slots_occupied' => $this->selectedWork['slotsOccupied'] ?? 1,
+            'excluded'  => $this->selectedWork['excludeSummary'],
             'timestamp' => now()->startOfDay(),
         ]);
 
@@ -189,7 +189,7 @@ protected function saveAssignment($userId, $slot)
 
         \Log::info('WorkAssignment created and verified', [
             'id' => $assignment->id,
-            'user_id' => $userId,
+            'license_table_id' => $licenseTableId,
             'slot' => $savedAssignment->slot,
             'value' => $savedAssignment->value,
             'agency_id' => $savedAssignment->agency_id,
@@ -209,18 +209,18 @@ protected function saveAssignment($userId, $slot)
 
     public function removeAssignment($payload)
     {
-        $userId = $payload['userId'];
+        $licenseTableId = $payload['licenseTableId'];
         $slot = $payload['slot'];
 
         $this->dispatch('startLoading');
         try {
-            $assignment = WorkAssignment::where('user_id', $userId)
+            $assignment = WorkAssignment::where('license_table_id', $licenseTableId)
                 ->where('slot', $slot)
                 ->whereDate('timestamp', now()->toDateString())
                 ->first();
-
+            
             if ($assignment) {
-                WorkAssignment::where('user_id', $userId)
+                WorkAssignment::where('license_table_id', $licenseTableId)
                     ->whereBetween('slot', [$slot, $slot + $assignment->slots_occupied - 1])
                     ->whereDate('timestamp', now()->toDateString())
                     ->delete();

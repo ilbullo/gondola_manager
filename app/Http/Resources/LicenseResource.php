@@ -50,7 +50,7 @@ class LicenseResource extends JsonResource
 
         return [
             'id' => $this->id,
-            'user_id' => $this->user_id,
+            'license_table_id' => $this->license_table_id,
             'user' => $this->user ? [
                 'id' => $this->user->id,
                 'license_number' => $this->user->license_number,

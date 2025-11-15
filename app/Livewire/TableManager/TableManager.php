@@ -40,8 +40,7 @@ class TableManager extends Component
      */
 
     public function clearLicenses() {
-        LicenseTable::truncate();
-        WorkAssignment::truncate();
+        LicenseTable::query()->delete();
         $this->hideTable();
     }
 

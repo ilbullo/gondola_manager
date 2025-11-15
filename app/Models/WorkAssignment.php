@@ -12,28 +12,30 @@ class WorkAssignment extends Model
     protected $table = 'work_assignments';
 
     protected $fillable = [
-        'user_id',
+        'license_table_id',
         'agency_id',
         'slot', //la colonna corrispondente al n-esimo lavoro (es. 1,2,3,4,5...ecc)
         'value',
         'voucher',
         'timestamp',
         'slots_occupied',
+        'excluded'
     ];
 
     protected $casts = [
         'timestamp' => 'datetime',
         'slots_occupied' => 'integer',
         'slot' => 'integer',
+        'excluded' => 'boolean',
     ];
 
 
     /**
      * Relazione con l'utente.
      */
-    public function user()
+    public function licenseTable()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(LicenseTable::class,'license_table_id','id');
     }
 
     /**

@@ -29,13 +29,9 @@
                     </thead>
                     <tbody id="sortable">
                         @foreach($licenses as $license)
-                            <tr class="border-b" draggable="true" wire:sortable.item="item-{{ $license['id'] }}"
-                                wire:key="selected-item-{{ $license['id'] }}">
-                                <td wire:sortable.handle class="p-2 text-sm text-gray-900 font-medium sticky left-0 bg-white z-10">
+                            <tr class="border-b">
+                                <td class="p-2 text-sm text-gray-900 font-medium sticky left-0 bg-white z-10">
                                     <div class="flex items-center space-x-2">
-                                        <svg class="drag-handle w-5 h-5 text-gray-500 cursor-grab active:cursor-grabbing" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"></path>
-                                        </svg>
                                         <span>{{ $license['user']['license_number'] ?? 'N/A' }}</span>
                                     </div>
                                 </td>
@@ -59,7 +55,6 @@
                                                     @if ($license['worksMap'][$slot]['voucher'])
                                                         ({{ Str::limit($license['worksMap'][$slot]['voucher'],4,'') }})
                                                     @endif 
-
                                                 @elseif ($license['worksMap'][$slot]['value'] === 'X')
                                                     X
                                                     @if ($license['worksMap'][$slot]['voucher'])

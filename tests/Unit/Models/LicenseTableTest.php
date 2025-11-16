@@ -6,12 +6,13 @@ use App\Models\LicenseTable;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use PHPUnit\Framework\Attributes\Test;
 
 class LicenseTableTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
+    #[Test]
     public function it_can_create_a_license_table()
     {
         $user = User::factory()->create();
@@ -26,7 +27,7 @@ class LicenseTableTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function it_belongs_to_a_user()
     {
         $user = User::factory()->create();
@@ -36,7 +37,7 @@ class LicenseTableTest extends TestCase
         $this->assertEquals($user->id, $licenseTable->user->id);
     }
 
-    /** @test */
+    #[Test]
     public function it_casts_date_to_date()
     {
         $user = User::factory()->create();

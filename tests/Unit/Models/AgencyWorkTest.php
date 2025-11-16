@@ -7,12 +7,13 @@ use App\Models\User;
 use App\Models\Agency;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use PHPUnit\Framework\Attributes\Test;
 
 class AgencyWorkTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
+    #[Test]
     public function it_can_create_an_agency_work()
     {
         $agencyWork = AgencyWork::factory()->create([
@@ -26,7 +27,7 @@ class AgencyWorkTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function it_belongs_to_a_user()
     {
         $user = User::factory()->create();
@@ -36,7 +37,7 @@ class AgencyWorkTest extends TestCase
         $this->assertEquals($user->id, $agencyWork->user->id);
     }
 
-    /** @test */
+    #[Test]
     public function it_belongs_to_an_agency()
     {
         $agency = Agency::factory()->create();
@@ -46,7 +47,7 @@ class AgencyWorkTest extends TestCase
         $this->assertEquals($agency->id, $agencyWork->agency->id);
     }
 
-    /** @test */
+    #[Test]
     public function it_casts_date_to_date()
     {
         $agencyWork = AgencyWork::factory()->create(['date' => '2023-01-01']);

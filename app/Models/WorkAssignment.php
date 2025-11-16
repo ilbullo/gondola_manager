@@ -16,10 +16,12 @@ class WorkAssignment extends Model
         'agency_id',
         'slot', //la colonna corrispondente al n-esimo lavoro (es. 1,2,3,4,5...ecc)
         'value',
+        'amount',
         'voucher',
         'timestamp',
         'slots_occupied',
-        'excluded'
+        'excluded',
+        'shared_from_first'
     ];
 
     protected $casts = [
@@ -27,6 +29,8 @@ class WorkAssignment extends Model
         'slots_occupied' => 'integer',
         'slot' => 'integer',
         'excluded' => 'boolean',
+        'shared_from_first' => 'boolean',
+        'amount'    => 'float'
     ];
 
 

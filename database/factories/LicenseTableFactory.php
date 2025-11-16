@@ -14,7 +14,8 @@ class LicenseTableFactory extends Factory
     {
         return [
             'user_id' => User::factory(),
-            'date' => $this->faker->date,
+            'date'    => $this->faker->date,
+            'order'   => $this->faker->numberBetween(1, 25)
         ];
     }
 }

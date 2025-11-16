@@ -10,13 +10,19 @@ class Sidebar extends Component
     public $workType = '';
     public $label = '';
     public $voucher = '';
-    public $excludeSummary = false;
+    public $sharedFromFirst = false;
     public $agencyName = ''; // For work type 'A' (AGENZIA)
     public $customAgencyName = ''; // For work type 'C' (CUSTOM)
     public $slotsOccupied = 1; // Default to 1 slot
     public $agencyId = null; // Store selected agency ID
+    public $amount = 90; // Nuova proprietà per importo
 
-    protected $listeners = ['selectAgency' => 'selectAgency'];
+    public $showActions = false; // tasti tabella
+
+    protected $listeners = [
+        'selectAgency' => 'selectAgency',
+        'updateWorkDetails' => 'updateWorkDetails', // Nuovo listener
+    ];
 
     public $config = [
         'work_types' => [
@@ -36,7 +42,7 @@ class Sidebar extends Component
                 'id' => 'selectAgencyButton',
                 'label' => 'AGENZIA',
                 'value' => 'A',
-                'classes' => 'text-white bg-blue-600 hover:bg-blue-700 focus:ring-blue-300 shadow-blue-500/40',
+                'classes' => 'text-white bg-sky-600 hover:bg-sky-700 focus:ring-sky-300 shadow-sky-500/40',
             ],
             [
                 'id' => 'quickPerdiVoltaButton',
@@ -117,12 +123,34 @@ class Sidebar extends Component
         ],
     ];
 
+    public function toggleActions()
+    {
+        $this->showActions = !$this->showActions;
+    }
+
+    public function openWorkDetailsModal()
+    {
+        \Log::info('Sidebar: Emitting openWorkDetailsModal event');
+        $this->dispatch('openWorkDetailsModal');
+    }
+
+    public function updateWorkDetails($details)
+    {
+        \Log::info('Sidebar: Updating work details', $details);
+        $this->amount = $details['amount'] ?? 90;
+        $this->slotsOccupied = $details['slotsOccupied'] ?? 1;
+        $this->excludeSummary = $details['excluded'] ?? false;
+
+        // Riemetti workSelected con stato completo
+        $this->emitWorkSelected();
+    }
+
     public function resetParams()
     {
         $this->workType = '';
         $this->label = '';
         $this->voucher = '';
-        $this->excludeSummary = false;
+        $this->sharedFromFirst = false;
         $this->agencyName = '';
         $this->customAgencyName = '';
         $this->slotsOccupied = 1;
@@ -145,7 +173,7 @@ class Sidebar extends Component
             $this->resetParams();
         } elseif ($value === 'A') {
             // Dispatch event to open modal with agencies
-            $agencies = Agency::all()->map(function ($agency) {
+            $agencies = Agency::orderBy('name')->get()->map(function ($agency) {
                 return ['id' => $agency->id, 'name' => $agency->name];
             })->toArray();
 
@@ -180,7 +208,7 @@ class Sidebar extends Component
     public function updated($propertyName)
     {
         // Emit event when any relevant property changes
-        if (in_array($propertyName, ['workType', 'voucher', 'excludeSummary', 'agencyName', 'customAgencyName', 'slotsOccupied', 'agencyId'])) {
+        if (in_array($propertyName, ['workType', 'voucher', 'sharedFromFirst', 'agencyName', 'customAgencyName', 'slotsOccupied', 'agencyId'])) {
             $this->emitWorkSelected();
         }
     }
@@ -191,19 +219,23 @@ class Sidebar extends Component
             'value' => $this->workType,
             'label' => $this->label,
             'voucher' => $this->voucher,
-            'excludeSummary' => $this->excludeSummary,
+            'sharedFromFirst' => $this->sharedFromFirst,
+            'excluded'  => false,
             'agencyName' => $this->workType === 'A' ? $this->agencyName : null,
             'agencyId' => $this->workType === 'A' ? $this->agencyId : null,
             'slotsOccupied' => $this->slotsOccupied,
+            'amount' => $this->amount, // Nuovo campo
         ]);
     }
 
     public function resetFields()
     {
         $this->voucher = '';
-        $this->excludeSummary = false;
+        $this->sharedFromFirst = false;
         $this->agencyName = '';
         $this->agencyId = null;
+        $this->amount = 90;
+        $this->slotsOccupied = 1;
     }
 
     public function resetTable()

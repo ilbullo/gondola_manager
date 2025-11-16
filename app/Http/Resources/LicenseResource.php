@@ -29,7 +29,6 @@ class LicenseResource extends JsonResource
                     'value' => $work->value,
                     'agency_code' => $work->agency ? $work->agency->code : null,
                     'voucher' => $work->voucher,
-                    'bepi'  => "ciaone",
                     'created_at' => $work->created_at
                 ];
             }

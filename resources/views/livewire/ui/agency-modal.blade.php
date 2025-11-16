@@ -8,14 +8,14 @@
                 </svg>
             </button>
         </div>
-        <div class="grid gap-2">
+        <div class="grid gap-2 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
             @forelse ($agencies as $agency)
                 <button wire:click="$dispatch('selectAgency', [{{ $agency['id'] }}])"
-                    class="h-10 px-3 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 focus:ring-blue-300 shadow-blue-500/40 rounded-md shadow-sm focus:ring-2 focus:outline-none transition-all duration-200">
+                    class="h-10 px-3 text-sm font-bold text-white bg-sky-600 hover:bg-sky-700 focus:ring-sky-300 shadow-sky-500/40 rounded-md shadow-sm focus:ring-2 focus:outline-none transition-all duration-200">
                     {{ $agency['name'] }}
                 </button>
             @empty
-                <p class="text-sm text-gray-500 text-center">Nessuna agenzia disponibile</p>
+                <p class="col-span-full text-sm text-gray-500 text-center">Nessuna agenzia disponibile</p>
             @endforelse
         </div>
     </div>

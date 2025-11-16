@@ -166,14 +166,17 @@ protected function saveAssignment($licenseTableId, $slot)
             'agency_id' => $agencyId,
             'selectedWork' => $this->selectedWork,
         ]);
+
         $assignment = WorkAssignment::create([
             'license_table_id' => $licenseTableId,
             'agency_id' => $agencyId,
             'slot' => $slot, // Forzato esplicito
             'value' => $this->selectedWork['value'],
+            'amount' => $this->selectedWork['amount'] ?? 90,
             'voucher' => $this->selectedWork['voucher'] ?? null,
             'slots_occupied' => $this->selectedWork['slotsOccupied'] ?? 1,
-            'excluded'  => $this->selectedWork['excludeSummary'],
+            'excluded'  => $this->selectedWork['excluded'] ?? false,
+            'shared_from_first' => $this->selectedWork['sharedFromFirst'] ?? false,
             'timestamp' => now()->startOfDay(),
         ]);
 
@@ -199,6 +202,7 @@ protected function saveAssignment($licenseTableId, $slot)
         $this->loadLicenses();
         $this->errorMessage = '';
         $this->dispatch('$refresh');
+        $this->dispatch('workAssigned');
     } catch (\Exception $e) {
         \Log::error('Failed to assign work', ['error' => $e->getMessage()]);
         $this->errorMessage = 'Errore durante l\'assegnazione del lavoro: ' . $e->getMessage();

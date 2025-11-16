@@ -8,7 +8,7 @@ use App\Models\{LicenseTable, WorkAssignment};
 class TableManager extends Component
 {
     public $licenses = false;
-    public $tableConfirmed = false;
+    public $tableConfirmed = true;
 
     protected $listeners = ['confirmLicenses' => 'showTable', 'editLicenses' => 'hideTable','resetLicenses' => 'clearLicenses'];
 
@@ -16,6 +16,9 @@ class TableManager extends Component
     {
         $today = now();
         $this->licenses = LicenseTable::whereDate('date',$today)->exists();
+        if ($this->licenses == false) {
+            $this->tableConfirmed = false;
+        }
     }
  
     

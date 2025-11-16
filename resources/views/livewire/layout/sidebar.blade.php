@@ -29,7 +29,7 @@
 
     @if ($config['sections']['notes']['enabled'])
         <div class="mt-2 space-y-1.5">
-            <label class="block text-sm md:text-base font-bold text-gray-800 border-l-4 {{ $config['sections']['notes']['border_color'] }} pl-2">
+            <label for="agencyNotes" class="block text-sm md:text-base font-bold text-gray-800 border-l-4 {{ $config['sections']['notes']['border_color'] }} pl-2">
                 {{ $config['sections']['notes']['label'] }}
             </label>
             <input id="agencyNotes" type="text" placeholder="{{ $config['sections']['notes']['placeholder'] }}" wire:model.live="voucher"
@@ -38,37 +38,35 @@
     @endif
 
     <div class="mt-2 flex items-center gap-1.5">
-        <input id="excludeSummary" type="checkbox"  wire:model.live="excludeSummary"
+        <input id="sharedFromFirst" type="checkbox" wire:model.live="sharedFromFirst"
             class="h-4 w-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-300 focus:outline-none" />
         <label class="text-sm font-bold text-gray-800">
-            ESCLUDI RIEPILOGO 
+            RIPARTISCI DAL PRIMO 
         </label>
     </div>
 
     <div class="mt-2 grid gap-1.5">
-        @foreach ($config['sections']['actions'] as $action)
-            <button id="{{ $action['id'] }}"
-                @if($action['wire']) wire:click="{{ $action['wire'] }}()" @endif
-                class="{{ $action['hidden'] ?? false ? 'hidden' : '' }} h-10 px-3 text-sm font-bold {{ $action['classes'] }} rounded-md shadow-sm focus:ring-2 focus:outline-none transition-all duration-200">
-                {{ $action['label'] }}
-            </button>
-        @endforeach
+        <button wire:click="openWorkDetailsModal"
+            class="h-10 px-3 uppercase text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 focus:ring-blue-300 shadow-blue-500/40 rounded-md shadow-sm focus:ring-2 focus:outline-none transition-all duration-200">
+            Configura Lavoro
+        </button>
+        <!-- Nuovo tasto per toggle azioni -->
+        <button wire:click="toggleActions"
+            class="h-10 px-3 uppercase text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 focus:ring-blue-300 shadow-blue-500/40 rounded-md shadow-sm focus:ring-2 focus:outline-none transition-all duration-200">
+            Opzioni Tabella
+        </button>
+
+        <!-- Pulsanti azioni nascosti, mostrati con toggle -->
+        <div x-data="{ show: @entangle('showActions') }" x-show="show" x-transition class="grid gap-1.5">
+            @foreach ($config['sections']['actions'] as $action)
+                <button id="{{ $action['id'] }}"
+                    @if($action['wire']) wire:click="{{ $action['wire'] }}()" @endif
+                    class="{{ $action['hidden'] ?? false ? 'hidden' : '' }} h-10 px-3 text-sm font-bold {{ $action['classes'] }} rounded-md shadow-sm focus:ring-2 focus:outline-none transition-all duration-200">
+                    {{ $action['label'] }}
+                </button>
+            @endforeach
+        </div>
     </div>
 
-    @if ($config['sections']['summary']['enabled'])
-        <div class="mt-2 bg-gray-800 text-white p-2 rounded-md shadow-sm shadow-gray-500/40 space-y-1.5">
-            @foreach ($config['sections']['summary']['counts'] as $count)
-                <div class="flex justify-between text-xs font-bold">
-                    <span>{{ $count['label'] }}:</span>
-                    <span id="{{ $count['id'] }}">{{ $count['value'] }}</span>
-                </div>
-            @endforeach
-            @if ($config['sections']['summary']['grand_total']['enabled'])
-                <div id="grandTotal" class="flex justify-between text-xs font-bold">
-                    <span>Totale:</span>
-                    <span id="grandTotalValue">{{ $config['sections']['summary']['grand_total']['value'] }}</span>
-                </div>
-            @endif
-        </div>
-    @endif
+    <livewire:component.work-summary />
 </div>

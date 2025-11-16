@@ -20,6 +20,9 @@ return new class extends Migration
             $table->string('voucher')->nullable();
             $table->dateTime('timestamp')->nullable();
             $table->unsignedInteger('slots_occupied')->default(1);
+            $table->boolean('excluded')->default(false);
+            $table->boolean('shared_from_first')->default(false);
+            $table->decimal('amount', 8, 2)->default(90.00);
             $table->timestamps();
             $table->foreign('license_table_id')->references('id')->on('license_table')->onDelete('cascade');
             $table->foreign('agency_id')->references('id')->on('agencies')->onDelete('set null');

@@ -32,7 +32,7 @@ class AgencyManagerTest extends TestCase
     {
         Livewire::test(AgencyManager::class)
             ->set('name', 'Agenzia Test')
-            ->set('code', 'TEST99')
+            ->set('code', 'TST9')
             ->call('create')
             ->assertHasNoErrors()
             ->assertSee('Agenzia creata con successo.')
@@ -40,7 +40,7 @@ class AgencyManagerTest extends TestCase
 
         $this->assertDatabaseHas('agencies', [
             'name' => 'Agenzia Test',
-            'code' => 'TEST99',
+            'code' => 'TST9',
         ]);
     }
 
@@ -64,7 +64,7 @@ class AgencyManagerTest extends TestCase
         Livewire::test(AgencyManager::class)
             ->call('edit', $agency->id)
             ->set('name', 'Modificata')
-            ->set('code', 'MOD123')
+            ->set('code', 'MD12')
             ->call('update')
             ->assertHasNoErrors()
             ->assertSee('Agenzia aggiornata con successo.');
@@ -72,7 +72,7 @@ class AgencyManagerTest extends TestCase
         $this->assertDatabaseHas('agencies', [
             'id' => $agency->id,
             'name' => 'Modificata',
-            'code' => 'MOD123',
+            'code' => 'MD12',
         ]);
     }
 

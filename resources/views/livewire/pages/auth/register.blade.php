@@ -15,6 +15,7 @@ layout('layouts.guest');
 state([
     'name' => '',
     'email' => '',
+    'license_number', 
     'password' => '',
     'password_confirmation' => ''
 ]);
@@ -22,6 +23,7 @@ state([
 rules([
     'name' => ['required', 'string', 'max:255'],
     'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+    'license_number' => ['required','integer'],
     'password' => ['required', 'string', 'confirmed', Rules\Password::defaults()],
 ]);
 
@@ -34,7 +36,8 @@ $register = function () {
 
     Auth::login($user);
 
-    $this->redirect(route('dashboard', absolute: false), navigate: true);
+    //$this->redirect(route('dashboard', absolute: false), navigate: true);
+    $this->redirect(route('dashboard'));
 };
 
 ?>
@@ -53,6 +56,13 @@ $register = function () {
             <x-input-label for="email" :value="__('Email')" />
             <x-text-input wire:model="email" id="email" class="block mt-1 w-full" type="email" name="email" required autocomplete="username" />
             <x-input-error :messages="$errors->get('email')" class="mt-2" />
+        </div>
+
+        <!-- License Number -->
+        <div class="mt-4">
+            <x-input-label for="license_number" :value="__('License')" />
+            <x-text-input wire:model="license_number" id="licence_number" class="block mt-1 w-full" type="text" name="license_number" required />
+            <x-input-error :messages="$errors->get('license_number')" class="mt-2" />
         </div>
 
         <!-- Password -->

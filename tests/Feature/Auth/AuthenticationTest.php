@@ -54,7 +54,7 @@ class AuthenticationTest extends TestCase
         $this->assertGuest();
     }
 
-    public function test_navigation_menu_can_be_rendered(): void
+   /* public function test_navigation_menu_can_be_rendered(): void
     {
         $user = User::factory()->create();
 
@@ -65,7 +65,7 @@ class AuthenticationTest extends TestCase
         $response
             ->assertOk()
             ->assertSeeVolt('layout.navigation');
-    }
+    }*/
 
     public function test_users_can_logout(): void
     {

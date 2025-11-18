@@ -105,9 +105,13 @@ class LicenseManager extends Component
 
     private function loadAvailableUsers(): void
     {
-        $this->availableUsers = User::whereDoesntHave('atWork', fn($q) =>
-                $q->whereDate('date', today())
-            )
+
+        // 1. Ottieni gli ID degli utenti già assegnati
+        $assignedUserIds = LicenseTable::whereDate('date', today())
+        ->pluck('user_id');
+
+        // 2. Query ottimizzata
+        $this->availableUsers = User::whereNotIn('id', $assignedUserIds)
             ->orderBy('license_number')
             ->get()
             ->map(fn($user) => [

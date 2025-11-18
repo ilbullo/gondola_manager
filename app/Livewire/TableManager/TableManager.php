@@ -11,6 +11,7 @@ class TableManager extends Component
 {
     public bool $hasLicenses = false;        // più chiaro di $licenses
     public bool $tableConfirmed = false;     // stato attuale della tabella
+    public bool $isRedistributed = false;
 
     /**
      * Mount: verifica se esistono licenze per oggi
@@ -35,12 +36,21 @@ class TableManager extends Component
     public function confirmTable(): void
     {
         $this->tableConfirmed = true;
+        $this->isRedistributed = false;
     }
 
     #[On('editLicenses')]
     public function enterEditMode(): void
     {
         $this->tableConfirmed = false;
+        $this->isRedistributed = false;
+    }
+
+    #[On('goToAssignmentTable')]
+    public function exitRedistributionMode(): void
+    {
+        $this->isRedistributed = false;
+        // $this->tableConfirmed rimane true
     }
 
     #[On('resetLicenses')]
@@ -69,6 +79,12 @@ class TableManager extends Component
     public function refreshLicenseStatus(): void
     {
         $this->checkTodayLicenses();
+    }
+
+    #[On('callRedistributeWorks')]
+    public function redistributeWorks() {
+        $this->isRedistributed = true; // Attiva la vista TableSplitter
+        $this->dispatch('redistributeWorks');
     }
 
     // === Render ===

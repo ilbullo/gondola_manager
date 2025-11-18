@@ -21,6 +21,7 @@ class Sidebar extends Component
     public int $amount = 90;
 
     public bool $showActions = false;
+    public bool $isRedistributionMode = false;
 
     // ===================================================================
     // Configurazione UI (può essere sovrascritta dal mount)
@@ -150,10 +151,23 @@ class Sidebar extends Component
 
     public function editTable(): void
     {
+        // Se si è in modalità ripartizione, si torna alla assegnazione
+        if ($this->isRedistributionMode) {
+            $this->dispatch('goToAssignmentTable'); // Nuovo evento per TableManager
+            session()->flash('success', 'Tornato alla modalità assegnazione lavori.');
+            return;
+        }
+
+        // Logica originale per tornare a LicenseManager (richiede conferma)
         $this->dispatch('openConfirmModal', [
             'message'      => 'Vuoi tornare in modalità modifica licenze?',
-            'confirmEvent' => 'editLicenses',
+            'confirmEvent' => 'editLicenses', // Evento per TableManager
         ]);
+    }
+
+    // Chiama l'evento in tableManager
+    public function redistributeWorks(){
+        $this->dispatch('callRedistributeWorks');
     }
 
     // ===================================================================

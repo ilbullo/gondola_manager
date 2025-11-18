@@ -36,7 +36,7 @@
                                     </div>
                                 </td>
                                 @for ($slot = 0; $slot <= 24; $slot++)
-                                    @php     
+                                    @php
                                         $index = $slot + 1;
                                     @endphp
                                     <td class="p-1 text-center text-xs border cursor-pointer"
@@ -54,7 +54,7 @@
                                                     {{ $license['worksMap'][$slot]['agency_code'] ?? 'N/A' }}
                                                     @if ($license['worksMap'][$slot]['voucher'])
                                                         ({{ Str::limit($license['worksMap'][$slot]['voucher'],4,'') }})
-                                                    @endif 
+                                                    @endif
                                                 @elseif ($license['worksMap'][$slot]['value'] === 'X')
                                                     X
                                                     @if ($license['worksMap'][$slot]['voucher'])
@@ -77,6 +77,23 @@
                         @endforeach
                     </tbody>
                 </table>
+                <h2 class="mt-4">Sistema di ripartizione:</h2>
+
+            <ul>
+                <li>Alla tabella vuota segno i lavori segnati come “fissi” alla licenza che li ha eseguiti.</li>
+                <li>Ripartisco tutti i lavori di tipo A (Agenzia) sugli slot liberi.</li>
+                <li>Ripartisco tutti i lavori “ripartisci dal primo”.</li>
+                <li>Ripartisco tutti i lavori di tipo X (contanti).</li>
+                <li>Sostituisco partendo dall’ultima X i lavori di tipo N eseguiti da ogni licenza.</li>
+                <li>Sostituisco partendo dall’ultima X i lavori di tipo P eseguiti da ogni licenza.</li>
+                <li>Se un lavoro viene fatto da un componente che non è in tabella (es. Luna) il lavoro va assegnato
+                    alla licenza bancale come lavoro di tipo “ripartisci dal primo”.</li>
+            </ul>
+
+            <h3>MANCA DA FARE</h3>
+            <ul>
+                <li>Blocco fatture a metà giornata se uno va via.</li>
+            </ul>
             </div>
         </div>
     </div>

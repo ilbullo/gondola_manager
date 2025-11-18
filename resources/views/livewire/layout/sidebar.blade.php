@@ -85,22 +85,20 @@
             Configura Lavoro
         </button>
 
-        <button
+ <button
     wire:click="toggleActions"
+    x-data="{ open: @entangle('showActions') }"
     type="button"
     class="w-full h-12 text-sm font-bold text-white bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 rounded-lg shadow-lg focus:ring-4 focus:ring-purple-300 transition-all flex items-center justify-center gap-3"
 >
     Opzioni Tabella
 
-    <!-- Freccia che ruota automaticamente (la soluzione più pulita) -->
     <svg 
-        x-data="{ open: @entangle('actionsOpen') }"
-        :class="{ 'rotate-180': open }"
+        :class="open ? 'rotate-180' : ''"
         class="w-5 h-5 transition-transform duration-300"
         fill="none" stroke="currentColor" viewBox="0 0 24 24"
     >
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" 
-              d="M19 9l-7 7-7-7" />
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7" />
     </svg>
 </button>
 

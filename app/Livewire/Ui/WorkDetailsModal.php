@@ -20,7 +20,7 @@ class WorkDetailsModal extends Component
     {
         return [
             'amount'        => 'required|numeric|min:0',
-            'slotsOccupied' => 'required|integer|in:1,2',
+            'slotsOccupied' => 'required|integer|in:1,2,3,4',
             'excluded'      => 'boolean',
         ];
     }

@@ -2,132 +2,155 @@
 
 namespace App\Livewire\TableManager;
 
-
+use App\Models\{LicenseTable, User};
 use Livewire\Component;
-use App\Models\User;
-use App\Models\LicenseTable;
-use Illuminate\Support\Facades\Auth;
-use Livewire\Attributes\Validate;
+use Illuminate\Support\Facades\DB;
 
 class LicenseManager extends Component
 {
-    public $availableUsers = [];
-    public $selectedUsers = [];
-    public $errorMessage = '';
+    /** @var array<int, array{id: int, user_id: int, name: string, surname: string, license: string|null}> */
+    public array $availableUsers = [];
 
+    /** @var array<int, array{id: int, user_id: int, order: int, user: array{id: int, name: string, surname: string, license: string|null}}> */
+    public array $selectedUsers = [];
 
-    public function mount()
+    public string $errorMessage = '';
+
+    // ===================================================================
+    // Lifecycle
+    // ===================================================================
+
+    public function mount(): void
     {
-        // Carica tutti gli utenti disponibili (escludendo quelli già selezionati)
-        $this->loadAvailableUsers();
-        // Carica gli utenti selezionati dalla tabella license_table
-        $this->loadSelectedUsers();
+        $this->refreshData();
     }
 
-    public function loadAvailableUsers()
-    {
-        // Carica gli utenti che non sono nella tabella license_table per la data odierna
-        $this->availableUsers = User::whereDoesntHave('atWork', function ($query) {
-            $query->whereDate('date', now()->toDateString());
-        })->orderBy('license_number','ASC')->get()->toArray();
-    }
+    // ===================================================================
+    // Public Actions
+    // ===================================================================
 
-    public function loadSelectedUsers()
+    public function selectUser(int $userId): void
     {
-        // Carica gli utenti selezionati per la data odierna, ordinati per 'order'
-        $this->selectedUsers = LicenseTable::whereDate('date', now()->toDateString())
-            ->with('user')
-            ->orderBy('order')
-            ->get()
-            ->map(function ($license) {
-                return [
-                    'id' => $license->id,
-                    'user_id' => $license->user_id,
-                    'order' => $license->order,
-                    'user' => $license->user ? [
-                        'id' => $license->user->id,
-                        'name' => $license->user->name,
-                        'surname' => $license->user->surname ?? '',
-                        'license' => $license->user->license_number,
-                    ] : null,
-                ];
-            })
-            ->filter(function ($item) {
-                return !is_null($item['user']);
-            })
-            ->toArray();
-    }
+        $this->dispatch('toggleLoading', true);
 
-    public function selectUser($userId)
-    {
-        $this->dispatch('startLoading');
-        // Trova l'utente selezionato
         $user = User::findOrFail($userId);
 
-        // Determina il prossimo ordine
-        $maxOrder = LicenseTable::whereDate('date', now()->toDateString())->max('order') ?? 0;
+        $nextOrder = $this->getNextOrder();
 
-        // Crea un record nella tabella license_table
         LicenseTable::create([
             'user_id' => $user->id,
-            'date' => now(),
-            'order' => $maxOrder + 1,
+            'date'    => today(),
+            'order'   => $nextOrder,
         ]);
 
-        // Ricarica gli utenti disponibili e selezionati
-        $this->loadAvailableUsers();
-        $this->loadSelectedUsers();
-        $this->dispatch('stopLoading');
+        $this->refreshData();
+        $this->dispatch('toggleLoading', false);
     }
 
-    public function removeUser($licenseTableId)
+    public function removeUser(int $licenseTableId): void
     {
-        $this->dispatch('startLoading');
-        // Rimuovi il record dalla tabella license_table
-        $license = LicenseTable::findOrFail($licenseTableId);
-        $license->delete();
+        $this->dispatch('toggleLoading', true);
 
-        // Ricarica gli utenti disponibili e selezionati
-        $this->loadAvailableUsers();
-        $this->loadSelectedUsers();
-        $this->dispatch('stopLoading');
+        LicenseTable::findOrFail($licenseTableId)->delete();
+
+        $this->refreshData();
+        $this->dispatch('toggleLoading', false);
     }
 
-    public function updateOrder($orderedIds)
+    /** Riceve l'array da Alpine (Livewire sortable) */
+    public function updateOrder(array $orderedIds): void
     {
-        $this->dispatch('startLoading');
-        // Aggiorna l'ordine dei record nella tabella license_table
-        foreach ($orderedIds as $index => $item) {
-            LicenseTable::where('id', $item['value'])->update(['order' => $index + 1]);
-        }
+        $this->dispatch('toggleLoading', true);
 
-        // Ricarica gli utenti selezionati per riflettere il nuovo ordine
+        DB::transaction(function () use ($orderedIds) {
+            foreach ($orderedIds as $index => $item) {
+                LicenseTable::where('id', $item['value'])
+                    ->update(['order' => $index + 1]);
+            }
+        });
+
         $this->loadSelectedUsers();
-        $this->dispatch('stopLoading');
+        $this->dispatch('toggleLoading', false);
+
         session()->flash('success', 'Ordine aggiornato con successo!');
     }
 
-    public function confirm()
+    public function confirm(): void
     {
-        $this->dispatch('startLoading');
-        // Valida che ci sia almeno un utente selezionato
+        $this->dispatch('toggleLoading', true);
+
         if (empty($this->selectedUsers)) {
             $this->errorMessage = 'Seleziona almeno un utente prima di confermare.';
-            $this->dispatch('stopLoading');
+            $this->dispatch('toggleLoading', false);
             return;
         }
 
-        // Resetta il messaggio di errore
         $this->errorMessage = '';
 
-        // Per ora, logga la conferma (puoi implementare il passaggio alla sezione successiva qui)
-        \Log::info('Conferma selezione utenti', ['selectedUsers' => $this->selectedUsers]);
-
-        // Puoi aggiungere un redirect o altre azioni qui in futuro
         session()->flash('success', 'Selezione confermata con successo!');
-        $this->dispatch('confirmLicenses');
-        $this->dispatch('stopLoading');
+        $this->dispatch('confirmLicenses'); // Va al TableManager
+
+        $this->dispatch('toggleLoading', false);
     }
+
+    // ===================================================================
+    // Private Helpers
+    // ===================================================================
+
+    private function refreshData(): void
+    {
+        $this->loadAvailableUsers();
+        $this->loadSelectedUsers();
+    }
+
+    private function loadAvailableUsers(): void
+    {
+        $this->availableUsers = User::whereDoesntHave('atWork', fn($q) =>
+                $q->whereDate('date', today())
+            )
+            ->orderBy('license_number')
+            ->get()
+            ->map(fn($user) => [
+                'id'                => $user->id,
+                'name'              => $user->name,
+                'surname'           => $user->surname ?? '',
+                'license_number'    => $user->license_number,
+                'full_name'         => trim("{$user->name} {$user->surname}"),
+            ])
+            ->toArray();
+    }
+
+    private function loadSelectedUsers(): void
+    {
+        $this->selectedUsers = LicenseTable::whereDate('date', today())
+            ->with('user')
+            ->orderBy('order')
+            ->get()
+            ->filter(fn($lt) => $lt->user !== null)
+            ->map(fn($lt) => [
+                'id'       => $lt->id,
+                'user_id'  => $lt->user_id,
+                'order'    => $lt->order,
+                'user'     => [
+                    'id'       => $lt->user->id,
+                    'name'     => $lt->user->name,
+                    'surname'  => $lt->user->surname ?? '',
+                    'license'  => $lt->user->license_number,
+                    'full_name' => trim("{$lt->user->name} " . ($lt->user->surname ?? '')),
+                ],
+            ])
+            ->values()
+            ->toArray();
+    }
+
+    private function getNextOrder(): int
+    {
+        return LicenseTable::whereDate('date', today())->max('order') + 1 ?? 1;
+    }
+
+    // ===================================================================
+    // Render
+    // ===================================================================
 
     public function render()
     {

@@ -3,22 +3,23 @@
 namespace App\Livewire\Ui;
 
 use Livewire\Component;
+use Livewire\Attributes\On;
 
 class LoadingOverlay extends Component
 {
     public bool $isLoading = false;
 
-    protected $listeners = [
-        'startLoading' => 'showLoading',
-        'stopLoading' => 'hideLoading',
-    ];
-
-    public function showLoading()
+    #[On('toggleLoading')]
+    public function toggle(bool $state): void
     {
-        $this->isLoading = true;
+        $this->isLoading = $state;
     }
 
-    public function hideLoading()
+    // Opzionale: fallback per compatibilità con vecchi eventi
+    #[On('startLoading')] public function start() { $this->toggle(true); }
+    #[On('stopLoading')]  public function stop()  { $this->toggle(false); }
+
+    public function mount(): void
     {
         $this->isLoading = false;
     }

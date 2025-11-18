@@ -3,27 +3,38 @@
 namespace App\Livewire\Ui;
 
 use Livewire\Component;
+use Livewire\Attributes\On;
 
 class AgencyModal extends Component
 {
-    public $show = false;
-    public $agencies = [];
+    public bool $show = false;
+    
+    /** @var array<int, mixed> */
+    public array $agencies = [];
 
-    protected $listeners = [
-        'open-agency-modal' => 'open',
-        'close-agency-modal' => 'close',
-    ];
 
-    public function open($data = [])
-    {
-        $this->agencies = $data['agencies'] ?? [];
-        $this->show = true;
-    }
+     #[On('toggleAgencyModal')]
+     public function toggle(bool $visible, array $agencies = []): void
+     {
+         $this->show = $visible;
+         $this->agencies = $visible ? $agencies : [];
+         $this->resetErrorBag();
+     }
 
-    public function close()
+     public function close(): void
     {
         $this->show = false;
         $this->agencies = [];
+    }
+
+    private function resetState(): void
+    {
+        $this->agencies = [];
+    }
+
+    public function mount(): void
+    {
+        $this->resetState();
     }
 
     public function render()

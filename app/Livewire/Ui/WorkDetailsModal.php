@@ -3,81 +3,79 @@
 namespace App\Livewire\Ui;
 
 use Livewire\Component;
+use Livewire\Attributes\On;
 
 class WorkDetailsModal extends Component
 {
-    public $amount = 90;
-    public $slotsOccupied = 1;
-    public $excluded = false;
-    public $isOpen = false;
+    // === Stato del modale ===
+    public bool $isOpen = false;
 
-    protected $listeners = [
-        'openWorkDetailsModal' => 'openModal',
-        'workSelected' => 'updateFromSelectedWork',
-    ];
+    // === Dati del form ===
+    public float|int $amount = 90;
+    public int $slotsOccupied = 1;
+    public bool $excluded = false;
 
-    public function openModal()
+    // === Regole di validazione (best practice Livewire 3) ===
+    protected function rules(): array
     {
-        \Log::info('WorkDetailsModal: Opening modal');
-        $this->isOpen = true;
-    }
-
-    public function closeModal()
-    {
-        \Log::info('WorkDetailsModal: Closing modal');
-        $this->isOpen = false;
-        $this->reset(['amount', 'slotsOccupied', 'excluded']);
-        $this->amount = 90;
-        $this->slotsOccupied = 1;
-    }
-
-    public function updateFromSelectedWork($work)
-    {
-        \Log::info('WorkDetailsModal: Updating from workSelected', $work);
-        $this->amount = $work['amount'] ?? 90;
-        $this->slotsOccupied = $work['slotsOccupied'] ?? 1;
-        $this->excluded = $work['excluded'] ?? false;
-    }
-
-    public function save()
-    {
-        $this->validate([
-            'amount' => 'required|numeric|min:0',
+        return [
+            'amount'        => 'required|numeric|min:0',
             'slotsOccupied' => 'required|integer|in:1,2',
-            'excluded' => 'boolean',
-        ]);
+            'excluded'      => 'boolean',
+        ];
+    }
 
-        \Log::info('WorkDetailsModal: Saving work details', [
-            'amount' => $this->amount,
-            'slotsOccupied' => $this->slotsOccupied,
-            'excluded' => $this->excluded,
-        ]);
+    // === Listener moderni con attributi (Livewire 3+) ===
+    #[On('openWorkDetailsModal')]
+    public function openModal(): void
+    {
+        $this->isOpen = true;
+        $this->resetErrorBag(); // Pulisce eventuali errori precedenti
+    }
 
-        // Emetti evento per aggiornare Sidebar
+    #[On('workSelected')]
+    public function updateFromSelectedWork(array $work): void
+    {
+        $this->amount        = $work['amount'] ?? 90;
+        $this->slotsOccupied = $work['slotsOccupied'] ?? 1;
+        $this->excluded      = $work['excluded'] ?? false;
+    }
+
+    public function save(): void
+    {
+        $this->validate();
+
         $this->dispatch('updateWorkDetails', [
-            'amount' => $this->amount,
+            'amount'        => $this->amount,
             'slotsOccupied' => $this->slotsOccupied,
-            'excluded' => $this->excluded,
+            'excluded'      => $this->excluded,
         ]);
 
         $this->closeModal();
     }
 
-    public function resetForm()
+    public function closeModal(): void
     {
-        \Log::info('WorkDetailsModal: Resetting form fields');
-        $this->amount = 90;
-        $this->slotsOccupied = 1;
-        $this->excluded = false;
-
-        \Log::info('WorkDetailsModal: Form fields reset', [
-            'amount' => $this->amount,
-            'slotsOccupied' => $this->slotsOccupied,
-            'excluded' => $this->excluded,
-        ]);
-
+        $this->isOpen = false;
+        $this->resetForm();
+        $this->resetErrorBag();
     }
 
+    // === Metodo privato per il reset (evita duplicazione) ===
+    private function resetForm(): void
+    {
+        $this->amount        = 90;
+        $this->slotsOccupied = 1;
+        $this->excluded      = false;
+    }
+
+    // === Opzionale: reset completo quando il componente viene mountato ===
+    public function mount(): void
+    {
+        $this->resetForm();
+    }
+
+    // === Render ===
     public function render()
     {
         return view('livewire.ui.work-details-modal');

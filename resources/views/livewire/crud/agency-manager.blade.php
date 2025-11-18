@@ -1,158 +1,173 @@
-<!-- resources/views/livewire/crud/agency-manager.blade.php -->
-<div class="max-w-5xl mx-auto p-4 sm:p-6 md:p-8">
-    <h1 class="text-2xl md:text-3xl font-bold mb-6 text-gray-800">{{ __('agency manager')}}</h1>
+{{-- resources/views/livewire/crud/agency-manager.blade.php --}}
+<div class="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">{{ __('Gestione Agenzie') }}</h1>
+        <p class="mt-2 text-gray-600">Aggiungi, modifica o elimina le agenzie del sistema.</p>
+    </div>
 
-    <!-- Messaggi di successo -->
-    @if (session()->has('message'))
-        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6 rounded-lg shadow-sm">
-            {{ session('message') }}
+    <!-- Messaggio di successo -->
+    @if (session('message'))
+        <div
+            class="mb-6 p-4 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl flex items-center gap-3 shadow-sm animate-fade-in">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span class="font-medium">{{ session('message') }}</span>
         </div>
     @endif
 
-    <!-- Barra di ricerca e pulsanti -->
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
-        <!-- Campo di ricerca -->
-        <div class="relative w-full md:w-2/5">
-            <input wire:model.live="search" type="text" placeholder="Cerca per nome o codice..."
-                class="w-full pl-10 pr-4 py-2.5 border-gray-200 rounded-lg shadow-sm focus:ring-blue-400 focus:border-blue-400 bg-white text-gray-900 placeholder-gray-400">
-            <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400"
-                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-        </div>
-        <!-- Pulsanti -->
-        <div class="flex flex-col md:flex-row md:space-x-3 space-y-3 md:space-y-0">
-            <button wire:click="toggleCreateForm"
-                class="bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 transition duration-200 text-sm font-medium">
-                {{ $showCreateForm ? 'Annulla' : 'Crea Nuova Agenzia' }}
-            </button>
-            <button wire:click="toggleShowDeleted"
-                class="bg-gray-600 text-white px-4 py-2.5 rounded-lg hover:bg-gray-700 transition duration-200 text-sm font-medium">
-                {{ $showDeleted ? __('hide deleted') : __('show deleted') }}
-            </button>
+    <!-- Barra di controllo -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-8">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+
+            <!-- Ricerca -->
+            <div class="relative flex-1 max-w-md">
+                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <input wire:model.live.debounce.300ms="search" type="text" placeholder="Cerca per nome o codice..."
+                    class="block w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 text-gray-900 placeholder-gray-500" />
+            </div>
+
+            <!-- Pulsanti azioni -->
+            <div class="flex flex-col sm:flex-row gap-3">
+                <button wire:click="toggleCreateForm"
+                    class="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2">
+                    @if ($showCreateForm)
+                        Annulla
+                    @else
+                        Nuova Agenzia
+                    @endif
+                </button>
+
+                <button wire:click="toggleShowDeleted"
+                    class="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2">
+                    @if ($showDeleted)
+                        Nascondi eliminate
+                    @else
+                        Mostra eliminate
+                    @endif
+                </button>
+            </div>
         </div>
     </div>
 
-    <!-- Form di creazione -->
-    @if ($showCreateForm)
-        <div class="bg-white shadow-lg rounded-lg p-4 md:p-6 mb-6 border border-gray-100">
-            <h2 class="text-xl md:text-2xl font-semibold mb-4 text-gray-800">{{__('create agency')}}</h2>
-            <form wire:submit.prevent="create" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <!-- Form Creazione -->
+    <div x-data="{ open: @entangle('showCreateForm') }" x-show="open" x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0 -translate-y-4" x-transition:enter-end="opacity-100 translate-y-0"
+        x-transition:leave="transition ease-in duration-200" x-transition:leave-end="opacity-0 -translate-y-4"
+        class="mb-8">
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Crea Nuova Agenzia</h2>
+
+            <form wire:submit="create" class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <label for="name" class="block text-sm font-medium text-gray-700 mb-1">{{__('name')}}</label>
-                    <input wire:model="name" type="text" id="name"
-                        class="block w-full border-gray-200 rounded-lg shadow-sm focus:ring-blue-400 focus:border-blue-400 py-2 px-3">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Nome Agenzia</label>
+                    <input wire:model="name" type="text"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
                     @error('name')
-                        <span class="text-red-500 text-sm mt-1">{{ $message }}</span>
+                        <span class="text-red-600 text-sm mt-1 block">{{ $message }}</span>
                     @enderror
                 </div>
+
                 <div>
-                    <label for="code" class="block text-sm font-medium text-gray-700 mb-1">{{__('code')}}</label>
-                    <input wire:model="code" type="text" id="code"
-                        class="block w-full border-gray-200 rounded-lg shadow-sm focus:ring-blue-400 focus:border-blue-400 py-2 px-3">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Codice (max 10 caratteri)</label>
+                    <input wire:model="code" type="text" maxlength="10"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all uppercase tracking-wider font-mono">
                     @error('code')
-                        <span class="text-red-500 text-sm mt-1">{{ $message }}</span>
+                        <span class="text-red-600 text-sm mt-1 block">{{ $message }}</span>
                     @enderror
                 </div>
+
                 <div class="md:col-span-2 flex justify-end">
                     <button type="submit"
-                        class="bg-green-600 text-white px-4 py-2.5 rounded-lg hover:bg-green-700 transition duration-200 text-sm font-medium">
-                        Salva
+                        class="px-8 py-3 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200">
+                        Crea Agenzia
                     </button>
                 </div>
             </form>
         </div>
-    @endif
+    </div>
 
-    <!-- Form di modifica -->
-    @if ($showEditForm)
-        <div class="bg-white shadow-lg rounded-lg p-4 md:p-6 mb-6 border border-gray-100">
-            <h2 class="text-xl md:text-2xl font-semibold mb-4 text-gray-800">{{__('edit agency')}}</h2>
-            <form wire:submit.prevent="update" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <!-- Form Modifica -->
+    <div x-data="{ open: @entangle('showEditForm') }" x-show="open" x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0 -translate-y-4" x-transition:enter-end="opacity-100 translate-y-0"
+        class="mb-8">
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Modifica Agenzia</h2>
+
+            <form wire:submit="update" class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <label for="edit_name" class="block text-sm font-medium text-gray-700 mb-1">{{__('name')}}</label>
-                    <input wire:model="name" type="text" id="edit_name"
-                        class="block w-full border-gray-200 rounded-lg shadow-sm focus:ring-blue-400 focus:border-blue-400 py-2 px-3">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Nome</label>
+                    <input wire:model="name" type="text"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
                     @error('name')
-                        <span class="text-red-500 text-sm mt-1">{{ $message }}</span>
+                        <span class="text-red-600 text-sm mt-1 block">{{ $message }}</span>
                     @enderror
                 </div>
+
                 <div>
-                    <label for="edit_code" class="block text-sm font-medium text-gray-700 mb-1">{{__('code')}}</label>
-                    <input wire:model="code" type="text" id="edit_code"
-                        class="block w-full border-gray-200 rounded-lg shadow-sm focus:ring-blue-400 focus:border-blue-400 py-2 px-3">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Codice</label>
+                    <input wire:model="code" type="text" maxlength="10"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all uppercase tracking-wider font-mono">
                     @error('code')
-                        <span class="text-red-500 text-sm mt-1">{{ $message }}</span>
+                        <span class="text-red-600 text-sm mt-1 block">{{ $message }}</span>
                     @enderror
                 </div>
-                <div class="md:col-span-2 flex justify-end space-x-3">
+
+                <div class="md:col-span-2 flex justify-end gap-4">
                     <button type="submit"
-                        class="bg-green-600 text-white px-4 py-2.5 rounded-lg hover:bg-green-700 transition duration-200 text-sm font-medium">
+                        class="px-8 py-3 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200">
                         Aggiorna
                     </button>
-                    <button wire:click="resetForm"
-                        class="bg-gray-600 text-white px-4 py-2.5 rounded-lg hover:bg-gray-700 transition duration-200 text-sm font-medium">
+                    <button type="button" wire:click="closeForms"
+                        class="px-8 py-3 bg-gray-600 hover:bg-gray-700 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200">
                         Annulla
                     </button>
                 </div>
             </form>
         </div>
-    @endif
+    </div>
 
-    <!-- Tabella dei record -->
-    <div class="bg-white shadow-lg rounded-lg p-4 md:p-6 border border-gray-100">
+    <!-- Tabella -->
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
-                        <th
-                            class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider md:px-6">
-                            {{__('name')}}</th>
-                        <th
-                            class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider md:px-6">
-                            {{__('code')}}</th>
-                        <th
-                            class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider md:px-6">
-                            {{__('actions')}}</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Nome
+                        </th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Codice
+                        </th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Azioni
+                        </th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
                     @forelse ($agencies as $agency)
-                        <tr class="{{ $agency->trashed() ? 'bg-gray-100' : '' }}">
-                            <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900 md:px-6">{{ $agency->name }}
-                            </td>
-                            <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900 md:px-6">{{ $agency->code }}
-                            </td>
-                            <td class="px-4 py-4 whitespace-nowrap text-sm md:px-6">
+                        <tr
+                            class="{{ $agency->trashed() ? 'bg-red-50 opacity-75' : 'hover:bg-gray-50' }} transition-colors">
+                            <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ $agency->name }}</td>
+                            <td class="px-6 py-4 text-sm font-mono text-gray-700">{{ $agency->code }}</td>
+                            <td class="px-6 py-4 text-sm">
                                 @if ($agency->trashed())
                                     <button wire:click="restore({{ $agency->id }})"
-                                        class="text-green-600 hover:text-green-900 flex items-center text-sm">
-                                        <svg class="h-5 w-5 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none"
-                                            viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                        </svg>
-                                        {{__('restore')}}
+                                        class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 rounded-lg font-medium transition">
+                                        Ripristina
                                     </button>
                                 @else
-                                    <div class="flex flex-col md:flex-row md:space-x-3 space-y-2 md:space-y-0">
+                                    <div class="flex items-center gap-4">
                                         <button wire:click="edit({{ $agency->id }})"
-                                            class="text-blue-600 hover:text-blue-900 flex items-center text-sm">
-                                            <svg class="h-5 w-5 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none"
-                                                viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15.414a2 2 0 01-2.828 0l-1.414-1.414a2 2 0 010-2.828z" />
-                                            </svg>
-                                            {{__('edit')}}
+                                            class="text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1">
+                                            Modifica
                                         </button>
-                                       <button wire:click="confirmDelete({{ $agency->id }})"class="text-red-600 hover:text-red-900 flex items-center text-sm">
-                                            <svg class="h-5 w-5 mr-1" xmlns="http://www.w3.org/2000/svg"
-                                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5-4h4m-4 0h4m-7 4h12" />
-                                            </svg>
-                                            {{__('delete')}}
+                                        <button wire:click="confirmDelete({{ $agency->id }})"
+                                            class="text-red-600 hover:text-red-800 font-medium flex items-center gap-1">
+                                            Elimina
                                         </button>
                                     </div>
                                 @endif
@@ -160,7 +175,12 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="3" class="px-4 py-4 text-center text-sm text-gray-500 md:px-6">{{__('no agencies found')}}.</td>
+                            <td colspan="3" class="px-6 py-12 text-center text-gray-500">
+                                Nessuna agenzia trovata.
+                                @if ($showDeleted)
+                                    (anche tra le eliminate)
+                                @endif
+                            </td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -168,7 +188,7 @@
         </div>
 
         <!-- Paginazione -->
-        <div class="mt-6">
+        <div class="bg-gray-50 px-6 py-4 border-t border-gray-200">
             {{ $agencies->links() }}
         </div>
     </div>

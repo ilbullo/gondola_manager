@@ -3,58 +3,65 @@
 namespace App\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
+use Throwable;
 
 class LicenseResource extends JsonResource
 {
-    public function toArray($request)
+    public function toArray($request): array
     {
-        $worksMap = array_fill(1,25,null);
-        foreach ($this->works as $work) {
-            for ($i = $work->slot; $i < $work->slot + $work->slots_occupied; $i++) {
-                if (isset($worksMap[$i])) {
-                    \Log::warning('Slot overlap detected', [
-                        'license_id' => $this->id,
-                        'slot' => $i,
-                        'existing_work' => $worksMap[$i],
-                        'new_work' => [
-                            'id' => $work->id,
-                            'value' => $work->value,
-                            'slot' => $work->slot,
-                            'slots_occupied' => $work->slots_occupied,
-                        ],
-                    ]);
+        try {
+            // Inizializza la mappa dei 25 slot
+            $worksMap = array_fill(1, 25, null);
+
+            foreach ($this->works as $work) {
+                $start = $work->slot;
+                $end   = $start + ($work->slots_occupied ?? 1) - 1;
+
+                for ($i = $start; $i <= $end; $i++) {
+                    if ($i < 1 || $i > 25) {
+                        continue; // Protezione da dati corrotti
+                    }
+
+                    if (isset($worksMap[$i])) {
+                        // Sovrapposizione rilevata → logga ma non rompe tutto
+                        report(new \RuntimeException(
+                            "Sovrapposizione slot: license_table_id={$this->id}, slot={$i}, work_id={$work->id}"
+                        ));
+                        // Opzionale: in locale lancia eccezione per debug
+                        if (app()->environment('local')) {
+                            throw new \RuntimeException("Overlap slot {$i}");
+                        }
+                    }
+
+                    $worksMap[$i] = [
+                        'id'          => $work->id,
+                        'value'       => $work->value,
+                        'agency_code' => $work->agency?->code,
+                        'voucher'     => $work->voucher,
+                        'created_at'  => optional($work->created_at)->toDateTimeString(),
+                    ];
                 }
-                $worksMap[$i] = [
-                    'id' => $work->id,
-                    'value' => $work->value,
-                    'agency_code' => $work->agency ? $work->agency->code : null,
-                    'voucher' => $work->voucher,
-                    'created_at' => $work->created_at
-                ];
             }
+
+            return [
+                'id'               => $this->id,
+                'license_table_id' => $this->id,
+                'user'             => $this->user ? [
+                    'id'             => $this->user->id,
+                    'license_number' => $this->user->license_number,
+                ] : null,
+                'worksMap'         => $worksMap,
+            ];
+        } catch (Throwable $e) {
+            // In caso di errore GRAVE, restituisci comunque una struttura valida
+            report($e);
+
+            return [
+                'id'               => $this->id,
+                'license_table_id' => $this->id,
+                'user'             => null,
+                'worksMap'         => array_fill(1, 25, null),
+            ];
         }
-
-        \Log::debug('WorksMap generated for license', [
-            'license_id' => $this->id,
-            'user_id' => $this->user_id,
-            'worksMap' => $worksMap,
-            'works_count' => count($this->works),
-            'raw_works' => $this->works->map(fn($work) => [
-                'id' => $work->id,
-                'slot' => $work->slot,
-                'value' => $work->value,
-                'slots_occupied' => $work->slots_occupied,
-            ])->toArray(),
-        ]);
-
-        return [
-            'id' => $this->id,
-            'license_table_id' => $this->license_table_id,
-            'user' => $this->user ? [
-                'id' => $this->user->id,
-                'license_number' => $this->user->license_number,
-            ] : null,
-            'worksMap' => $worksMap,
-        ];
     }
 }

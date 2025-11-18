@@ -2,42 +2,62 @@
 
 namespace App\Livewire\Crud;
 
-use Livewire\Component;
-use Livewire\WithPagination;
 use App\Models\Agency;
+use Livewire\Component;
+use Livewire\Attributes\On;
+use Livewire\WithPagination;
 
 class AgencyManager extends Component
 {
     use WithPagination;
 
-    public $search = '';
-    public $showCreateForm = false;
-    public $showEditForm = false;
-    public $showDeleted = false;
-    public $name;
-    public $code;
-    public $editingId;
+    // === Filtri e UI ===
+    public string $search = '';
+    public bool $showCreateForm = false;
+    public bool $showEditForm = false;
+    public bool $showDeleted = false;
 
-    protected $rules = [
-        'name' => 'required|string|max:255',
-        'code' => 'required|string|max:10|unique:agencies,code',
-    ];
+    // === Form fields ===
+    public ?string $name = null;
+    public ?string $code = null;
+    public ?int $editingId = null;
 
-    protected $listeners = ['confirmDeleteAgency' => 'delete'];
-
-
-    public function toggleCreateForm()
+    // === Validazione dinamica (Livewire v3 best practice) ===
+    protected function rules(): array
     {
-        $this->showCreateForm = !$this->showCreateForm;
+        return [
+            'name' => 'required|string|max:255',
+            'code' => [
+                'required',
+                'string',
+                'max:10',
+                'unique:agencies,code' . ($this->editingId ? ',' . $this->editingId : ''),
+            ],
+        ];
+    }
+
+    // === Lifecycle ===
+    public function mount(): void
+    {
         $this->resetForm();
     }
 
-    public function toggleShowDeleted()
+    // === Azioni UI ===
+    public function toggleCreateForm(): void
     {
-        $this->showDeleted = !$this->showDeleted;
+        $this->showCreateForm = !$this->showCreateForm;
+        $this->showEditForm = false;
+        $this->resetForm();
     }
 
-    public function create()
+    public function toggleShowDeleted(): void
+    {
+        $this->showDeleted = !$this->showDeleted;
+        $this->resetPage();
+    }
+
+    // === CRUD Operations ===
+    public function create(): void
     {
         $this->validate();
 
@@ -46,14 +66,14 @@ class AgencyManager extends Component
             'code' => $this->code,
         ]);
 
-        session()->flash('message', 'Agenzia creata con successo.');
-        $this->resetForm();
-        $this->showCreateForm = false;
+        $this->notify('Agenzia creata con successo.');
+        $this->closeForms();
     }
 
-    public function edit($id)
+    public function edit(int $id): void
     {
         $agency = Agency::findOrFail($id);
+
         $this->editingId = $id;
         $this->name = $agency->name;
         $this->code = $agency->code;
@@ -61,12 +81,9 @@ class AgencyManager extends Component
         $this->showCreateForm = false;
     }
 
-    public function update()
+    public function update(): void
     {
-        $this->validate([
-            'name' => 'required|string|max:255',
-            'code' => 'required|string|max:10|unique:agencies,code,' . $this->editingId,
-        ]);
+        $this->validate();
 
         $agency = Agency::findOrFail($this->editingId);
         $agency->update([
@@ -74,51 +91,72 @@ class AgencyManager extends Component
             'code' => $this->code,
         ]);
 
-        session()->flash('message', 'Agenzia aggiornata con successo.');
-        $this->resetForm();
+        $this->notify('Agenzia aggiornata con successo.');
+        $this->closeForms();
     }
 
-    public function delete($id)
+    #[On('confirmDeleteAgency')]
+    public function delete(mixed $payload): void
     {
-        $agency = Agency::findOrFail($id);
-        $agency->delete();
-        session()->flash('message', 'Agenzia eliminata con successo.');
+        $id = is_array($payload) ? ($payload['id'] ?? $payload[0] ?? null) : $payload;
+
+        if ($id) {
+            Agency::findOrFail($id)->delete();
+            $this->notify('Agenzia eliminata con successo.');
+        }
     }
 
-    public function restore($id)
+    public function restore(int $id): void
     {
-        $agency = Agency::withTrashed()->findOrFail($id);
-        $agency->restore();
-        session()->flash('message', 'Agenzia ripristinata con successo.');
+        Agency::withTrashed()->findOrFail($id)->restore();
+        $this->notify('Agenzia ripristinata con successo.');
     }
 
-    public function resetForm()
+    public function confirmDelete(int $id): void
     {
-        $this->reset(['name', 'code', 'editingId', 'showEditForm']);
+        $this->dispatch('openConfirmModal', [
+            'message'      => 'Eliminare definitivamente questa agenzia?',
+            'confirmEvent' => 'confirmDeleteAgency',
+            'payload'      => $id,
+        ]);
     }
 
-    public function updatedSearch()
+    // === Hooks Livewire ===
+    public function updatedSearch(): void
     {
         $this->resetPage();
     }
 
-    public function confirmDelete($id)
-{
-    $this->dispatch('openConfirmModal', [
-        'message'      => 'Eliminare questa agenzia?',
-        'confirmEvent' => 'confirmDeleteAgency',
-        'payload'       => $id,
-    ]);
-}
+    // === Metodi privati ausiliari ===
+    public function closeForms(): void
+    {
+        $this->showCreateForm = false;
+        $this->showEditForm = false;
+        $this->resetForm();
+        $this->resetErrorBag();
+    }
 
+    public function resetForm(): void
+    {
+        $this->name = null;
+        $this->code = null;
+        $this->editingId = null;
+    }
+
+    private function notify(string $message): void
+    {
+        session()->flash('message', $message);
+    }
+
+    // === Render ===
     public function render()
     {
         $query = Agency::query();
 
-        if ($this->search) {
+        if ($this->search !== '') {
             $query->where(function ($q) {
-                $q->where('name', 'like', '%' . $this->search . '%')
-                  ->orWhere('code', 'like', '%' . $this->search . '%');
+                $q->where('name', 'like', "%{$this->search}%")
+                  ->orWhere('code', 'like', "%{$this->search}%");
             });
         }
 
@@ -128,6 +166,8 @@ class AgencyManager extends Component
 
         $agencies = $query->paginate(10);
 
-        return view('livewire.crud.agency-manager', compact('agencies'));
+        return view('livewire.crud.agency-manager', [
+            'agencies' => $agencies,
+        ]);
     }
 }

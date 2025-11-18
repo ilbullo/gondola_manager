@@ -1,72 +1,135 @@
-<div id="sidebar"
-    class="fixed inset-y-0 left-0 w-48 md:w-56 bg-white shadow-md shadow-blue-500/10 p-2 transform -translate-x-full lg:static lg:translate-x-0 lg:w-56 transition-transform duration-300 lg:flex lg:flex-col overflow-y-auto z-30">
+<div
+    id="sidebar"
+    class="fixed inset-y-0 left-0 w-64 bg-white shadow-2xl shadow-blue-600/10 p-4 transform -translate-x-full lg:translate-x-0 lg:static lg:shadow-lg transition-transform duration-300 ease-in-out z-40 overflow-y-auto"
+    x-data="{ actionsOpen: @entangle('showActions') }"
+>
+    {{-- Flash success --}}
     @if (session('success'))
-        <div id="successMessage"
-            class="flex items-center gap-1 p-2 bg-gradient-to-r from-emerald-500 to-lime-500 rounded-md shadow-sm shadow-emerald-500/40">
-            <span class="text-sm font-bold text-white">✓ {{ session('success') }}</span>
+        <div class="mb-4 flex items-center gap-2 p-3 bg-gradient-to-r from-emerald-500 to-lime-500 text-white rounded-lg shadow-lg animate-fade-in">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+            <span class="font-bold text-sm">{{ session('success') }}</span>
         </div>
     @endif
 
-    <div class="space-y-2">
-        <label class="block text-sm md:text-base font-bold text-gray-800 border-l-4 border-blue-500 pl-2">
-            {{ __('work type') }}
-        </label>
-        <div class="grid gap-1.5">
-            @foreach ($config['work_types'] as $button)
-                <button id="{{ $button['id'] }}" wire:click="setWorkType('{{ $button['value'] }}')"
-                    class="h-10 px-3 text-sm font-bold {{ $button['classes'] }} rounded-md shadow-sm focus:ring-2 focus:outline-none transition-all duration-200">
-                    {{ $button['label'] }}
+    {{-- Selezione rapida lavoro --}}
+    <div class="space-y-3">
+        <h3 class="text-sm font-extrabold text-gray-800 border-l-4 border-blue-600 pl-3 uppercase tracking-wider">
+            Tipo Lavoro
+        </h3>
+
+        <div class="grid gap-2">
+            @foreach ($config['work_types'] as $btn)
+                <button
+                    wire:click="setWorkType('{{ $btn['value'] }}')"
+                    id="{{ $btn['id'] }}"
+                    class="h-11 px-4 text-sm font-bold rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 {{ $btn['classes'] }}
+                           {{ $workType === $btn['value'] || ($workType === 'A' && $btn['value'] === 'A') ? 'ring-4 ring-white ring-opacity-60 scale-105' : '' }}"
+                >
+                    {{ $btn['label'] }}
                 </button>
             @endforeach
         </div>
+
+        {{-- Selezione corrente --}}
         @if ($label)
-            <div id="currentSelection"
-                class="bg-gray-200 border-2 border-gray-500 rounded-md p-1.5 text-xs font-extrabold text-center">
-                Selezione: <span id="selectionText">{{ $label }}{{ $workType === 'A' && $agencyName ? ' - ' . $agencyName : '' }}</span>
+            <div class="bg-gradient-to-r from-gray-100 to-gray-200 border-2 border-gray-600 rounded-lg p-3 text-center">
+                <span class="text-xs font-black text-gray-800 uppercase tracking-wider">
+                    Selezione:
+                </span>
+                <span class="block text-sm font-bold text-gray-900 mt-1">
+                    {{ $label }}
+                    @if ($workType === 'A' && $agencyName)
+                        <span class="text-sky-600">– {{ $agencyName }}</span>
+                    @endif
+                </span>
             </div>
         @endif
     </div>
 
-    @if ($config['sections']['notes']['enabled'])
-        <div class="mt-2 space-y-1.5">
-            <label for="agencyNotes" class="block text-sm md:text-base font-bold text-gray-800 border-l-4 {{ $config['sections']['notes']['border_color'] }} pl-2">
+    {{-- Note / Voucher --}}
+    @if ($config['sections']['notes']['enabled'] ?? true)
+        <div class="mt-5 space-y-2">
+            <label class="block text-sm font-extrabold text-gray-800 border-l-4 border-emerald-600 pl-3">
                 {{ $config['sections']['notes']['label'] }}
             </label>
-            <input id="agencyNotes" type="text" placeholder="{{ $config['sections']['notes']['placeholder'] }}" wire:model.live="voucher"
-                class="w-full h-10 px-2 text-sm font-medium text-gray-900 bg-white border-2 {{ $config['sections']['notes']['input_border'] }} rounded-md placeholder:text-gray-500 placeholder:font-medium focus:ring-2 focus:outline-none transition-all duration-200" />
+            <input
+                type="text"
+                wire:model.live="voucher"
+                placeholder="{{ $config['sections']['notes']['placeholder'] }}"
+                class="w-full h-11 px-4 text-sm font-medium bg-white border-2 border-emerald-300 rounded-lg focus:border-emerald-600 focus:ring-4 focus:ring-emerald-300 focus:outline-none transition-all"
+            />
         </div>
     @endif
 
-    <div class="mt-2 flex items-center gap-1.5">
-        <input id="sharedFromFirst" type="checkbox" wire:model.live="sharedFromFirst"
-            class="h-4 w-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-300 focus:outline-none" />
-        <label class="text-sm font-bold text-gray-800">
-            RIPARTISCI DAL PRIMO 
+    {{-- Ripartizione dal primo --}}
+    <div class="mt-4 flex items-center gap-3">
+        <input
+            id="sharedFromFirst"
+            type="checkbox"
+            wire:model.live="sharedFromFirst"
+            class="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500 focus:ring-2"
+        />
+        <label for="sharedFromFirst" class="text-sm font-bold text-gray-800 cursor-pointer select-none">
+            RIPARTISCI DAL PRIMO
         </label>
     </div>
 
-    <div class="mt-2 grid gap-1.5">
-        <button wire:click="openWorkDetailsModal"
-            class="h-10 px-3 uppercase text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 focus:ring-blue-300 shadow-blue-500/40 rounded-md shadow-sm focus:ring-2 focus:outline-none transition-all duration-200">
+    {{-- Pulsanti principali --}}
+    <div class="mt-6 space-y-3">
+        <button
+            wire:click="openWorkDetailsModal"
+            class="w-full h-12 text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 rounded-lg shadow-lg focus:ring-4 focus:ring-blue-300 transition-all"
+        >
             Configura Lavoro
         </button>
-        <!-- Nuovo tasto per toggle azioni -->
-        <button wire:click="toggleActions"
-            class="h-10 px-3 uppercase text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 focus:ring-blue-300 shadow-blue-500/40 rounded-md shadow-sm focus:ring-2 focus:outline-none transition-all duration-200">
-            Opzioni Tabella
-        </button>
 
-        <!-- Pulsanti azioni nascosti, mostrati con toggle -->
-        <div x-data="{ show: @entangle('showActions') }" x-show="show" x-transition class="grid gap-1.5">
+        <button
+    wire:click="toggleActions"
+    type="button"
+    class="w-full h-12 text-sm font-bold text-white bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 rounded-lg shadow-lg focus:ring-4 focus:ring-purple-300 transition-all flex items-center justify-center gap-3"
+>
+    Opzioni Tabella
+
+    <!-- Freccia che ruota automaticamente (la soluzione più pulita) -->
+    <svg 
+        x-data="{ open: @entangle('actionsOpen') }"
+        :class="{ 'rotate-180': open }"
+        class="w-5 h-5 transition-transform duration-300"
+        fill="none" stroke="currentColor" viewBox="0 0 24 24"
+    >
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" 
+              d="M19 9l-7 7-7-7" />
+    </svg>
+</button>
+
+        {{-- Azioni avanzate (toggle) --}}
+        <div
+            x-show="actionsOpen"
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0 transform -translate-y-4"
+            x-transition:enter-end="opacity-100 transform translate-y-0"
+            x-transition:leave="transition ease-in duration-200"
+            x-transition:leave-start="opacity-100 transform translate-y-0"
+            x-transition:leave-end="opacity-0 transform -translate-y-4"
+            class="grid gap-2 mt-3"
+        >
             @foreach ($config['sections']['actions'] as $action)
-                <button id="{{ $action['id'] }}"
-                    @if($action['wire']) wire:click="{{ $action['wire'] }}()" @endif
-                    class="{{ $action['hidden'] ?? false ? 'hidden' : '' }} h-10 px-3 text-sm font-bold {{ $action['classes'] }} rounded-md shadow-sm focus:ring-2 focus:outline-none transition-all duration-200">
+                <button
+                    id="{{ $action['id'] }}"
+                    wire:click="{{ $action['wire'] ?? '' }}()"
+                    class="{{ $action['hidden'] ?? false ? 'hidden' : '' }}
+                           w-full h-11 text-sm font-bold rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all {{ $action['classes'] }}"
+                >
                     {{ $action['label'] }}
                 </button>
             @endforeach
         </div>
     </div>
 
-    <livewire:component.work-summary />
+    {{-- Riepilogo lavori --}}
+    <div class="mt-8 border-t-2 border-gray-200 pt-6">
+        <livewire:component.work-summary />
+    </div>
 </div>

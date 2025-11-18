@@ -51,7 +51,7 @@ class TableSplitter extends Component
         // 2. Carica tutti i lavori ripartibili (non esclusi)
         $sharableWorks = WorkAssignment::whereDate('timestamp', today())
             ->where('excluded', false)
-            ->with('agency:id,code')
+            ->with('agency:id,name,code')
             ->whereIn('value', ['A', 'X', 'N', 'P'])
             ->get();
 
@@ -95,6 +95,7 @@ public function printSplitTable(): void
         'data'        => [
             'splitTable'  => $this->splitTable,
             'bancaleCost' => $this->bancaleCost,
+            'bancaleName' => \Auth::user()->name,
             'timestamp'   => now()->format('d/m/Y H:i'),
         ],
         'filename'    => 'ripartizione_' . today()->format('Ymd') . '.pdf',
@@ -114,9 +115,10 @@ public function printAgencyReport(): void
         'data'        => [
             'agencyReport' => $this->generateAgencyReportData(),
             'timestamp'    => now()->format('d/m/Y H:i'),
+            'bancaleUser'  => \Auth::user()->name
         ],
         'filename'    => 'report_agenzie_' . today()->format('Ymd') . '.pdf',
-        'orientation' => 'landscape',
+        'orientation' => 'portrait',
     ]);
 
     $this->redirectRoute('generate.pdf');
@@ -134,59 +136,63 @@ private function generateAgencyReportData(): array
         $licenseNumber = $row['license'];
 
         foreach ($row['assignments'] as $slot => $assignment) {
-            // 1. Ignora completamente i placeholder stdClass
+            // Ignora placeholder
             if (!$assignment instanceof \App\Models\WorkAssignment) {
                 continue;
             }
 
-            // 2. Prendi SOLO il record che inizia in quella posizione
-            //    (il tuo service imposta $assignment->slot = posizione di partenza)
-            if ($assignment->slot != $slot) {
-                continue; // ← Questa è la riga MAGICA che risolve tutto
+            // Prendi solo il record principale
+            if (($assignment->slot ?? null) != $slot) {
+                continue;
             }
 
-            // --- Da qui in poi è sicuro: abbiamo il record principale ---
-            $agencyName = $assignment->value === 'A' && $assignment->agency
-                ? $assignment->agency->name
-                : 'Servizi Generali';
+            // MOSTRA SOLO LAVORI TIPO "A"
+            if ($assignment->value !== 'A') {
+                continue;
+            }
 
-            $voucher = trim($assignment->voucher ?? '');
-            $voucherDisplay = $voucher !== '' ? $voucher : 'Senza Voucher';
+            // Controllo agenzia + timestamp valido
+            if (!$assignment->agency || !$assignment->timestamp) {
+                continue;
+            }
 
-            // Chiave univoca: agenzia + voucher + timestamp (per lavori identici)
-            $key = $agencyName . '||' . $voucherDisplay . '||' . ($assignment->timestamp?->format('YmdHi') ?? '000000');
+            $agencyName = $assignment->agency->name ?? 'Agenzia Sconosciuta';
+            $voucher    = trim($assignment->voucher ?? '') ?: '-';
+            $time       = $assignment->timestamp->format('H:i'); // ← ORARIO CORRETTO
+
+            // Chiave univoca per evitare doppioni (stesso servizio, stesso orario, stesso voucher)
+            $key = $agencyName . '|' . $assignment->timestamp->format('YmdHi') . '|' . $voucher;
 
             if (!isset($report[$key])) {
                 $report[$key] = [
                     'agency_name'     => $agencyName,
-                    'voucher'         => $voucher !== '' ? $voucher : '-',
-                    'voucher_display' => $voucherDisplay,
-                    'timestamp'       => $assignment->timestamp,
-                    'work_type'       => $assignment->value,
-                    'slots'           => 0,
+                    'time'            => $time,
+                    'voucher'         => $voucher,
                     'license_numbers' => [],
                 ];
             }
 
             $report[$key]['license_numbers'][] = $licenseNumber;
-            $report[$key]['slots'] += $assignment->slots_occupied ?? 1;
         }
     }
 
     // Formattazione finale
-    return collect($report)
-        ->map(function ($item) {
-            $item['license_numbers'] = collect($item['license_numbers'])
-                ->unique()
-                ->sort()
-                ->implode(', ');
-            $item['time'] = $item['timestamp']?->format('H:i') ?? 'N/D';
-            return $item;
-        })
-        ->sortBy('timestamp')
-        ->groupBy('agency_name')
-        ->map->groupBy('voucher_display')
-        ->toArray();
+
+return collect($report)
+    ->map(function ($item) {
+        $item['license_numbers'] = collect($item['license_numbers'])
+            ->unique()
+            ->sort()
+            ->implode(', ');
+        return $item;
+    })
+    ->sortBy('time')
+    ->values()  // ← IMPORTANTE: reindicizza
+    ->groupBy('agency_name')
+    ->map(function ($group) {
+        return $group->values(); // ← Forza che ogni gruppo sia una collection indicizzata
+    })
+    ->toArray();
 }
 
     // ===================================================================

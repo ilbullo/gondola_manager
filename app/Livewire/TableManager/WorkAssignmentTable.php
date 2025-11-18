@@ -147,7 +147,7 @@ class WorkAssignmentTable extends Component
                 'slots_occupied'   => $slotsOccupied,
                 'excluded'         => $this->selectedWork['excluded'] ?? false,
                 'shared_from_first'=> $this->selectedWork['sharedFromFirst'] ?? false,
-                'timestamp'        => today(),
+                'timestamp'        => now(),
             ]);
 
             $this->refreshTable();

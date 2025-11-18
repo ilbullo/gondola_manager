@@ -18,38 +18,24 @@
         </div>
         {{-- Pulsanti Stampa PDF (NUOVI) --}}
         <div class="flex space-x-3">
-            <button
-                wire:click="printSplitTable"
-                class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition duration-150 text-sm"
-            >
+        <!-- PULSANTE DI TEST -->
+
+            <button wire:click="printSplitTable"
+                class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700">
                 Stampa Tabella (PDF)
             </button>
-            <button
-                wire:click="printAgencyReport"
-                class="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 transition duration-150 text-sm"
-            >
-                Stampa Report Agenzie (PDF)
-            </button>
 
-            {{-- Pulsante per tornare alla vista di assegnazione standard --}}
-            <button
-                wire:click="$dispatch('goToAssignmentTable')"
-                class="px-4 py-2 bg-yellow-500 text-white font-semibold rounded-lg shadow-md hover:bg-yellow-600 transition duration-150 text-sm"
-            >
-                <svg class="w-5 h-5 inline mr-1 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path></svg>
-                Torna ad Assegnazione Manuale
+            <button wire:click="printAgencyReport"
+                class="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700">
+                Report Agenzie (PDF)
             </button>
         </div>
 
-        {{-- Pulsante per tornare alla vista di assegnazione standard --}}
-        <button
-            wire:click="$dispatch('goToAssignmentTable')"
-            class="px-4 py-2 bg-yellow-500 text-white font-semibold rounded-lg shadow-md hover:bg-yellow-600 transition duration-150 text-sm"
-        >
-            <svg class="w-5 h-5 inline mr-1 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path></svg>
-            Torna ad Assegnazione Manuale
+        <button wire:click="$dispatch('goToAssignmentTable')"
+            class="px-4 py-2 bg-yellow-500 text-white font-semibold rounded-lg shadow-md hover:bg-yellow-600">
+            ← Torna ad Assegnazione Manuale
         </button>
-    </div>
+        </div>
 
     @if (empty($splitTable))
         <p class="text-lg text-red-500 font-semibold p-4 border border-red-300 bg-red-50 rounded-lg">
@@ -60,13 +46,13 @@
             <table class="min-w-full divide-y divide-gray-300">
                 <thead>
                     <tr class="bg-blue-600 text-white sticky top-0 z-10">
-                        <th class="px-4 py-3 text-left text-sm font-semibold uppercase w-[200px] lg:w-[250px]">
-                            Licenza / Operatore
+                        <th class="px-4 py-3 text-left text-sm font-semibold uppercase w-[200px]">
+                            Licenza
                         </th>
 
                         {{-- Colonne Riepilogative (Punto 7) --}}
-                        <th class="px-3 py-3 text-right text-sm font-semibold uppercase bg-blue-700 lg:w-[200px]">Contanti Dovuti (€)</th>
-                        <th class="px-3 py-3 text-center text-sm font-semibold uppercase bg-yellow-700">Tot. N</th>
+                        <th class="px-3 py-3 text-right text-sm font-semibold uppercase bg-blue-700 w-[180px]">Contanti Dovuti (€)</th>
+                        <th class="px-3 py-3 text-center text-sm font-semibold uppercase bg-yellow-500">Tot. N</th>
                         <th class="px-3 py-3 text-center text-sm font-semibold uppercase bg-red-700">Tot. P</th>
 
                         {{-- Colonne Slot (1 a 25) --}}
@@ -167,28 +153,28 @@
                 <tfoot class="sticky bottom-0 bg-gray-800 text-white shadow-inner">
                     <tr>
                         {{-- 1. Colonna Etichetta + Slots (Colspan 1 + 25 = 26 colonne totali) --}}
-                        <td class="px-4 py-3 text-right text-lg font-extrabold uppercase border-r border-gray-700">
+                        <td class="px-4 py-3 text-right text-md font-extrabold uppercase border-r border-gray-700">
                             Totale Generale:
                         </td>
 
                         {{-- 2. Totale Contanti Dovuti --}}
-                        <td class="px-3 py-3 text-right text-lg font-extrabold bg-blue-600 border-r border-gray-700">
+                        <td class="px-3 py-3 text-right text-md font-extrabold bg-blue-600 border-r border-gray-700">
                             € {{ number_format($totalCashDue, 2) }}
                         </td>
 
                         {{-- 3. Totale N --}}
-                        <td class="px-3 py-3 text-center text-lg font-extrabold bg-yellow-600 border-r border-gray-700">
+                        <td class="px-3 py-3 text-center text-md font-extrabold bg-yellow-500 border-r border-gray-700">
                             {{ $totalN }}
                         </td>
 
                         {{-- 4. Totale P --}}
-                        <td class="px-3 py-3 text-center text-lg font-extrabold bg-red-600 border-r border-gray-700">
+                        <td class="px-3 py-3 text-center text-md font-extrabold bg-red-600 border-r border-gray-700">
                             {{ $totalP }}
                         </td>
 
                          {{-- 5. Le 25 colonne slot unite --}}
                         <td colspan="25" class="px-3 py-3 text-center text-sm font-semibold bg-gray-700">
-                            (Riepilogo Totale Slot Lavori)
+                            
                         </td>
                     </tr>
                 </tfoot>
@@ -196,48 +182,3 @@
         </div>
     @endif
 </div>
-<script>
-    document.addEventListener('livewire:initialized', () => {
-        Livewire.on('printPdf', (eventPayload) => {
-            // Livewire v3 passa il payload nell'array eventPayload[0]
-            const params = eventPayload[0];
-
-            // 1. Crea un form dinamico per l'invio POST (necessario per il download)
-            const form = document.createElement('form');
-            form.method = 'POST';
-            // Assicurati che l'action corrisponda ESATTAMENTE alla tua rotta
-            form.action = '/generate-pdf';
-            form.target = '_blank'; // Consigliato per non interrompere la sessione Livewire
-
-            // 2. Aggiungi il token CSRF di Laravel (FONDAMENTALE)
-            const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
-            const csrfInput = document.createElement('input');
-            csrfInput.type = 'hidden';
-            csrfInput.name = '_token';
-            csrfInput.value = csrfToken;
-            form.appendChild(csrfInput);
-
-            // 3. Aggiungi i parametri ricevuti dal componente
-            for (const key in params) {
-                if (params.hasOwnProperty(key)) {
-                    const input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = key;
-
-                    // Cruciale: I dati complessi (l'array della tabella) DEVONO essere serializzati in JSON
-                    if (key === 'data') {
-                        input.value = JSON.stringify(params[key]);
-                    } else {
-                        input.value = params[key];
-                    }
-                    form.appendChild(input);
-                }
-            }
-
-            // 4. Invia e pulisci il form
-            document.body.appendChild(form);
-            form.submit();
-            form.remove(); // Rimuove il form dinamico dal DOM
-        });
-    });
-</script>

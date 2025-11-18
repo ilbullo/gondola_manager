@@ -22,7 +22,7 @@ Route::group(
 
         Route::view('agency-manager', 'livewire.pages.agency-manager')->name('agency-manager');
         Route::view('table-manager', 'livewire.pages.table-manager')->name('table-manager');
-        Route::post('/generate-pdf', [PdfController::class, 'generate'])->name('pdf.generate');
+        Route::get('/generate-pdf', [PdfController::class, 'generate'])->name('generate.pdf');
     });
 
 

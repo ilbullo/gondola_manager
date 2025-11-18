@@ -1,83 +1,71 @@
-{{-- resources/views/pdf/split-table.blade.php --}}
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Ripartizione {{ $timestamp }}</title>
+    <meta charset="utf-8">
+    <title>Ripartizione Lavori {{ $timestamp }}</title>
     <style>
-        body { font-family: sans-serif; font-size: 10px; color: #000; margin: 10mm; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { border: 1px solid #000; padding: 4px; text-align: center; }
-        th { background-color: #eee; font-weight: bold; }
-        .license-col { width: 15%; text-align: left; }
-        .summary-col { width: 8%; font-weight: bold; }
-        .slot-cell { width: 2%; font-size: 8px; }
-        /* Stili in BIANCO/NERO per i tipi di lavoro */
-        .A { background-color: #ddd; }
-        .X, .N, .P { background-color: #bbb; }
-        .excluded { background-color: #666; color: #fff; font-weight: bold; }
-        .sff { border: 2px solid #000; } /* Shared From First */
+        body { font-family: DejaVu Sans, sans-serif; font-size: 9pt; margin: 10mm; color: #000; }
+        h1 { font-size: 16pt; text-align: center; margin-bottom: 10px; }
+        .header { margin-bottom: 15px; text-align: center; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #000; padding: 6px; text-align: center; }
+        th { background-color: #e0e0e0; font-weight: bold; }
+        .license { width: 140px; text-align: left; font-weight: bold; }
+        .summary { background-color: #d0d0d0; font-weight: bold; }
+        .slot { font-size: 8pt; }
+        .A { background-color: #f0f0f0; }
+        .X, .N, .P { background-color: #d0d0d0; }
+        .excluded { background-color: #555; color: white; }
+        .sff { border: 2px solid #000; }
+        tfoot td { background-color: #bbb; font-weight: bold; font-size: 10pt; }
     </style>
 </head>
 <body>
-    <h1>Tabella Ripartizione Lavori</h1>
-    <p>Data: {{ $timestamp }} | Costo Bancale: € {{ number_format($bancaleCost, 2) }}</p>
+    <h1>Ripartizione Lavori - {{ $timestamp }}</h1>
+    <div class="header">Costo Bancale: € {{ number_format($bancaleCost, 2) }} - Bancale in servizio: {{ auth()->check() ? auth()->user()->name : 'N/A' }}</div>
 
     <table>
         <thead>
             <tr>
-                <th class="license-col">Licenza / Operatore</th>
-                <th class="summary-col">Cash Dovuto (€)</th>
-                <th class="summary-col">Tot. N</th>
-                <th class="summary-col">Tot. P</th>
-                @for ($i = 1; $i <= 25; $i++)
-                    <th class="slot-cell">{{ $i }}</th>
-                @endfor
+                <th class="license">Licenza</th>
+                <th class="summary">Contanti (€)</th>
+                <th class="summary">N</th>
+                <th class="summary">P</th>
+                @for($i=1; $i<=25; $i++)<th class="slot">{{ $i }}</th>@endfor
             </tr>
         </thead>
         <tbody>
-            {{-- Stampa i dati da $splitTable --}}
-            @foreach ($splitTable as $row)
+            @foreach($splitTable as $row)
                 <tr>
-                    <td class="license-col">{{ $row['license'] }} ({{ $row['user_name'] }})</td>
-                    <td class="summary-col">{{ number_format($row['cash_due'], 2) }}</td>
-                    <td class="summary-col">{{ $row['n_count'] }}</td>
-                    <td class="summary-col">{{ $row['p_count'] }}</td>
-
-                    @for ($slot = 1; $slot <= 25; $slot++)
+                    <td class="license">{{ $row['license'] }} ({{ $row['user_name'] }})</td>
+                    <td class="summary">€ {{ number_format($row['cash_due'], 2) }}</td>
+                    <td class="summary">{{ $row['n_count'] }}</td>
+                    <td class="summary">{{ $row['p_count'] }}</td>
+                    @for($s=1; $s<=25; $s++)
                         @php
-                            $work = $row['assignments'][$slot] ?? null;
-                            $isMainWork = $work && $work->slot === $slot;
-                            $colSpan = $isMainWork ? $work->slots_occupied : 1;
-                            $workValue = $work->value ?? '';
-                            $classes = $workValue ? $workValue : '';
-                            if ($work->excluded ?? false) $classes .= ' excluded';
-                            if ($work->shared_from_first ?? false) $classes .= ' sff';
+                            $work = $row['assignments'][$s] ?? null;
+                            $isMain = $work && ($work->slot ?? null) === $s;
                         @endphp
-
-                        @if ($isMainWork)
-                            <td colspan="{{ $colSpan }}" class="slot-cell {{ $classes }}">
-                                {{ $workValue }}@if($work->shared_from_first ?? false)*@endif
+                        @if($isMain)
+                            <td colspan="{{ $work->slots_occupied }}"
+                                class="slot {{ $work->value }} {{ $work->excluded ?? false ? 'excluded' : '' }} {{ $work->shared_from_first ?? false ? 'sff' : '' }}">
+                                {{ $work->value === 'A' ? ($work->agency->code ?? 'AG') : $work->value }}
+                                {{ $work->shared_from_first ?? false ? '*' : '' }}
                             </td>
-                        @elseif (!$work)
-                            <td class="slot-cell"></td>
+                        @elseif(!$work)
+                            <td class="slot"></td>
                         @endif
                     @endfor
                 </tr>
             @endforeach
         </tbody>
         <tfoot>
-            @php
-                $collection = collect($splitTable);
-                $totalCashDue = $collection->sum('cash_due');
-                $totalN = $collection->sum('n_count');
-                $totalP = $collection->sum('p_count');
-            @endphp
             <tr>
-                <td colspan="4" style="text-align: right; font-size: 12px; font-weight: bold;">TOTALE GENERALE</td>
-                <td class="summary-col" style="background-color: #999;">€ {{ number_format($totalCashDue, 2) }}</td>
-                <td class="summary-col" style="background-color: #999;">{{ $totalN }}</td>
-                <td class="summary-col" style="background-color: #999;">{{ $totalP }}</td>
-                <td colspan="25" style="background-color: #999;"></td>
+                <td style="text-align:right; font-weight:bold;">TOTALE GENERALE</td>
+                <td>€ {{ number_format(collect($splitTable)->sum('cash_due'), 2) }}</td>
+                <td>{{ collect($splitTable)->sum('n_count') }}</td>
+                <td>{{ collect($splitTable)->sum('p_count') }}</td>
+                <td colspan="25"></td>
             </tr>
         </tfoot>
     </table>

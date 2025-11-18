@@ -8,6 +8,7 @@ use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Session;   
 
 class TableSplitter extends Component
 {
@@ -85,126 +86,108 @@ class TableSplitter extends Component
     // Funzionalità PDF (Punto 1)
     // ===================================================================
 
-    /**
-     * Prepara i dati e genera il PDF della tabella ripartita (A4 orizzontale, B/N).
-     */
-    public function printSplitTable(): void
-    {
-        // Ricalcola la tabella per assicurarsi che l'output sia l'ultima versione
-        $this->generateTable();
+public function printSplitTable(): void
+{
+    $this->generateTable();
 
-        $data = [
-            'splitTable' => $this->splitTable,
+    Session::flash('pdf_generate', [
+        'view'        => 'pdf.split-table',
+        'data'        => [
+            'splitTable'  => $this->splitTable,
             'bancaleCost' => $this->bancaleCost,
-            'excludedFromA' => $this->excludedFromA,
-            'timestamp' => today()->format('d/m/Y H:i'),
-            // Il resto dei dati che la vista PDF richiede
-        ];
+            'timestamp'   => now()->format('d/m/Y H:i'),
+        ],
+        'filename'    => 'ripartizione_' . today()->format('Ymd') . '.pdf',
+        'orientation' => 'landscape',
+    ]);
 
-        // Invia un evento per avviare la generazione del PDF (da intercettare via JS/Controller)
-        $this->dispatch('printPdf', [
-            'view' => 'pdf.split-table', // Vista da creare (punto 3)
-            'data' => $data,
-            'filename' => 'ripartizione_' . today()->format('Ymd') . '.pdf',
-            'paper' => 'a4',
-            'orientation' => 'landscape', // Formato A4 orizzontale
-        ]);
+    // Redirect alla route che genera il PDF
+    $this->redirectRoute('generate.pdf');
+}
 
-        session()->flash('success', 'Preparazione del PDF della tabella ripartita avviata.');
+public function printAgencyReport(): void
+{
+    $this->generateTable();
+
+    Session::flash('pdf_generate', [
+        'view'        => 'pdf.agency-report',
+        'data'        => [
+            'agencyReport' => $this->generateAgencyReportData(),
+            'timestamp'    => now()->format('d/m/Y H:i'),
+        ],
+        'filename'    => 'report_agenzie_' . today()->format('Ymd') . '.pdf',
+        'orientation' => 'landscape',
+    ]);
+
+    $this->redirectRoute('generate.pdf');
+}
+
+private function generateAgencyReportData(): array
+{
+    if (empty($this->splitTable)) {
+        return [];
     }
 
-    /**
-     * Prepara e raggruppa i dati per il Report Agenzie.
-     */
-    private function generateAgencyReportData(): array
-    {
-        // Se la tabella non è ancora generata, la generiamo
-        if (empty($this->splitTable)) {
-             $this->generateTable();
-        }
+    $report = [];
 
-        $reportWorks = [];
+    foreach ($this->splitTable as $row) {
+        $licenseNumber = $row['license'];
 
-        // Raccogli tutti i lavori assegnati (solo i record principali)
-        foreach ($this->splitTable as $licenseRow) {
-            $licenseNumber = $licenseRow['license'];
-
-            foreach ($licenseRow['assignments'] as $work) {
-                // Solo i WorkAssignment assegnati (non gli stdClass placeholder e solo i 'capo' blocco)
-                // Assumo che $work->slot contenga lo slot di partenza e che WorkAssignment abbia 'agency' relationship
-                if ($work instanceof WorkAssignment && $work->slot === $work->slot) {
-
-                    // Usiamo l'ID del lavoro originale (se presente) o un identificatore univoco
-                    // Se il lavoro è ripartito (X->N/P), usiamo l'ID originale per raggruppare
-                    $workKey = $work->original_id ?? $work->id; // Assumendo che ci sia un modo per tracciare l'originale
-
-                    // Ottieni il timestamp formattato o una stringa vuota di fallback
-                    $formattedTimestamp = $work->timestamp?->format('YmdHi') ?? '000000000000';
-
-                    // Per il report agenzie, ci concentriamo sui lavori A (che hanno agency) e sui lavori generali
-                    $agencyName = $work->agency->name ?? ($work->value === 'A' ? 'Sconosciuta' : 'N/D');
-
-                    // Raggruppa per un identificatore univoco del lavoro (che non cambia tra licenze)
-                    $uniqueWorkIdentifier = $agencyName . '_' . $formattedTimestamp . '_' . $work->voucher;
-
-                    if (!isset($reportWorks[$uniqueWorkIdentifier])) {
-                        // Inizializza il record per il report
-                        $reportWorks[$uniqueWorkIdentifier] = [
-                            'agency_name' => $agencyName,
-                            'timestamp'   => $work->timestamp,
-                            'voucher'     => $work->voucher,
-                            'license_numbers' => [],
-                            'work_type' => $work->value,
-                            'slots_assigned' => 0,
-                            'original_work_id' => $workKey,
-                        ];
-                    }
-
-                    // Aggiungi il numero di licenza
-                    $reportWorks[$uniqueWorkIdentifier]['license_numbers'][] = $licenseNumber;
-                    $reportWorks[$uniqueWorkIdentifier]['slots_assigned'] += $work->slots_occupied;
-                }
+        foreach ($row['assignments'] as $slot => $assignment) {
+            // 1. Ignora completamente i placeholder stdClass
+            if (!$assignment instanceof \App\Models\WorkAssignment) {
+                continue;
             }
+
+            // 2. Prendi SOLO il record che inizia in quella posizione
+            //    (il tuo service imposta $assignment->slot = posizione di partenza)
+            if ($assignment->slot != $slot) {
+                continue; // ← Questa è la riga MAGICA che risolve tutto
+            }
+
+            // --- Da qui in poi è sicuro: abbiamo il record principale ---
+            $agencyName = $assignment->value === 'A' && $assignment->agency
+                ? $assignment->agency->name
+                : 'Servizi Generali';
+
+            $voucher = trim($assignment->voucher ?? '');
+            $voucherDisplay = $voucher !== '' ? $voucher : 'Senza Voucher';
+
+            // Chiave univoca: agenzia + voucher + timestamp (per lavori identici)
+            $key = $agencyName . '||' . $voucherDisplay . '||' . ($assignment->timestamp?->format('YmdHi') ?? '000000');
+
+            if (!isset($report[$key])) {
+                $report[$key] = [
+                    'agency_name'     => $agencyName,
+                    'voucher'         => $voucher !== '' ? $voucher : '-',
+                    'voucher_display' => $voucherDisplay,
+                    'timestamp'       => $assignment->timestamp,
+                    'work_type'       => $assignment->value,
+                    'slots'           => 0,
+                    'license_numbers' => [],
+                ];
+            }
+
+            $report[$key]['license_numbers'][] = $licenseNumber;
+            $report[$key]['slots'] += $assignment->slots_occupied ?? 1;
         }
-
-        // 3. Post-elaborazione: Rimuovi duplicati di licenza e formatta la lista
-        $report = collect($reportWorks)
-            ->map(function ($work) {
-                // Ordina e unisci i numeri di licenza
-                $work['license_numbers'] = collect($work['license_numbers'])->unique()->sort()->implode(', ');
-                return $work;
-            })
-            // Raggruppa per Agenzia per la visualizzazione nel PDF
-            ->groupBy('agency_name')
-            ->toArray();
-
-        return $report;
     }
 
-    /**
-     * Prepara i dati e genera il PDF del Report Agenzie (Punto 2).
-     */
-    public function printAgencyReport(): void
-    {
-        $reportData = $this->generateAgencyReportData();
-
-        $data = [
-            'agencyReport' => $reportData,
-            'timestamp' => today()->format('d/m/Y H:i'),
-        ];
-
-        // Invia un evento per avviare la generazione del PDF (da intercettare via JS/Controller)
-        $this->dispatch('printPdf', [
-            'view' => 'pdf.agency-report', // Vista da creare (punto 4)
-            'data' => $data,
-            'filename' => 'report_agenzie_' . today()->format('Ymd') . '.pdf',
-            'paper' => 'a4',
-            'orientation' => 'landscape', // Formato A4 orizzontale
-        ]);
-
-        session()->flash('success', 'Preparazione del PDF del report agenzie avviata.');
-    }
-
+    // Formattazione finale
+    return collect($report)
+        ->map(function ($item) {
+            $item['license_numbers'] = collect($item['license_numbers'])
+                ->unique()
+                ->sort()
+                ->implode(', ');
+            $item['time'] = $item['timestamp']?->format('H:i') ?? 'N/D';
+            return $item;
+        })
+        ->sortBy('timestamp')
+        ->groupBy('agency_name')
+        ->map->groupBy('voucher_display')
+        ->toArray();
+}
 
     // ===================================================================
     // Render

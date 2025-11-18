@@ -18,12 +18,12 @@ class AgencyTest extends TestCase
     {
         $agency = Agency::factory()->create([
             'name' => 'Test Agency',
-            'code' => 'AG001',
+            'code' => 'AG01',
         ]);
 
         $this->assertDatabaseHas('agencies', [
             'name' => 'Test Agency',
-            'code' => 'AG001',
+            'code' => 'AG01',
         ]);
     }
 
@@ -31,7 +31,7 @@ class AgencyTest extends TestCase
     public function it_has_many_work_assignments()
     {
         $agency = Agency::factory()->create();
-        $workAssignment = WorkAssignment::factory()->create(['agency_id' => $agency->id]);
+        $workAssignment = WorkAssignment::factory()->create(['agency_id' => $agency->id,'value' => 'A']);
 
         $this->assertInstanceOf(\Illuminate\Database\Eloquent\Collection::class, $agency->workAssignments);
         $this->assertCount(1, $agency->workAssignments);
@@ -54,10 +54,10 @@ class AgencyTest extends TestCase
     {
         $agency = Agency::factory()->create([
             'name' => 'Test Agency',
-            'code' => 'AG001',
+            'code' => 'AG01',
         ]);
 
-        $this->assertEquals('Test Agency (AG001)', $agency->display_name);
+        $this->assertEquals('Test Agency (AG01)', $agency->display_name);
     }
 
     #[Test]
@@ -73,9 +73,9 @@ class AgencyTest extends TestCase
     #[Test]
 public function it_fails_to_create_agency_with_duplicate_code()
 {
-    Agency::factory()->create(['code' => 'AG001']);
+    Agency::factory()->create(['code' => 'AG01']);
 
     $this->expectException(\Illuminate\Database\QueryException::class);
-    Agency::factory()->create(['code' => 'AG001']);
+    Agency::factory()->create(['code' => 'AG01']);
 }
 }

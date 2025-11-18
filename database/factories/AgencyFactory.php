@@ -13,7 +13,7 @@ class AgencyFactory extends Factory
     {
         return [
             'name' => $this->faker->company,
-            'code' => $this->faker->unique()->regexify('[A-Z]{3}[0-9]{3}'),
+            'code' => $this->faker->unique()->regexify('[A-Z]{2}[0-9]{2}'),
         ];
     }
 }

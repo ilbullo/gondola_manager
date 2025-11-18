@@ -17,7 +17,7 @@ class WorkAssignmentFactory extends Factory
             'license_table_id' => LicenseTable::factory(),
             'agency_id' => Agency::factory(),
             'slot' => $this->faker->numberBetween(1, 25),
-            'value' => $this->faker->word,
+            'value' => $this->faker->randomElement(['N', 'X', 'A', 'P']),
             'voucher' => $this->faker->optional()->word,
             'timestamp' => now(),
             'slots_occupied' => $this->faker->numberBetween(1, 5),

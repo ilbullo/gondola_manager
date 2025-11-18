@@ -22,7 +22,7 @@ class WorkAssignmentTest extends TestCase
             'license_table_id' => $licenseTable->id,
             'agency_id' => $agency->id,
             'slot' => 2,
-            'value' => 'test-value',
+            'value' => 'A',
             'voucher' => 'voucher-456',
             'timestamp' => now(),
             'slots_occupied' => 1,
@@ -34,7 +34,7 @@ class WorkAssignmentTest extends TestCase
             'license_table_id' => $licenseTable->id,
             'agency_id' => $agency->id,
             'slot' => 2,
-            'value' => 'test-value',
+            'value' => 'A',
             'voucher' => 'voucher-456',
             'slots_occupied' => 1,
             'excluded' => false,
@@ -144,10 +144,10 @@ class WorkAssignmentTest extends TestCase
     #[Test]
     public function it_returns_agency_code_accessor()
     {
-        $agency = Agency::factory()->create(['code' => 'AG123']);
+        $agency = Agency::factory()->create(['code' => 'AG12']);
         $workAssignment = WorkAssignment::factory()->create(['agency_id' => $agency->id]);
 
-        $this->assertEquals('AG123', $workAssignment->agency_code);
+        $this->assertEquals('AG12', $workAssignment->agency_code);
 
         $workAssignmentNoAgency = WorkAssignment::factory()->create(['agency_id' => null]);
         $this->assertNull($workAssignmentNoAgency->agency_code);

@@ -15,6 +15,7 @@ class Sidebar extends Component
     public string $label = '';
     public string $voucher = '';
     public bool $sharedFromFirst = false;
+    public bool $excluded = false;
     public ?string $agencyName = null;
     public ?int $agencyId = null;
     public int $slotsOccupied = 1;
@@ -90,6 +91,8 @@ class Sidebar extends Component
     {
         $this->amount = $details['amount'] ?? 90;
         $this->slotsOccupied = $details['slotsOccupied'] ?? 1;
+        $this->excluded = $details['excluded'];
+        $this->sharedFromFirst = $details['sharedFromFirst'];
 
         $this->emitWorkSelected();
     }
@@ -131,7 +134,7 @@ class Sidebar extends Component
     // ===================================================================
     public function updated($property, $value): void
     {
-        $relevant = ['voucher', 'sharedFromFirst', 'slotsOccupied', 'amount'];
+        $relevant = ['voucher', 'sharedFromFirst', 'slotsOccupied','excluded', 'amount'];
 
         if (str($property)->contains($relevant)) {
             $this->emitWorkSelected();
@@ -195,7 +198,7 @@ class Sidebar extends Component
             'label'           => $this->label,
             'voucher'         => $this->voucher,
             'sharedFromFirst' => $this->sharedFromFirst,
-            'excluded'        => false,
+            'excluded'        => $this->excluded,
             'agencyName'      => $this->workType === 'A' ? $this->agencyName : null,
             'agencyId'        => $this->workType === 'A' ? $this->agencyId : null,
             'slotsOccupied'   => $this->slotsOccupied,

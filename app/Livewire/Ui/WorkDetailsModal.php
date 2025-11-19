@@ -14,14 +14,16 @@ class WorkDetailsModal extends Component
     public float|int $amount = 90;
     public int $slotsOccupied = 1;
     public bool $excluded = false;
+    public bool $sharedFromFirst = false;
 
     // === Regole di validazione (best practice Livewire 3) ===
     protected function rules(): array
     {
         return [
-            'amount'        => 'required|numeric|min:0',
-            'slotsOccupied' => 'required|integer|in:1,2,3,4',
-            'excluded'      => 'boolean',
+            'amount'            => 'required|numeric|min:0',
+            'slotsOccupied'     => 'required|integer|in:1,2,3,4',
+            'excluded'          => 'boolean',
+            'sharedFromFirst'   => 'boolean'
         ];
     }
 
@@ -36,9 +38,10 @@ class WorkDetailsModal extends Component
     #[On('workSelected')]
     public function updateFromSelectedWork(array $work): void
     {
-        $this->amount        = $work['amount'] ?? 90;
-        $this->slotsOccupied = $work['slotsOccupied'] ?? 1;
-        $this->excluded      = $work['excluded'] ?? false;
+        $this->amount           = $work['amount'] ?? 90;
+        $this->slotsOccupied    = $work['slotsOccupied'] ?? 1;
+        $this->excluded         = $work['excluded'] ?? false;
+        $this->sharedFromFirst  = $work['sharedFromFirst'] ?? false;
     }
 
     public function save(): void
@@ -46,9 +49,10 @@ class WorkDetailsModal extends Component
         $this->validate();
 
         $this->dispatch('updateWorkDetails', [
-            'amount'        => $this->amount,
-            'slotsOccupied' => $this->slotsOccupied,
-            'excluded'      => $this->excluded,
+            'amount'            => $this->amount,
+            'slotsOccupied'     => $this->slotsOccupied,
+            'excluded'          => $this->excluded,
+            'sharedFromFirst'   => $this->sharedFromFirst
         ]);
 
         $this->closeModal();
@@ -64,9 +68,24 @@ class WorkDetailsModal extends Component
     // === Metodo privato per il reset (evita duplicazione) ===
     private function resetForm(): void
     {
-        $this->amount        = 90;
-        $this->slotsOccupied = 1;
-        $this->excluded      = false;
+        $this->amount           = 90;
+        $this->slotsOccupied    = 1;
+        $this->excluded         = false;
+        $this->sharedFromFirst  = false;
+    }
+
+    public function updatedExcluded($value)
+    {
+        if ($value) {
+            $this->sharedFromFirst = false;
+        }
+    }
+
+    public function updatedSharedFromFirst($value)
+    {
+        if ($value) {
+            $this->excluded = false;
+        }
     }
 
     // === Opzionale: reset completo quando il componente viene mountato ===

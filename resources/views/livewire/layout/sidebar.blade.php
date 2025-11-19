@@ -32,22 +32,62 @@
             @endforeach
         </div>
 
-        {{-- Selezione corrente --}}
-        @if ($label)
-            <div class="bg-gradient-to-r from-gray-100 to-gray-200 border-2 border-gray-600 rounded-lg p-3 text-center">
-                <span class="text-xs font-black text-gray-800 uppercase tracking-wider">
-                    Selezione:
-                </span>
-                <span class="block text-sm font-bold text-gray-900 mt-1">
+        {{-- RIEPILOGO TESTUALE MINIMALE – solo l’essenziale, altezza 42–48px --}}
+@if($workType !== '' && $workType !== 'clear')
+    <div class="mt-4 px-4 py-2 text-sm font-medium text-gray-800 border-l-4 border-blue-600 bg-gray-50 rounded-r-lg">
+
+        <div class="flex items-center justify-between gap-3">
+
+            <!-- Sinistra: tipo lavoro + agenzia -->
+            <div class="flex-1 min-w-0">
+                <span class="font-black">
                     {{ $label }}
-                    @if ($workType === 'A' && $agencyName)
-                        <span class="text-sky-600">– {{ $agencyName }}</span>
+                    @if($workType === 'A' && $agencyName)
+                        → {{ $agencyName }}
                     @endif
                 </span>
+
+                <!-- Voucher se presente -->
+                @if(trim($voucher))
+                    <span class="ml-3 text-emerald-700 text-xs font-bold">
+                        ({{ Str::limit($voucher, 20) }})
+                    </span>
+                @endif
             </div>
-        @endif
+
+            <!-- Centro-destra: importo, caselle, opzioni, check -->
+            <div class="flex items-center gap-3 text-xs font-bold">
+
+                <span class="text-indigo-700">€{{ $amount }}</span>
+
+                <span class="flex items-center gap-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                    {{ $slotsOccupied }}
+                </span>
+
+                <!-- Opzioni speciali (solo se attive) -->
+                @if($sharedFromFirst)
+                    <span class="text-amber-600" title="Riparti dal primo">R1</span>
+                @endif
+                @if($excluded ?? false)
+                    <span class="text-red-600" title="Escluso">X</span>
+                @endif
+
+                <!-- Check verde per confermare che è pronto -->
+                <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000-16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                </svg>
+
+            </div>
+        </div>
+    </div>
+@endif
+
     </div>
 
+    @if($workType != "")
     {{-- Note / Voucher --}}
     @if ($config['sections']['notes']['enabled'] ?? true)
         <div class="mt-5 space-y-2">
@@ -62,9 +102,10 @@
             />
         </div>
     @endif
+    @endif
 
     {{-- Ripartizione dal primo --}}
-    <div class="mt-4 flex items-center gap-3">
+  <!--  <div class="mt-4 flex items-center gap-3">
         <input
             id="sharedFromFirst"
             type="checkbox"
@@ -75,25 +116,30 @@
             RIPARTISCI DAL PRIMO
         </label>
     </div>
-
+-->
     {{-- Pulsanti principali --}}
     <div class="mt-6 space-y-3">
+        @if($workType != "")
         <button
             wire:click="openWorkDetailsModal"
-            class="w-full h-12 text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 rounded-lg shadow-lg focus:ring-4 focus:ring-blue-300 transition-all"
+            class="w-full h-12 uppercase text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 rounded-lg shadow-lg focus:ring-4 focus:ring-blue-300 transition-all"
         >
             Configura Lavoro
         </button>
-
+        @endif
+{{-- Riepilogo lavori --}}
+    <div class="mt-8 border-t-2 border-gray-200 pt-6">
+        <livewire:component.work-summary />
+    </div>
  <button
     wire:click="toggleActions"
     x-data="{ open: @entangle('showActions') }"
     type="button"
-    class="w-full h-12 text-sm font-bold text-white bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 rounded-lg shadow-lg focus:ring-4 focus:ring-purple-300 transition-all flex items-center justify-center gap-3"
+    class="w-full h-12 text-sm uppercase font-bold text-white bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 rounded-lg shadow-lg focus:ring-4 focus:ring-purple-300 transition-all flex items-center justify-center gap-3"
 >
     Opzioni Tabella
 
-    <svg 
+    <svg
         :class="open ? 'rotate-180' : ''"
         class="w-5 h-5 transition-transform duration-300"
         fill="none" stroke="currentColor" viewBox="0 0 24 24"
@@ -124,10 +170,5 @@
                 </button>
             @endforeach
         </div>
-    </div>
-
-    {{-- Riepilogo lavori --}}
-    <div class="mt-8 border-t-2 border-gray-200 pt-6">
-        <livewire:component.work-summary />
     </div>
 </div>

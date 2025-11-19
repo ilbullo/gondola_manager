@@ -8,7 +8,8 @@ use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Session;   
+use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Auth;
 
 class TableSplitter extends Component
 {
@@ -95,7 +96,7 @@ public function printSplitTable(): void
         'data'        => [
             'splitTable'  => $this->splitTable,
             'bancaleCost' => $this->bancaleCost,
-            'bancaleName' => \Auth::user()->name,
+            'bancaleName' => Auth::user()->name,
             'timestamp'   => now()->format('d/m/Y H:i'),
         ],
         'filename'    => 'ripartizione_' . today()->format('Ymd') . '.pdf',
@@ -115,7 +116,7 @@ public function printAgencyReport(): void
         'data'        => [
             'agencyReport' => $this->generateAgencyReportData(),
             'timestamp'    => now()->format('d/m/Y H:i'),
-            'bancaleUser'  => \Auth::user()->name
+            'bancaleUser'  => Auth::user()->name
         ],
         'filename'    => 'report_agenzie_' . today()->format('Ymd') . '.pdf',
         'orientation' => 'portrait',

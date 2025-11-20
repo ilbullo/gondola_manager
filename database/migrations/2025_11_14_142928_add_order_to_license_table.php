@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('license_table', function (Blueprint $table) {
-            $table->integer('order')->default(0);
+            $table->integer('order')->unique()->default(0);
             $table->index('order');
         });
     }

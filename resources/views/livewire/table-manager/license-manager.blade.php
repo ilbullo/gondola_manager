@@ -59,7 +59,7 @@
             <div wire:sortable="updateOrder" class="flex-1 overflow-y-auto px-3 py-2 space-y-2">
                 @forelse($selectedUsers as $item)
                     <div
-                        wire:sortable.item
+                        wire:sortable.item="{{ $item['id'] }}"
                         wire:key="sel-{{ $item['id'] }}-{{ $loop->index }}"
                         class="bg-emerald-50 border border-emerald-300 rounded-lg px-3 py-2.5 flex items-center justify-between cursor-move hover:bg-emerald-100 transition group text-sm"
                     >

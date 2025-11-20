@@ -17,14 +17,14 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
-        User::factory()->create([
+        /*User::factory()->create([
             'name' => 'Test User',
             'email' => 'ilbullo@gmail.com',
             'password'  =>'password',
             'license_number'=> 140
-        ]);
+        ]);*/
 
-        User::factory(40)->create();
+        //User::factory(40)->create();
 
         $agencies = [
             'ALBATRAVEL' => 'ALBA',

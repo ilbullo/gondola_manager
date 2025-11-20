@@ -32,8 +32,10 @@
             @endforeach
         </div>
 
-        {{-- RIEPILOGO TESTUALE MINIMALE – solo l’essenziale, altezza 42–48px --}}
-@if($workType !== '' && $workType !== 'clear')
+        {{-- RIEPILOGO TESTUALE MINIMALE  --}}
+        <livewire:component.work-info-box class="mt-6" />
+        
+{{--  @if($workType !== '' && $workType !== 'clear')
     <div class="mt-4 px-4 py-2 text-sm font-medium text-gray-800 border-l-4 border-blue-600 bg-gray-50 rounded-r-lg">
 
         <div class="flex items-center justify-between gap-3">
@@ -83,7 +85,7 @@
             </div>
         </div>
     </div>
-@endif
+@endif --}}
 
     </div>
 

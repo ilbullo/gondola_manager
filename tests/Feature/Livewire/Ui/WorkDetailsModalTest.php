@@ -56,6 +56,7 @@ class WorkDetailsModalTest extends TestCase
                 'amount' => 200,
                 'slotsOccupied' => 4,
                 'excluded' => true,
+                'sharedFromFirst' => false
             ])
             ->assertSet('isOpen', false);
     }

@@ -126,29 +126,34 @@ class LicenseManagerTest extends TestCase
 
     #[Test]
 
-    public function it_confirms_the_selection_and_dispatches_event()
+        public function it_confirms_the_selection_and_dispatches_event()
     {
-        LicenseTable::factory()->create([
-            'user_id' => $this->user1->id,
+        // 1. Setup: Creiamo almeno una licenza per oggi
+        // (Altrimenti il metodo confirm() si ferma e mostra un errore)
+        $user = \App\Models\User::factory()->create();
+        
+        \App\Models\LicenseTable::create([
+            'user_id' => $user->id,
             'date'    => today(),
-            'order'   => 1
+            'order'   => 1,
         ]);
 
-        $tester = Livewire::test(LicenseManager::class)
-            ->call('confirm')
-            ->assertDispatched('confirmLicenses');
-
-        // Controlla che il flash sia stato settato PRIMA del dispatch
-        $this->assertTrue(
-            session()->has('success') || 
-            session()->getOldInput('__laravel_flash__')['success'] ?? false
-        );
-
-        // O semplicemente leggi direttamente dal session store del test
-        $this->assertEquals(
-            'Selezione confermata con successo!',
-            session('success')
-        );
+        // 2. Esecuzione del Test
+        \Livewire\Livewire::test(\App\Livewire\TableManager\LicenseManager::class)
+            // Assicuriamoci che il componente carichi i dati (mount)
+            ->call('confirm') 
+            
+            // 3. Asserzioni
+            // Verifica che non ci siano errori nel componente
+            ->assertSet('errorMessage', '') 
+            
+            // Verifica che l'evento 'confirmLicenses' sia stato emesso
+            ->assertDispatched('confirmLicenses')
+            
+            // === IL FIX È QUI ===
+            // Invece di controllare manualmente l'array di sessione,
+            // usiamo l'asserzione integrata che gestisce tutto automaticamente.
+            ->assertSee('Selezione confermata con successo!');
     }
 
     #[Test]

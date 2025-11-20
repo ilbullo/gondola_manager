@@ -58,7 +58,9 @@ class LicenseManager extends Component
     }
 
     /** Riceve l'array da Alpine (Livewire sortable) */
-    public function updateOrder(array $orderedIds): void
+    /** VECCHIO METODO FUNZIONANTE */
+    
+    /*public function updateOrder(array $orderedIds): void
     {
         $this->dispatch('toggleLoading', true);
 
@@ -73,7 +75,75 @@ class LicenseManager extends Component
         $this->dispatch('toggleLoading', false);
 
         session()->flash('success', 'Ordine aggiornato con successo!');
+    }*/
+
+
+public function updateOrder(array $orderedIds): void
+{
+    // 1. Validazione rapida
+    if (empty($orderedIds)) {
+        return;
     }
+
+    $this->dispatch('toggleLoading', true);
+
+    // Mappiamo l'input per avere coppie [id => nuovo_ordine]
+    // Questo serve per pulire i dati e preparare le query
+    $orderMapping = [];
+    foreach ($orderedIds as $index => $item) {
+        if (!empty($item['value'])) {
+            $orderMapping[$item['value']] = $index + 1;
+        }
+    }
+    
+    if (empty($orderMapping)) {
+        $this->dispatch('toggleLoading', false);
+        return;
+    }
+
+    DB::transaction(function () use ($orderMapping) {
+        $ids = array_keys($orderMapping);
+
+        // 2. SPOSTAMENTO MASSIVO (1 Query)
+        // Spostiamo tutti gli ID coinvolti in una "Safe Zone" (es. ordine + 100.000).
+        // Questo libera ISTANTANEAMENTE gli slot 1, 2, 3... prevenendo l'errore
+        // "Duplicate entry" sulla chiave unica (date, order) quando andremo a riassegnarli.
+        LicenseTable::whereIn('id', $ids)
+            ->update(['order' => DB::raw('`order` + 100000')]);
+
+        // 3. AGGIORNAMENTO MASSIVO (1 Query)
+        // Usiamo SQL puro con CASE/WHEN per aggiornare tutte le righe in una sola chiamata.
+        // È molto più performante (e atomico) rispetto a fare N query in un ciclo.
+        
+        $cases = [];
+        $params = [];
+
+        foreach ($orderMapping as $id => $order) {
+            $cases[] = "WHEN ? THEN ?";
+            $params[] = $id;
+            $params[] = $order;
+        }
+
+        // Aggiungiamo gli ID alla fine dei parametri per la clausola WHERE IN
+        $params = array_merge($params, $ids);
+
+        // Costruzione della query
+        $casesSql = implode(' ', $cases);
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+
+        // Nota: aggiorniamo anche updated_at manualmente poiché è una query raw
+        $query = "UPDATE license_table 
+                  SET `order` = CASE id $casesSql END, 
+                      updated_at = NOW() 
+                  WHERE id IN ($placeholders)";
+
+        DB::update($query, $params);
+    });
+
+    $this->loadSelectedUsers();
+    $this->dispatch('toggleLoading', false);
+    session()->flash('success', 'Ordine aggiornato con successo!');
+}    
 
     public function confirm(): void
     {

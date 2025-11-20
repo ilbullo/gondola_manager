@@ -52,6 +52,10 @@
                 class="px-4 py-2 bg-purple-600 text-white font-semibold rounded-lg shadow-md hover:bg-purple-700">
                 Report Agenzie (PDF)
             </button>
+            <button wire:click="$dispatch('goToAssignmentTable')"
+            class="px-4 py-2 bg-yellow-500 text-white font-semibold rounded-lg shadow-md hover:bg-yellow-600">
+            ← Torna ad Assegnazione Manuale
+        </button>
         </div>
     </div>
     

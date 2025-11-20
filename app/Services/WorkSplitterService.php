@@ -369,7 +369,7 @@ class WorkSplitterService
                     if ($work->value === 'N') $nCounts += $work->slots_occupied;
                     if ($work->value === 'P') $pCounts += $work->slots_occupied;
 
-                    if (in_array($work->value, ['X', 'N', 'P'])) {
+                    if (in_array($work->value, ['X'])) {
                         $cashDue += ($work->slots_occupied * self::CASH_AMOUNT);
                     }
                 }

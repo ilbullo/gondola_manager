@@ -2,44 +2,36 @@
 
 namespace App\Livewire\TableManager;
 
+use App\Enums\DayType;
 use App\Models\{LicenseTable, WorkAssignment};
 use App\Services\WorkSplitterService;
-use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Component;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Collection;
 
 class TableSplitter extends Component
 {
-    /** @var float Costo del bancale inserito dall'utente. */
     public float $bancaleCost = 0.0;
-
-    /** @var array<int, mixed> La tabella ripartita finale. */
     public array $splitTable = [];
-
-     /** @var array<int, mixed> La lista delle licenze escluse da ripartizione lavori tipo A. */
     public array $excludedFromA = [];
+    public array $shifts = [];
 
-    // ===================================================================
-    // Lifecycle & Data Loading
-    // ===================================================================
+    // NUOVO: Statistiche di validazione (Expected vs Actual)
+    public array $validationStats = []; 
 
     public function mount(): void
     {
         $this->generateTable();
     }
 
-//    #[On('tableReset')]
-//    #[On('licensesCleared')]
     #[On('callRedistributeWorks')]
     public function generateTable(): void
     {
-
         $this->splitTable = [];
+        $this->validationStats = [];
 
-        // 1. Carica le licenze in servizio oggi (ordinate)
         $licenses = LicenseTable::with('user:id,name,license_number')
             ->whereDate('date', today())
             ->orderBy('order')
@@ -49,24 +41,40 @@ class TableSplitter extends Component
             return;
         }
 
-        // 2. Carica tutti i lavori ripartibili (non esclusi)
+        foreach ($licenses as $license) {
+            $currentShift = $this->shifts[$license->id] ?? null;
+            if (!$currentShift || !DayType::tryFrom($currentShift)) {
+                $this->shifts[$license->id] = DayType::FULL->value;
+            }
+        }
+
         $sharableWorks = WorkAssignment::whereDate('timestamp', today())
             ->where('excluded', false)
             ->with('agency:id,name,code')
             ->whereIn('value', ['A', 'X', 'N', 'P'])
+            ->orderBy('timestamp')
             ->get();
 
-        // 3. Usa il servizio per la logica di ripartizione
-        $splitter = new WorkSplitterService($licenses, $sharableWorks, $this->excludedFromA);
+        $splitter = new WorkSplitterService(
+            $licenses, 
+            $sharableWorks, 
+            $this->excludedFromA, 
+            $this->shifts
+        );
 
-        // 4. Genera la tabella e la salva nello stato Livewire
+        // Ottieni tabella ripartita
         $this->splitTable = $splitter->getSplitTable($this->bancaleCost ?? 0);
+        
+        // Ottieni statistiche di validazione
+        $this->validationStats = $splitter->getValidationStats();
     }
 
-    /**
-     * Ricalcola la tabella quando il costo del bancale cambia
-     */
     public function updatedBancaleCost(): void
+    {
+        $this->generateTable();
+    }
+
+    public function updatedShifts(): void
     {
         $this->generateTable();
     }
@@ -78,127 +86,89 @@ class TableSplitter extends Component
         } else {
             $this->excludedFromA[] = $licenseTableId;
         }
-
-        // Ripartisci immediatamente
         $this->generateTable();
     }
 
-    // ===================================================================
-    // Funzionalità PDF (Punto 1)
-    // ===================================================================
+    public function printSplitTable(): void
+    {
+        $this->generateTable();
+        
+        Session::flash('pdf_generate', [
+            'view'        => 'pdf.split-table',
+            'data'        => [
+                'splitTable'  => $this->splitTable,
+                'bancaleCost' => $this->bancaleCost,
+                'bancaleName' => Auth::user()->name,
+                'timestamp'   => now()->format('d/m/Y H:i'),
+            ],
+            'filename'    => 'ripartizione_' . today()->format('Ymd') . '.pdf',
+            'orientation' => 'landscape',
+        ]);
 
-public function printSplitTable(): void
-{
-    $this->generateTable();
-
-    Session::flash('pdf_generate', [
-        'view'        => 'pdf.split-table',
-        'data'        => [
-            'splitTable'  => $this->splitTable,
-            'bancaleCost' => $this->bancaleCost,
-            'bancaleName' => Auth::user()->name,
-            'timestamp'   => now()->format('d/m/Y H:i'),
-        ],
-        'filename'    => 'ripartizione_' . today()->format('Ymd') . '.pdf',
-        'orientation' => 'landscape',
-    ]);
-
-    // Redirect alla route che genera il PDF
-    $this->redirectRoute('generate.pdf');
-}
-
-public function printAgencyReport(): void
-{
-    $this->generateTable();
-
-    Session::flash('pdf_generate', [
-        'view'        => 'pdf.agency-report',
-        'data'        => [
-            'agencyReport' => $this->generateAgencyReportData(),
-            'timestamp'    => now()->format('d/m/Y H:i'),
-            'bancaleUser'  => Auth::user()->name
-        ],
-        'filename'    => 'report_agenzie_' . today()->format('Ymd') . '.pdf',
-        'orientation' => 'portrait',
-    ]);
-
-    $this->redirectRoute('generate.pdf');
-}
-
-private function generateAgencyReportData(): array
-{
-    if (empty($this->splitTable)) {
-        return [];
+        $this->redirectRoute('generate.pdf');
     }
 
-    $report = [];
+    public function printAgencyReport(): void
+    {
+        $this->generateTable(); 
+        $agencyReport = $this->prepareAgencyReport();
+        
+        Session::flash('pdf_generate', [
+            'view'        => 'pdf.agency-report',
+            'data'        => [
+                'agencyReport' => $agencyReport,
+                'timestamp'    => now()->format('d/m/Y H:i'),
+            ],
+            'filename'    => 'report_agenzie_' . today()->format('Ymd') . '.pdf',
+            'orientation' => 'portrait',
+        ]);
 
-    foreach ($this->splitTable as $row) {
-        $licenseNumber = $row['license'];
+        $this->redirectRoute('generate.pdf');
+    }
 
-        foreach ($row['assignments'] as $slot => $assignment) {
-            // Ignora placeholder
-            if (!$assignment instanceof \App\Models\WorkAssignment) {
-                continue;
+    private function prepareAgencyReport(): array
+    {
+        // Logica report agenzie (invariata)
+        $report = [];
+        foreach ($this->splitTable as $tableRow) {
+            $licenseNumber = $tableRow['license'];
+            foreach ($tableRow['assignments'] as $slot => $assignment) {
+                if (!$assignment instanceof WorkAssignment || $assignment->slot !== $slot || $assignment->value !== 'A') {
+                    continue;
+                }
+                $agencyName = $assignment->agency->name ?? 'N/A';
+                $voucher    = trim($assignment->voucher ?? '') ?: '-';
+                $time       = $assignment->timestamp instanceof \Carbon\Carbon 
+                                ? $assignment->timestamp->format('H:i') 
+                                : \Carbon\Carbon::parse($assignment->timestamp)->format('H:i'); 
+                $key = $agencyName . '|' . ($assignment->timestamp instanceof \Carbon\Carbon 
+                                ? $assignment->timestamp->format('YmdHi') 
+                                : \Carbon\Carbon::parse($assignment->timestamp)->format('YmdHi')) . '|' . $voucher;
+                if (!isset($report[$key])) {
+                    $report[$key] = [
+                        'agency_name'     => $agencyName,
+                        'time'            => $time,
+                        'voucher'         => $voucher,
+                        'license_numbers' => [],
+                    ];
+                }
+                $report[$key]['license_numbers'][] = $licenseNumber;
             }
-
-            // Prendi solo il record principale
-            if (($assignment->slot ?? null) != $slot) {
-                continue;
-            }
-
-            // MOSTRA SOLO LAVORI TIPO "A"
-            if ($assignment->value !== 'A') {
-                continue;
-            }
-
-            // Controllo agenzia + timestamp valido
-            if (!$assignment->agency || !$assignment->timestamp) {
-                continue;
-            }
-
-            $agencyName = $assignment->agency->name ?? 'Agenzia Sconosciuta';
-            $voucher    = trim($assignment->voucher ?? '') ?: '-';
-            $time       = $assignment->timestamp->format('H:i'); // ← ORARIO CORRETTO
-
-            // Chiave univoca per evitare doppioni (stesso servizio, stesso orario, stesso voucher)
-            $key = $agencyName . '|' . $assignment->timestamp->format('YmdHi') . '|' . $voucher;
-
-            if (!isset($report[$key])) {
-                $report[$key] = [
-                    'agency_name'     => $agencyName,
-                    'time'            => $time,
-                    'voucher'         => $voucher,
-                    'license_numbers' => [],
-                ];
-            }
-
-            $report[$key]['license_numbers'][] = $licenseNumber;
         }
+        return collect($report)
+            ->map(function ($item) {
+                $item['license_numbers'] = collect($item['license_numbers'])
+                    ->unique()
+                    ->sort()
+                    ->implode(', ');
+                return $item;
+            })
+            ->sortBy('time')
+            ->values()  
+            ->groupBy('agency_name')
+            ->map(fn(Collection $group) => $group->values())
+            ->toArray();
     }
-
-    // Formattazione finale
-
-return collect($report)
-    ->map(function ($item) {
-        $item['license_numbers'] = collect($item['license_numbers'])
-            ->unique()
-            ->sort()
-            ->implode(', ');
-        return $item;
-    })
-    ->sortBy('time')
-    ->values()  // ← IMPORTANTE: reindicizza
-    ->groupBy('agency_name')
-    ->map(function ($group) {
-        return $group->values(); // ← Forza che ogni gruppo sia una collection indicizzata
-    })
-    ->toArray();
-}
-
-    // ===================================================================
-    // Render
-    // ===================================================================
 
     public function render()
     {

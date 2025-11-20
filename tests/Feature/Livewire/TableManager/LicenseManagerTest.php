@@ -49,14 +49,14 @@ class LicenseManagerTest extends TestCase
 
     public function it_selects_a_user_and_adds_a_license_table_record()
     {
-        $this->assertDatabaseCount('license_tables', 0);
+        $this->assertDatabaseCount('license_table', 0);
 
         Livewire::test(LicenseManager::class)
             ->call('selectUser', $this->user2->id)
             ->assertDispatched('toggleLoading', true)
             ->assertDispatched('toggleLoading', false);
 
-        $this->assertDatabaseHas('license_tables', [
+        $this->assertDatabaseHas('license_table', [
             'user_id' => $this->user2->id,
             'date' => today(),
             'order' => 1,
@@ -64,7 +64,6 @@ class LicenseManagerTest extends TestCase
 
         // Verifica che l'utente sia passato da "disponibile" a "selezionato"
         Livewire::test(LicenseManager::class)
-            ->call('mount')
             ->assertSet('selectedUsers', function ($users) {
                 return count($users) === 1 && $users[0]['user_id'] === $this->user2->id;
             })
@@ -73,6 +72,7 @@ class LicenseManagerTest extends TestCase
             });
     }
 
+    
     #[Test]
 
     public function it_removes_a_license_table_record()
@@ -88,7 +88,6 @@ class LicenseManagerTest extends TestCase
         
         // Verifica che l'utente sia tornato tra gli "available"
         Livewire::test(LicenseManager::class)
-            ->call('mount')
             ->assertSet('selectedUsers', [])
             ->assertSet('availableUsers', function ($users) {
                 return collect($users)->pluck('id')->contains($this->user3->id);
@@ -113,14 +112,14 @@ class LicenseManagerTest extends TestCase
             ->call('updateOrder', $orderedIds)
             ->assertDispatched('toggleLoading', true)
             ->assertDispatched('toggleLoading', false)
-            ->assertSessionHas('success', 'Ordine aggiornato con successo!')
+            ->assertSee('Ordine aggiornato con successo!')
             ->assertSet('selectedUsers', function ($users) use ($lt1, $lt2) {
                 return $users[0]['id'] === $lt2->id && $users[0]['order'] === 1 &&
                        $users[1]['id'] === $lt1->id && $users[1]['order'] === 2;
             });
 
-        $this->assertDatabaseHas('license_tables', ['id' => $lt2->id, 'order' => 1]);
-        $this->assertDatabaseHas('license_tables', ['id' => $lt1->id, 'order' => 2]);
+        $this->assertDatabaseHas('license_table', ['id' => $lt2->id, 'order' => 1]);
+        $this->assertDatabaseHas('license_table', ['id' => $lt1->id, 'order' => 2]);
     }
 
     // --- Conferma ---
@@ -129,12 +128,27 @@ class LicenseManagerTest extends TestCase
 
     public function it_confirms_the_selection_and_dispatches_event()
     {
-        LicenseTable::factory()->create(['user_id' => $this->user1->id, 'date' => today(), 'order' => 1]);
+        LicenseTable::factory()->create([
+            'user_id' => $this->user1->id,
+            'date'    => today(),
+            'order'   => 1
+        ]);
 
-        Livewire::test(LicenseManager::class)
+        $tester = Livewire::test(LicenseManager::class)
             ->call('confirm')
-            ->assertSessionHas('success', 'Selezione confermata con successo!')
             ->assertDispatched('confirmLicenses');
+
+        // Controlla che il flash sia stato settato PRIMA del dispatch
+        $this->assertTrue(
+            session()->has('success') || 
+            session()->getOldInput('__laravel_flash__')['success'] ?? false
+        );
+
+        // O semplicemente leggi direttamente dal session store del test
+        $this->assertEquals(
+            'Selezione confermata con successo!',
+            session('success')
+        );
     }
 
     #[Test]

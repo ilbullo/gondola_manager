@@ -29,7 +29,7 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => bcrypt('password'),
             'remember_token' => Str::random(10),
-            'license_number' => $this->faker->numberBetween(1, 440), // Example: 421
+            'license_number' => $this->faker->unique()->numberBetween(1, 440), // Example: 421
             'created_at' => now(),
             'updated_at' => now(),
         ];

@@ -16,6 +16,9 @@ return new class extends Migration
             $table->date('date');
             $table->index('date');
             $table->unsignedBigInteger('user_id');
+            $table->integer('order')->default(0);
+            $table->unique(['date', 'order']);
+            $table->index('order');
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');            
             $table->timestamps();
         });

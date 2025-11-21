@@ -27,17 +27,17 @@ class ModalConfirm extends Component
 
     public function confirm(): void
     {
-        \Log::info('ModalConfirm: confirm() chiamato! Evento: ' . $this->confirmEvent . ', Payload: ', [$this->confirmPayload]);
         if ($this->confirmEvent) {
             $this->dispatch($this->confirmEvent, payload: $this->confirmPayload);
         }
 
-        $this->close();
+        $this->cancel();
     }
 
     public function cancel(): void
     {
         $this->close();
+        $this->resetExcept('show');
     }
 
     private function close(): void

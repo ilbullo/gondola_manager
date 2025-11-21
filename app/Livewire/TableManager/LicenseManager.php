@@ -30,36 +30,45 @@ class LicenseManager extends Component
     // ===================================================================
 
     public function selectUser(int $userId): void
-    {
-        $this->dispatch('toggleLoading', true);
+{
+    $this->dispatch('toggleLoading', true);
 
-        $user = User::findOrFail($userId);
+    $user = User::findOrFail($userId);
 
-        $nextOrder = $this->getNextOrder();
+    $nextOrder = $this->getNextOrder();
 
-        LicenseTable::create([
-            'user_id' => $user->id,
-            'date'    => today(),
-            'order'   => $nextOrder,
-        ]);
+    LicenseTable::create([
+        'user_id' => $user->id,
+        'date'    => today(),
+        'order'   => $nextOrder,
+    ]);
 
-        $this->refreshData();
-        $this->dispatch('toggleLoading', false);
-    }
+    // RIMUOVI refreshData() qui
+    // $this->refreshData();
 
-    public function removeUser(int $licenseTableId): void
-    {
-        $this->dispatch('toggleLoading', true);
+    // Sostituisci con QUESTO:
+    $this->loadSelectedUsers();        // solo questo
+    $this->dispatch('selected-updated'); // forza Alpine a rileggere
 
-        LicenseTable::findOrFail($licenseTableId)->delete();
+    $this->dispatch('toggleLoading', false);
+}
 
-        $this->refreshData();
-        $this->dispatch('toggleLoading', false);
-    }
+public function removeUser(int $licenseTableId): void
+{
+    $this->dispatch('toggleLoading', true);
+
+    LicenseTable::findOrFail($licenseTableId)->delete();
+
+    // $this->refreshData();  → ELIMINA
+    $this->loadSelectedUsers();   // ← solo questo
+    $this->dispatch('selected-updated');
+
+    $this->dispatch('toggleLoading', false);
+}
 
     /** Riceve l'array da Alpine (Livewire sortable) */
     /** VECCHIO METODO FUNZIONANTE */
-    
+
     /*public function updateOrder(array $orderedIds): void
     {
         $this->dispatch('toggleLoading', true);
@@ -95,7 +104,7 @@ public function updateOrder(array $orderedIds): void
             $orderMapping[$item['value']] = $index + 1;
         }
     }
-    
+
     if (empty($orderMapping)) {
         $this->dispatch('toggleLoading', false);
         return;
@@ -114,7 +123,7 @@ public function updateOrder(array $orderedIds): void
         // 3. AGGIORNAMENTO MASSIVO (1 Query)
         // Usiamo SQL puro con CASE/WHEN per aggiornare tutte le righe in una sola chiamata.
         // È molto più performante (e atomico) rispetto a fare N query in un ciclo.
-        
+
         $cases = [];
         $params = [];
 
@@ -132,9 +141,9 @@ public function updateOrder(array $orderedIds): void
         $placeholders = implode(',', array_fill(0, count($ids), '?'));
 
         // Nota: aggiorniamo anche updated_at manualmente poiché è una query raw
-        $query = "UPDATE license_table 
-                  SET `order` = CASE id $casesSql END, 
-                      updated_at = NOW() 
+        $query = "UPDATE license_table
+                  SET `order` = CASE id $casesSql END,
+                      updated_at = NOW()
                   WHERE id IN ($placeholders)";
 
         DB::update($query, $params);
@@ -143,7 +152,7 @@ public function updateOrder(array $orderedIds): void
     $this->loadSelectedUsers();
     $this->dispatch('toggleLoading', false);
     session()->flash('success', 'Ordine aggiornato con successo!');
-}    
+}
 
     public function confirm(): void
     {

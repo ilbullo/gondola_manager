@@ -70,7 +70,7 @@
                     <input wire:model="name" type="text"
                         class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
                     @error('name')
-                        <span class="text-red-600 text-sm mt-1 block">{{ $message }}</span>
+                        <x-input-error :messages="$errors->get('name')" class="mt-2" />
                     @enderror
                 </div>
 
@@ -79,7 +79,7 @@
                     <input wire:model="code" type="text" maxlength="10"
                         class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all uppercase tracking-wider font-mono">
                     @error('code')
-                        <span class="text-red-600 text-sm mt-1 block">{{ $message }}</span>
+                        <x-input-error :messages="$message" class="mt-2" />
                     @enderror
                 </div>
 
@@ -106,7 +106,7 @@
                     <input wire:model="name" type="text"
                         class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
                     @error('name')
-                        <span class="text-red-600 text-sm mt-1 block">{{ $message }}</span>
+                        <x-input-error :messages="$message" class="mt-2" />
                     @enderror
                 </div>
 
@@ -115,7 +115,7 @@
                     <input wire:model="code" type="text" maxlength="10"
                         class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all uppercase tracking-wider font-mono">
                     @error('code')
-                        <span class="text-red-600 text-sm mt-1 block">{{ $message }}</span>
+                        <x-input-error :messages="$message" class="mt-2" />
                     @enderror
                 </div>
 
@@ -192,4 +192,7 @@
             {{ $agencies->links() }}
         </div>
     </div>
+    @push('modals')
+    <livewire:ui.modal-confirm />
+    @endpush
 </div>

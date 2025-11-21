@@ -1,5 +1,6 @@
 {{-- resources/views/livewire/modals/work-details-modal.blade.php --}}
 <div>
+    @if($isOpen)
     <div x-data="{ open: @entangle('isOpen') }" x-show="open" x-transition:enter="transition ease-out duration-300"
         x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
         x-transition:leave="transition ease-in duration-200" x-transition:leave-end="opacity-0"
@@ -50,7 +51,7 @@
                                     class="absolute left-4 top-1/2 -translate-y-1/2 text-xl font-bold text-gray-500">€</span>
                             </div>
                             @error('amount')
-                                <p class="mt-2 text-sm text-red-600 font-medium">{{ $message }}</p>
+                                <x-input-error :messages="$message" class="mt-2" />
                             @enderror
                         </div>
 
@@ -68,7 +69,7 @@
                                 <option value="4">4 Caselle</option>
                             </select>
                             @error('slotsOccupied')
-                                <p class="mt-2 text-sm text-red-600 font-medium">{{ $message }}</p>
+                                <x-input-error :messages="$message" class="mt-2" />
                             @enderror
                         </div>
 
@@ -90,7 +91,7 @@
                             class="flex items-center justify-between bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl p-5 border-2 border-gray-200">
                             <div class="flex items-center gap-4">
                                 <input id="sharedFromFirst" type="checkbox" wire:model.live="sharedFromFirst"
-                                    class="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500 focus:ring-2" />
+                                    class="h-6 w-6 rounded border-2 border-gray-300 text-blue-600 focus:ring-blue-500 focus:ring-offset-2 transition" />
                                 <label for="sharedFromFirst"
                                     class="text-sm font-bold text-gray-800 cursor-pointer select-none">
                                     Ripartisci dal primo
@@ -119,4 +120,5 @@
             </div>
         </div>
     </div>
+    @endif
 </div>

@@ -23,7 +23,7 @@
     <main>
         {{ $slot }}
     </main>
-    <livewire:ui.modal-confirm />
+    @stack('modals')
     @livewireScripts
     <!-- Optional: Remove if sortable functionality is not needed -->
     <script src="https://cdn.jsdelivr.net/gh/livewire/sortable@v1.x.x/dist/livewire-sortable.js"></script>

@@ -1,5 +1,10 @@
 <x-app-layout>
         @livewire('table-manager.table-manager')
-        @livewire('ui.agency-modal')
-        @livewire('ui.work-details-modal')
+
+        @push('modals')
+            @livewire('ui.agency-modal')
+            @livewire('ui.modal-confirm')
+            @livewire('ui.work-details-modal')
+        @endpush
+
 </x-app-layout>

@@ -16,7 +16,7 @@
 
     <!-- Layout compatto: 70/30 su tablet/desktop, stacked su mobile -->
     <div class="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-4 h-[calc(100vh-110px)]">
-        
+
         <!-- SINISTRA: Licenze disponibili -->
         <section class="lg:col-span-8 bg-white rounded-xl shadow overflow-hidden flex flex-col">
             <div class="bg-blue-600 text-white px-4 py-2.5 text-sm font-bold flex items-center justify-between">

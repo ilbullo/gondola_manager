@@ -1,5 +1,6 @@
 {{-- resources/views/livewire/modals/confirm-modal.blade.php --}}
 <div>
+  @if($show)
     <div
         x-data="{ open: @entangle('show') }"
         x-show="open"
@@ -71,4 +72,5 @@
             </div>
         </div>
     </div>
+    @endif
 </div>

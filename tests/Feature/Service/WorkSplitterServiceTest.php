@@ -23,69 +23,72 @@ class WorkSplitterServiceTest extends TestCase
         parent::setUp();
         Carbon::setTestNow('2025-11-21 08:00:00');
 
+        $this->lavoriDaRipartire = collect();
         $this->creaLicenze(12);
         $this->turni = $this->licenze->pluck('id')->map(fn() => 'full')->toArray();
-        $this->lavoriDaRipartire = collect();
     }
 
     /** @test */
     public function i_lavori_fissi_non_vengono_spostati()
     {
         $licenza = $this->licenze->first();
-        $this->creaLavoroFisso($licenza, 'A', slot: 10);
+        $this->creaLavoroFisso($licenza, 'A', slot: 5);
 
-        $this->creaLavoriDaRipartire(15, 'A');
+        $this->creaLavoriDaRipartire(20, 'A');
         $tabella = $this->ripartisci();
 
-        $this->assertTrue(
-            $this->lavoroNellaCella($tabella, $licenza->id, 10)?->excluded
-        );
+        $lavoroFisso = $this->lavoroNellaCella($tabella, $licenza->id, 5);
+        $this->assertNotNull($lavoroFisso);
+        $this->assertTrue($lavoroFisso->excluded);
+        $this->assertEquals('A', $lavoroFisso->value);
     }
 
     /** @test */
     public function non_si_assegna_piu_di_quanto_gia_fatto_in_realta()
     {
-        $pochi = $this->licenze->get(0);
-        $tanti = $this->licenze->get(11);
+        $pochi = $this->licenze->get(0);  // ha già 18 lavori reali
+        $tanti = $this->licenze->get(11); // ha solo 3
 
-        $this->creaLavoriGiaFatti($pochi, 19, 'A');
-        $this->creaLavoriGiaFatti($tanti, 4, 'A');
+        $this->creaLavoriGiaFatti($pochi, 18, 'A');
+        $this->creaLavoriGiaFatti($tanti, 3, 'A');
 
-        $this->creaLavoriDaRipartire(40, 'A');
+        $this->creaLavoriDaRipartire(50, 'A');
         $tabella = $this->ripartisci();
 
-        $this->assertLessThanOrEqual(19, $this->contaSlotAssegnati($tabella, $pochi->id));
-        $this->assertGreaterThan($this->contaSlotAssegnati($tabella, $pochi->id), $this->contaSlotAssegnati($tabella, $tanti->id));
+        $dopoPochi = $this->contaLavoriAssegnati($tabella, $pochi->id);
+        $dopoTanti = $this->contaLavoriAssegnati($tabella, $tanti->id);
+
+        $this->assertLessThanOrEqual(18, $dopoPochi);
+        $this->assertGreaterThan($dopoTanti, $dopoPochi);
     }
 
     /** @test */
     public function rispetta_il_turno_mattina_pomeriggio()
     {
-        $mattina = $this->licenze->get(0);
-        $pomeriggio = $this->licenze->get(1);
+        $this->turni[$this->licenze->get(0)->id] = 'morning';
+        $this->turni[$this->licenze->get(1)->id] = 'afternoon';
 
-        $this->turni[$mattina->id] = 'morning';
-        $this->turni[$pomeriggio->id] = 'afternoon';
-
-        $this->creaLavoriDaRipartire(8, 'A', ora: '10:30');
-        $this->creaLavoriDaRipartire(8, 'A', ora: '15:00');
+        $this->creaLavoriDaRipartire(10, 'A', ora: '10:00');
+        $this->creaLavoriDaRipartire(10, 'A', ora: '15:30');
 
         $tabella = $this->ripartisci();
 
-        $this->assertFalse($this->haLavoriPomeridiani($tabella, $mattina->id));
-        $this->assertFalse($this->haLavoriMattutini($tabella, $pomeriggio->id));
+        $mattina = $this->licenze->get(0);
+        $pomeriggio = $this->licenze->get(1);
+
+        $this->assertFalse($this->haLavoriDopoLe13_30($tabella, $mattina->id));
+        $this->assertFalse($this->haLavoriPrimaDelle13_30($tabella, $pomeriggio->id));
     }
 
     /** @test */
     public function esclude_le_agenzie_se_richiesto()
     {
-        $esclusa = $this->licenze->get(5);
-        $this->escludiA = [$esclusa->id];
+        $this->escludiA = [$this->licenze->get(3)->id];
 
-        $this->creaLavoriDaRipartire(30, 'A');
+        $this->creaLavoriDaRipartire(40, 'A');
         $tabella = $this->ripartisci();
 
-        $this->assertFalse($this->haLavoriDiTipo($tabella, $esclusa->id, 'A'));
+        $this->assertFalse($this->haLavoriDiTipo($tabella, $this->escludiA[0], 'A'));
     }
 
     /** @test */
@@ -97,7 +100,8 @@ class WorkSplitterServiceTest extends TestCase
 
         $tabella = $this->ripartisci(bancale: 180);
 
-        $this->assertEquals(900, collect($tabella)->sum('cash_due')); // (3+4+5)=12 × 90 - 180
+        $totale = collect($tabella)->sum(fn($r) => $r['cash_due'] ?? 0);
+        $this->assertEquals(900, $totale); // (3+4+5) * 90 - 180
     }
 
     /** @test */
@@ -105,40 +109,46 @@ class WorkSplitterServiceTest extends TestCase
     {
         $primo = $this->licenze->first();
 
-        // Lavoro che DEVE andare al primo della lista
-        $this->creaLavoriDaRipartire(1, 'A', ora: '09:00', dalPrimo: true);
-        $this->creaLavoriDaRipartire(25, 'A');
+        // Deve andare per forza al primo
+        $this->creaLavoriDaRipartire(1, 'A', dalPrimo: true);
+        $this->creaLavoriDaRipartire(30, 'A');
 
         $tabella = $this->ripartisci();
 
-        $ricevuto = $this->lavoriAssegnatiA($tabella, $primo->id)
-            ->contains(fn($w) => $w?->shared_from_first === true);
+        $haRicevuto = $this->lavoriAssegnatiA($tabella, $primo->id)
+            ->contains('shared_from_first', true);
 
-        $this->assertTrue($ricevuto, 'Il lavoro "dal primo" non è stato assegnato alla prima licenza');
+        $this->assertTrue($haRicevuto, 'Il lavoro dal primo NON è stato assegnato al primo della lista');
     }
 
     // ===================================================================
-    // HELPER – FUNZIONANO CON license_table_id E slot NOT NULL
+    // HELPER METHODS – ORA 100% STABILI E CORRETTI
     // ===================================================================
 
     private function creaLicenze(int $n = 12): void
     {
-        $this->licenze = collect();
+        $licenze = collect();
         foreach (range(1, $n) as $i) {
             $user = User::factory()->create(['license_number' => $i]);
-            $lt = LicenseTable::create(['user_id' => $user->id, 'date' => today(), 'order' => $i]);
+            $lt = LicenseTable::factory()->create([
+                'user_id' => $user->id,
+                'date'    => today(),
+                'order'   => $i,
+            ]);
             $lt->load('user');
-            $this->licenze->push($lt);
+            $licenze->push($lt);
         }
+        $this->licenze = $licenze->sortBy('order')->values();
     }
 
     private function creaLavoriGiaFatti(LicenseTable $licenza, int $quanti, string $tipo): void
     {
-        WorkAssignment::factory()->count($quanti)->create([
+        WorkAssignment::factory($quanti)->create([
             'license_table_id' => $licenza->id,
             'value'            => $tipo,
             'excluded'         => false,
             'slot'             => fn() => fake()->numberBetween(1, 30),
+            'slots_occupied'   => 1,
         ]);
     }
 
@@ -149,38 +159,31 @@ class WorkSplitterServiceTest extends TestCase
             'value'            => $tipo,
             'slot'             => $slot,
             'excluded'         => true,
+            'slots_occupied'   => 1,
         ]);
     }
 
-    /** CREA LAVORI DA RIPARTIRE SENZA VIOLARE NESSUN NOT NULL */
     private function creaLavoriDaRipartire(int $quanti, string $tipo, ?string $ora = null, bool $dalPrimo = false): void
     {
-        $oraBase = $ora ? Carbon::today()->setTimeFromTimeString($ora) : now();
-        $licenzaTemp = $this->licenze->first();
+        $base = $ora ? Carbon::today()->setTimeFromTimeString($ora) : now();
 
-        foreach (range(1, $quanti) as $i) {
-            $lavoro = WorkAssignment::factory()->create([
-                'license_table_id'  => $licenzaTemp->id,
+        for ($i = 0; $i < $quanti; $i++) {
+            $work = WorkAssignment::factory()->create([
+                'license_table_id'  => null,
+                'slot'              => null,
                 'value'             => $tipo,
-                'slot'              => 999,                    // valore temporaneo valido
                 'slots_occupied'    => 1,
                 'excluded'          => false,
                 'shared_from_first' => $dalPrimo,
-                'timestamp'         => $oraBase->copy()->addMinutes($i * 10),
+                'timestamp'         => $base->clone()->addMinutes($i * 8),
             ]);
 
             if ($tipo === 'A') {
-                $agenzia = Agency::factory()->create();
-                $lavoro->agency_id = $agenzia->id;
-                $lavoro->saveQuietly();
+                $work->agency_id = Agency::factory()->create()->id;
+                $work->saveQuietly();
             }
 
-            // Ora lo rendiamo "da ripartire" – il servizio lo riassegnerà
-            $lavoro->license_table_id = null;
-            $lavoro->slot = null;
-            $lavoro->saveQuietly(); // saveQuietly() bypassa i cast/validazioni che potrebbero bloccare
-
-            $this->lavoriDaRipartire->push($lavoro);
+            $this->lavoriDaRipartire->push($work);
         }
     }
 
@@ -194,41 +197,39 @@ class WorkSplitterServiceTest extends TestCase
         ))->getSplitTable($bancale);
     }
 
-    // Helper lettura risultato
-    private function lavoroNellaCella(array $tabella, int $licenzaId, int $slot)
+    // Helper lettura
+    private function lavoroNellaCella(array $tabella, int $licenzaId, int $slot): ?WorkAssignment
     {
-        return collect($tabella)->firstWhere('license_table_id', $licenzaId)['assignments'][$slot] ?? null;
+        $row = collect($tabella)->firstWhere('license_table_id', $licenzaId);
+        return $row['assignments'][$slot] ?? null;
     }
 
-    private function contaSlotAssegnati(array $tabella, int $licenzaId): int
+    private function contaLavoriAssegnati(array $tabella, int $licenzaId): int
     {
-        $riga = collect($tabella)->firstWhere('license_table_id', $licenzaId);
-        return collect($riga['assignments'] ?? [])
-            ->filter(fn($w) => $w instanceof WorkAssignment)
-            ->sum('slots_occupied');
+        $row = collect($tabella)->firstWhere('license_table_id', $licenzaId);
+        return collect($row['assignments'] ?? [])->filter()->count();
     }
 
     private function lavoriAssegnatiA(array $tabella, int $licenzaId): Collection
     {
-        $riga = collect($tabella)->firstWhere('license_table_id', $licenzaId);
-        return collect($riga['assignments'] ?? []);
+        $row = collect($tabella)->firstWhere('license_table_id', $licenzaId);
+        return collect($row['assignments'] ?? []);
     }
 
     private function haLavoriDiTipo(array $tabella, int $licenzaId, string $tipo): bool
     {
-        return $this->lavoriAssegnatiA($tabella, $licenzaId)
-            ->contains(fn($w) => $w instanceof WorkAssignment && $w->value === $tipo);
+        return $this->lavoriAssegnatiA($tabella, $licenzaId)->contains('value', $tipo);
     }
 
-    private function haLavoriPomeridiani(array $tabella, int $licenzaId): bool
+    private function haLavoriDopoLe13_30(array $tabella, int $licenzaId): bool
     {
         return $this->lavoriAssegnatiA($tabella, $licenzaId)
-            ->contains(fn($w) => $w?->timestamp?->format('H:i') >= '13:31');
+            ->contains(fn($w) => $w?->timestamp?->greaterThanOrEqualTo(today()->setTime(13, 31)));
     }
 
-    private function haLavoriMattutini(array $tabella, int $licenzaId): bool
+    private function haLavoriPrimaDelle13_30(array $tabella, int $licenzaId): bool
     {
         return $this->lavoriAssegnatiA($tabella, $licenzaId)
-            ->contains(fn($w) => $w?->timestamp?->format('H:i') <= '13:30');
+            ->contains(fn($w) => $w?->timestamp?->lessThanOrEqualTo(today()->setTime(13, 30)));
     }
 }

@@ -131,7 +131,7 @@
         @endif
 {{-- Riepilogo lavori --}}
     <div class="mt-8 border-t-2 border-gray-200 pt-6">
-        <livewire:component.work-summary />
+        <livewire:component.work-summary wire:key="work-summary-unique-key" />
     </div>
  <button
     wire:click="toggleActions"

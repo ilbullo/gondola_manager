@@ -150,7 +150,6 @@ class LicenseManagerTest extends TestCase
             // Verifica che l'evento 'confirmLicenses' sia stato emesso
             ->assertDispatched('confirmLicenses')
             
-            // === IL FIX È QUI ===
             // Invece di controllare manualmente l'array di sessione,
             // usiamo l'asserzione integrata che gestisce tutto automaticamente.
             ->assertSee('Selezione confermata con successo!');

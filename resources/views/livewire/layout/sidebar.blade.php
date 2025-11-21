@@ -33,8 +33,8 @@
         </div>
 
         {{-- RIEPILOGO TESTUALE MINIMALE  --}}
-        <livewire:component.work-info-box class="mt-6" />
-        
+        <livewire:component.work-info-box class="mt-6" wire:key="work-info-box-sidebar-unique"/>
+
 {{--  @if($workType !== '' && $workType !== 'clear')
     <div class="mt-4 px-4 py-2 text-sm font-medium text-gray-800 border-l-4 border-blue-600 bg-gray-50 rounded-r-lg">
 

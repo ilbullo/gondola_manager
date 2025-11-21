@@ -23,7 +23,8 @@ class User extends Authenticatable
         'password',
         'role',
         'type',
-        'license_number'
+        'license_number',
+        'last_login_at'
     ];
 
     /**
@@ -47,7 +48,8 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'role' => UserRole::class,
-            'type' => LicenseType::class
+            'type' => LicenseType::class,
+            'last_login_at' => 'datetime'
 
         ];
     }

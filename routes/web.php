@@ -3,26 +3,26 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PdfController;
 
-Route::view('/', 'welcome');
+//Route::view('/', 'welcome');
 
-Route::view('dashboard', 'dashboard')
-    ->middleware(['auth', 'verified'])
+/*Route::view('dashboard', 'dashboard')
+        ->middleware(['auth', 'verified'])
     ->name('dashboard');
+*/
 
-Route::view('profile', 'profile')
-    ->middleware(['auth'])
-    ->name('profile');
+Route::redirect('/', '/login');
 
 Route::group(
     [
-        'middleware' => ['auth',],
+        'middleware' => ['auth','verified'],
         'prefix' => '',
     ],
     function () {
-
+        Route::view('dashboard', 'dashboard')->name('dashboard');
+        Route::view('profile', 'profile')->name('profile');
         Route::view('agency-manager', 'livewire.pages.agency-manager')->name('agency-manager');
         Route::view('table-manager', 'livewire.pages.table-manager')->name('table-manager');
-        Route::get('/generate-pdf', [PdfController::class, 'generate'])->name('generate.pdf');
+        Route::get('generate-pdf', [PdfController::class, 'generate'])->name('generate.pdf');
     });
 
 

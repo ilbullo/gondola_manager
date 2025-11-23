@@ -41,7 +41,7 @@
                                     @endphp
                                     <td class="p-1 text-center text-xs border cursor-pointer {{ \App\Enums\WorkType::tryFrom($license['worksMap'][$slot]['value']?? '')?->colourClass() }}"
                                      {{-- wire:click="@if (isset($license['worksMap'][$slot])) openConfirmRemove({{ $license['id'] }}, {{ $index }}) @else assignWork({{ $license['id'] }}, {{ $index }}) @endif" --}}
-                                        wire:click="@if (isset($license['worksMap'][$slot])) openInfoBox(@js($license['worksMap'][$slot] ?? null),{{ $index }}) @else assignWork({{ $license['id'] }}, {{ $index }}) @endif" 
+                                        wire:click="@if (isset($license['worksMap'][$slot])) openInfoBox(@js($license['worksMap'][$slot]['id'] ?? null),{{ $index }}) @else assignWork({{ $license['id'] }}, {{ $index }}) @endif" 
                                         >
                                         @if (isset($license['worksMap'][$slot]))
                                             <span class="text-gray-900 font-medium">

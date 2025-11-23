@@ -116,9 +116,9 @@ class WorkAssignmentTable extends Component
         $this->saveAssignment($licenseTableId, $slot, $slotsOccupied);
     }
 
-    public function openInfoBox($work,$slot) {
+    public function openInfoBox($workId) {
 
-        $this->dispatch('showWorkInfo',$work,$slot);
+        $this->dispatch('showWorkInfo', $workId);    
     }
 
     // ===================================================================
@@ -158,7 +158,8 @@ class WorkAssignmentTable extends Component
         $this->dispatch('toggleLoading', false);
     }
 
-    private function refreshTable(): void
+    #[On('refreshTableBoard')]
+    public function refreshTable(): void
     {
         $licenses = LicenseTable::with([
                 'user:id,license_number',

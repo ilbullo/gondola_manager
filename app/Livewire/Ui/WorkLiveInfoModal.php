@@ -2,68 +2,124 @@
 
 namespace App\Livewire\Ui;
 
-use Livewire\Component;
-use Livewire\Attributes\On;
+use App\Models\WorkAssignment;
 use Carbon\Carbon;
+use Livewire\Attributes\On; // cambia se il modello si chiama diversamente
+use Livewire\Component;
 
 class WorkLiveInfoModal extends Component
 {
-    public $work = [];   // Riceve tutto il lavoro selezionato
     public bool $open = false;
 
+    public $work = null;
+
+    // Campi per il form di modifica (retro della carta)
+    public string $value = '';
+
+    public ?string $agency_code = null;
+
+    public ?string $voucher = null;
+
+    public float $amount = 0.0;
+
+    public bool $excluded = false;
+
+    public bool $shared_from_first = false;
+
     #[On('showWorkInfo')]
-    public function openModal($work,$slot) : void
+    public function openModal($workId): void // Meglio ricevere solo l'ID
     {
-       $this->work = array_merge($work, ["slot" => $slot]);
+        $this->work = WorkAssignment::findOrFail($workId);
+
+        // Sincronizza i campi del form
+        $this->value = $this->work->value;
+        $this->agency_code = $this->work->agency_code;
+        $this->voucher = $this->work->voucher ?? $this->work->note ?? '';
+        $this->amount = (float) $this->work->amount;
+        $this->excluded = (bool) $this->work->excluded;
+        $this->shared_from_first = (bool) $this->work->shared_from_first;
+
         $this->open = true;
+
+        // Forza Livewire a riconoscere il cambiamento (utile con Alpine)
+        $this->dispatch('$refresh');
     }
 
     public function closeModal(): void
     {
         $this->open = false;
-        $this->work = [];
+        $this->work = null;
+        $this->reset(['value', 'agency_code', 'voucher', 'amount', 'excluded', 'shared_from_first']);
     }
 
-    public function getFormattedWorkProperty(): array
+    // Nel componente WorkLiveInfoModal.php
+    public function getWorkDataProperty(): array
     {
-        if (empty($this->work) || !isset($this->work['created_at'])) {
-            return $this->work; // Restituisce i dati base se il tempo non è disponibile
+        if (! $this->work) {
+            return [
+                'id' => null,
+                'value' => '',
+                'agency' => '',
+                'agency_code' => '',
+                'amount' => 0.0,
+                'voucher' => '',
+                'excluded' => false,
+                'shared_from_first' => false,
+                'time_elapsed' => '',
+                'departure_time' => '',
+                'created_at' => '',
+            ];
         }
 
-        $createdAt = Carbon::parse($this->work['created_at']);
-        
-        // Calcolo del tempo trascorso ("X tempo fa") - L'informazione più importante
-        $timeElapsed = $createdAt->diffForHumans(Carbon::now(), true); 
-        
-        // Formattazione dell'ora e della data di partenza
-        $departureTime = $createdAt->format('H:i:s');
-        $departureDate = $createdAt->format('d/m/Y');
-        // Unisce i dati originali con le nuove proprietà calcolate
-        return array_merge($this->work, [
-            'departure_time' => $departureTime,
-            'departure_date' => $departureDate,
-            'time_elapsed'   => $timeElapsed,
-        ]);
+        $createdAt = Carbon::parse($this->work->created_at);
+
+        return [
+            'id' => $this->work->id,
+            'value' => $this->work->value,
+            'agency' => $this->work->agency,
+            'agency_code' => $this->work->agency_code,
+            'amount' => $this->work->amount,
+            'voucher' => $this->work->voucher ?? $this->work->note ?? '',
+            'excluded' => $this->work->excluded,
+            'shared_from_first' => $this->work->shared_from_first,
+            'time_elapsed' => $createdAt->diffForHumans(['parts' => 2, 'join' => ' e ']),
+            'departure_time' => $createdAt->format('H:i'),
+            'created_at' => $createdAt->format('d/m/Y H:i'),
+        ];
     }
 
-    // Placeholder per la funzione di modifica
-    public function editWork(int $workId): void
+    public function save()
     {
-        // Qui andrebbe la logica per aprire un form di modifica,
-        // ad esempio emettendo un evento Livewire:
-        // $this->dispatch('openWorkEditForm', $workId);
-        // Per ora chiudiamo la modale:
-        $this->closeModal();
-    }
-
-    public function openConfirmRemove(int $licenseTableId, int $slot): void
-    {
-        $this->closeModal();
-        $this->dispatch('openConfirmModal', [
-            'message'      => 'Vuoi rimuovere il lavoro da questa cella?',
-            'confirmEvent' => 'confirmRemoveAssignment',
-            'payload'      => compact('licenseTableId','slot'),
+        $this->validate([
+            'value' => 'required|in:A,X,N,P',
+            'amount' => 'required|numeric|min:0.01',
+            'voucher' => 'nullable|string|max:255',
+            'agency_code' => 'nullable|string|max:50',
         ]);
+
+        $this->work->update([
+            'value' => $this->value,
+            'agency_code' => $this->agency_code,
+            'voucher' => $this->voucher,
+            'amount' => $this->amount,
+            'excluded' => $this->excluded,
+            'shared_from_first' => $this->shared_from_first,
+        ]);
+
+        // Aggiorna anche i campi visualizzati nel fronte
+        $this->work->refresh();
+
+        // Risincronizza i campi (importantissimo!)
+    $this->fill($this->work->only([
+        'value', 'agency_code', 'voucher', 'amount', 'excluded', 'shared_from_first'
+    ]));
+    $this->voucher = $this->work->voucher ?? $this->work->note ?? '';
+
+    $this->dispatch('work-updated');
+    $this->dispatch('refreshTableBoard');
+
+    // Questo è il trucco MAGICO
+    $this->dispatch('flip-back');
     }
 
     public function render()

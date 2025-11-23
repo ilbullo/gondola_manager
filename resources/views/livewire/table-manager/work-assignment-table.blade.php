@@ -39,16 +39,10 @@
                                     @php
                                         $index = $slot + 1;
                                     @endphp
-                                    <td
-                                        @class([
-                                            'p-1 text-center text-xs border cursor-pointer',
-                                            'bg-gray-50 hover:bg-gray-100' => !isset($license['worksMap'][$slot]),
-                                            'bg-blue-100' => isset($license['worksMap'][$slot]) && $license['worksMap'][$slot]['value'] === 'A',
-                                            'bg-green-100' => isset($license['worksMap'][$slot]) && $license['worksMap'][$slot]['value'] === 'X',
-                                            'bg-red-100' => isset($license['worksMap'][$slot]) && $license['worksMap'][$slot]['value'] === 'P',
-                                            'bg-yellow-100' => isset($license['worksMap'][$slot]) && $license['worksMap'][$slot]['value'] === 'N',
-                                        ])
-                                        wire:click="@if (isset($license['worksMap'][$slot])) openConfirmRemove({{ $license['id'] }}, {{ $index }}) @else assignWork({{ $license['id'] }}, {{ $index }}) @endif">
+                                    <td class="p-1 text-center text-xs border cursor-pointer {{ \App\Enums\WorkType::tryFrom($license['worksMap'][$slot]['value']?? '')?->colourClass() }}"
+                                     {{-- wire:click="@if (isset($license['worksMap'][$slot])) openConfirmRemove({{ $license['id'] }}, {{ $index }}) @else assignWork({{ $license['id'] }}, {{ $index }}) @endif" --}}
+                                        wire:click="@if (isset($license['worksMap'][$slot])) openInfoBox(@js($license['worksMap'][$slot] ?? null),{{ $index }}) @else assignWork({{ $license['id'] }}, {{ $index }}) @endif" 
+                                        >
                                         @if (isset($license['worksMap'][$slot]))
                                             <span class="text-gray-900 font-medium">
                                                 @if ($license['worksMap'][$slot]['value'] === 'A')

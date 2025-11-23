@@ -140,23 +140,15 @@
                                     $work = $assignments[$slot] ?? null;
                                     $isMainWork = $work && ($work instanceof WorkAssignment || $work instanceof \stdClass) && ($work->slot ?? 0) === $slot;
                                     $colSpan = $isMainWork ? ($work->slots_occupied ?? 1) : 1;
-
+                                    $workTypeEnum = \App\Enums\WorkType::class;
                                     $isSFF = $isMainWork && ($work->shared_from_first ?? false);
                                     $isExcluded = $isMainWork && ($work->excluded ?? false);
-                                    
-                                    $colorClasses = match ($work->value ?? null) {
-                                        'A' => 'bg-indigo-200 text-indigo-900 font-semibold',
-                                        'X' => 'bg-green-200 text-green-900 font-semibold',
-                                        'P' => 'bg-red-300 text-red-900 font-bold',
-                                        'N' => 'bg-yellow-300 text-yellow-900 font-bold',
-                                        default => 'bg-gray-100 text-gray-500',
-                                    };
-
+                                    $colorClasses =  $workTypeEnum::tryFrom($work->value ?? "")?->colourClass() ?? 'bg-gray-100 text-gray-500' . " font-bold";
                                     if ($isExcluded) {
-                                        $colorClasses = 'bg-gray-500 text-white font-extrabold';
+                                        $colorClasses = $workTypeEnum::EXCLUDED->colourClass();
                                     }
 
-                                    $sffClass = $isSFF ? 'border-2 border-purple-700' : '';
+                                    $sffClass = $isSFF ? 'bg-teal-300 text-teal-900' : '';
                                 @endphp
 
                                 @if ($isMainWork)

@@ -42,7 +42,7 @@ class WorkAssignmentTable extends Component
     public function removeAssignment(array $payload): void
     {
         $this->dispatch('toggleLoading', true);
-
+        
         $licenseTableId = $payload['licenseTableId'] ?? null;
         $slot           = $payload['slot'] ?? null;
 
@@ -51,21 +51,22 @@ class WorkAssignmentTable extends Component
             $this->dispatch('toggleLoading', false);
             return;
         }
-
+        
         try {
-            DB::transaction(function () use ($licenseTableId, $slot) {
-                $assignment = WorkAssignment::where('license_table_id', $licenseTableId)
+            WorkAssignment::find($licenseTableId)->delete();
+            /*DB::transaction(function () use ($licenseTableId, $slot) {
+                $assignment = WorkAssignment::where('id', $licenseTableId)
                     ->where('slot', $slot)
                     ->whereDate('timestamp', today())
                     ->first();
-
+                dd($slot + $assignment->slots_occupied - 1);
                 if ($assignment) {
-                    WorkAssignment::where('license_table_id', $licenseTableId)
+                    dd(WorkAssignment::where('license_table_id', $licenseTableId)
                         ->whereBetween('slot', [$slot, $slot + $assignment->slots_occupied - 1])
-                        ->whereDate('timestamp', today())
-                        ->delete();
+                        ->whereDate('timestamp', today()));
+                        //->delete());
                 }
-            });
+            });*/
 
             $this->refreshTable();
             $this->errorMessage = '';
@@ -115,13 +116,9 @@ class WorkAssignmentTable extends Component
         $this->saveAssignment($licenseTableId, $slot, $slotsOccupied);
     }
 
-    public function openConfirmRemove(int $licenseTableId, int $slot): void
-    {
-        $this->dispatch('openConfirmModal', [
-            'message'      => 'Vuoi rimuovere il lavoro da questa cella?',
-            'confirmEvent' => 'confirmRemoveAssignment',
-            'payload'      => compact('licenseTableId', 'slot'),
-        ]);
+    public function openInfoBox($work,$slot) {
+
+        $this->dispatch('showWorkInfo',$work,$slot);
     }
 
     // ===================================================================

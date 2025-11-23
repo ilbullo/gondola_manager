@@ -37,7 +37,11 @@ class LicenseResource extends JsonResource
                         'id'          => $work->id,
                         'value'       => $work->value,
                         'agency_code' => $work->agency?->code,
+                        'agency'      => $work->agency?->name,
+                        'amount'      => $work->amount,
                         'voucher'     => $work->voucher,
+                        'excluded'    => $work->excluded,
+                        'shared_from_first' => $work->shared_from_first,
                         'created_at'  => optional($work->created_at)->toDateTimeString(),
                     ];
                 }

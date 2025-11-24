@@ -6,7 +6,6 @@ use App\Http\Resources\LicenseResource;
 use App\Models\{Agency, LicenseTable, WorkAssignment};
 use Livewire\Attributes\On;
 use Livewire\Component;
-use Illuminate\Support\Facades\DB;
 
 class WorkAssignmentTable extends Component
 {
@@ -24,6 +23,8 @@ class WorkAssignmentTable extends Component
 
     public function mount(): void
     {
+        // La chiamata a refreshTable() qui attiverà il wire:loading 
+        // che si disattiverà automaticamente alla fine del mount.
         $this->refreshTable();
     }
 
@@ -41,42 +42,33 @@ class WorkAssignmentTable extends Component
     #[On('confirmRemoveAssignment')]
     public function removeAssignment(array $payload): void
     {
-        $this->dispatch('toggleLoading', true);
+        // Rimosse chiamate esplicite a dispatch('toggleLoading', ...)
+        // perché in conflitto con wire:loading.flex
+        
         $licenseTableId = $payload['licenseTableId'] ?? null;
-        $slot           = $payload['slot'] ?? null;
 
         if (!$licenseTableId) {
             $this->errorMessage = 'Dati mancanti per rimuovere l\'assegnazione.';
-            $this->dispatch('toggleLoading', false);
             return;
         }
         
         $this->dispatch('closeWorkInfoModal');
 
         try {
+            // Uso sicuro di destroy per eliminare l'assegnazione
+            $deleted = WorkAssignment::destroy($licenseTableId);
             
-            WorkAssignment::find($licenseTableId)->delete();
-            /*DB::transaction(function () use ($licenseTableId, $slot) {
-                $assignment = WorkAssignment::where('id', $licenseTableId)
-                    ->where('slot', $slot)
-                    ->whereDate('timestamp', today())
-                    ->first();
-                dd($slot + $assignment->slots_occupied - 1);
-                if ($assignment) {
-                    dd(WorkAssignment::where('license_table_id', $licenseTableId)
-                        ->whereBetween('slot', [$slot, $slot + $assignment->slots_occupied - 1])
-                        ->whereDate('timestamp', today()));
-                        //->delete());
-                }
-            });*/
-            $this->refreshTable();
-            $this->errorMessage = '';
+            if ($deleted > 0) {
+                $this->refreshTable();
+                $this->errorMessage = '';
+            } else {
+                 $this->errorMessage = 'Lavoro già rimosso o ID non trovato.';
+            }
+
         } catch (\Throwable $e) {
             report($e);
-            $this->errorMessage = 'Errore durante la rimozione del lavoro.';
+            $this->errorMessage = 'Errore durante la rimozione del lavoro: ' . $e->getMessage();
         }
-
-        $this->dispatch('toggleLoading', false);
     }
 
     public function assignWork(int $licenseTableId, int $slot): void
@@ -86,55 +78,38 @@ class WorkAssignmentTable extends Component
             return;
         }
 
-        if (!in_array($this->selectedWork['value'], ['A', 'X', 'P', 'N'])) {
-            $this->errorMessage = 'Tipo di lavoro non valido.';
-            return;
-        }
-
-        if ($slot < 1 || $slot > 25) {
-            $this->errorMessage = 'Slot non valido.';
-            return;
-        }
-
-        $this->dispatch('toggleLoading', true);
-
-        $slotsOccupied = $this->selectedWork['slotsOccupied'] ?? 1;
-
-        $conflict = WorkAssignment::where('license_table_id', $licenseTableId)
-            ->whereDate('timestamp', today())
-            ->where(function ($q) use ($slot, $slotsOccupied) {
-                $q->where('slot', '<=', $slot + $slotsOccupied - 1)
-                  ->whereRaw('slot + slots_occupied - 1 >= ?', [$slot]);
-            })
-            ->exists();
-
-        if ($conflict) {
-            $this->errorMessage = 'Lo slot è già occupato o si sovrappone.';
-            $this->dispatch('toggleLoading', false);
-            return;
-        }
-
-        $this->saveAssignment($licenseTableId, $slot, $slotsOccupied);
+        $this->saveAssignment($licenseTableId, $slot, $this->selectedWork['slotsOccupied'] ?? 1);
     }
-
+    
     public function openInfoBox($workId) {
-
+        // wire:loading si attiverà automaticamente
         $this->dispatch('showWorkInfo', $workId);    
     }
-
-    // ===================================================================
-    // Private Helpers
-    // ===================================================================
 
     private function saveAssignment(int $licenseTableId, int $slot, int $slotsOccupied): void
     {
         try {
             $agencyId = null;
             if ($this->selectedWork['value'] === 'A' && !empty($this->selectedWork['agencyName'])) {
-                $agencyId = Agency::where('name', $this->selectedWork['agencyName'])
-                    ->value('id');
+                $agency = Agency::where('name', $this->selectedWork['agencyName'])->first();
+                $agencyId = $agency?->id; // Uso l'operatore nullsafe per evitare eccezioni
             }
 
+            // Verifica conflitti (Logica essenziale mantenuta)
+            $conflict = WorkAssignment::where('license_table_id', $licenseTableId)
+                ->whereDate('timestamp', today())
+                ->where(function ($q) use ($slot, $slotsOccupied) {
+                    $q->where('slot', '<=', $slot + $slotsOccupied - 1)
+                      ->whereRaw('slot + slots_occupied - 1 >= ?', [$slot]);
+                })
+                ->exists();
+
+            if ($conflict) {
+                $this->errorMessage = 'Lo slot è già occupato o si sovrappone.';
+                return;
+            }
+
+            // Creazione del nuovo record
             WorkAssignment::create([
                 'license_table_id' => $licenseTableId,
                 'agency_id'        => $agencyId,
@@ -151,16 +126,15 @@ class WorkAssignmentTable extends Component
             $this->refreshTable();
             $this->errorMessage = '';
             $this->dispatch('workAssigned');
+            
         } catch (\Throwable $e) {
             report($e);
-            $this->errorMessage = 'Errore durante l\'assegnazione del lavoro.';
+            $this->errorMessage = 'Errore durante l\'assegnazione del lavoro: ' . $e->getMessage();
         }
-
-        $this->dispatch('toggleLoading', false);
     }
 
     #[On('refreshTableBoard')]
-    public function refreshTable(): void
+    private function refreshTable(): void
     {
         $licenses = LicenseTable::with([
                 'user:id,license_number',

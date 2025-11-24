@@ -1,11 +1,15 @@
 {{-- resources/views/livewire/table-manager/work-assignment-table.blade.php --}}
 <div wire:refresh class="h-full flex flex-col">
 
-    <div id="loading-modal"
-         wire:loading.flex
-         class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100]"
-         role="status"
+<div id="loading-modal" 
+         {{-- Usa 'hidden' di default e rimuovi 'hidden' quando Livewire è in caricamento --}}
+         wire:loading.class.remove="hidden" 
+         
+         {{-- Ora puoi lasciare 'flex' e le classi di centratura, perché 'hidden' ha la precedenza --}}
+         class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] hidden"
+         role="status" 
          aria-live="polite">
+        
         <div class="bg-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-4">
             <svg class="animate-spin h-6 w-6 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>

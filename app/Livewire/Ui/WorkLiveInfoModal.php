@@ -116,6 +116,7 @@ class WorkLiveInfoModal extends Component
     ]));
     $this->voucher = $this->work->voucher ?? $this->work->note ?? '';
 
+    session()->flash('message', "Lavoro salvato con successo.");
     $this->dispatch('work-updated');
     $this->dispatch('refreshTableBoard');
 

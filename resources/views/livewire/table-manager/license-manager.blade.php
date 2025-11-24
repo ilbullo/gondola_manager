@@ -4,11 +4,11 @@
 
     <!-- Messaggi -->
     @if (session('success'))
-        <div class="max-w-5xl mx-auto mb-3 px-4 py-2 bg-green-100 text-green-800 text-sm font-medium rounded-lg">
-            {{ session('success') }}
-        </div>
+                @include('components.sessionMessage',["message" => session('message')])
     @endif
     @if ($errorMessage)
+            @include('components.sessionMessage',["message" => $errorMessage, 'colour' => "red"])
+
         <div class="max-w-5xl mx-auto mb-3 px-4 py-2 bg-red-100 text-red-800 text-sm font-medium rounded-lg">
             {{ $errorMessage }}
         </div>
@@ -32,7 +32,13 @@
                             <button
                                 wire:click="selectUser({{ $user['id'] }})"
                                 wire:loading.attr="disabled"
-                                class="p-3 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 hover:border-blue-400 transition text-center text-xs group disabled:opacity-50"
+                                class="p-3 border rounded-lg
+                                @if($user['license_number']< 450)
+                                 bg-blue-50 hover:bg-blue-100  border-blue-200 hover:border-blue-400
+                                @else
+                                   bg-yellow-50 hover:bg-yellow-100 border-yellow-200 hover:border-yellow-400
+                                @endif
+                                transition text-center text-xs group disabled:opacity-50"
                                 title="Aggiungi alla tabella"
                             >
                                 <div class="font-black text-blue-900 text-lg leading-none">
@@ -55,7 +61,7 @@
                 <span class="bg-white/25 px-3 py-1 rounded-full text-xs">{{ count($selectedUsers) }}/25</span>
             </div>
 
-            <div 
+            <div
                 wire:sortable="updateOrder"
                 wire:sortable.options='{
                     "animation": 180,
@@ -103,7 +109,6 @@
                     class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-lg transition shadow disabled:opacity-50"
                 >
                     <span wire:loading.remove wire:target="confirm">Conferma Tabella</span>
-                    <span wire:loading wire:target="confirm">Salvataggio...</span>
                 </button>
             </div>
         </aside>

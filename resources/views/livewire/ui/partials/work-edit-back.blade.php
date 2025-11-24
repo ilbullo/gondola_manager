@@ -1,25 +1,28 @@
+{{-- resources/views/livewire/ui/partials/work-edit-back.blade.php --}}
 <div class="h-full flex flex-col bg-white">
-    <!-- Header -->
+
     <div class="bg-gradient-to-r from-emerald-600 to-emerald-700 px-6 py-5">
-        <div class="flex items-center justify-between">
-            <h2 class="text-xl sm:text-2xl font-bold text-white">Modifica Lavoro</h2>
-            <button @click="flipped = false" 
-                    class="rounded-full p-2.5 text-white/80 hover:text-white hover:bg-white/20 transition">
-                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                          d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+        <div class="flex justify-between items-center">
+            <h2 class="text-2xl font-bold text-white">Modifica Lavoro</h2>
+            <button @click="flipped = false"
+                    class="p-2 rounded-full bg-white/20 hover:bg-white/30 text-white transition">
+                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M15 19l-7-7 7-7"/>
                 </svg>
             </button>
         </div>
     </div>
 
-    <!-- Corpo scrollabile -->
-    <div class="flex-1 px-6 py-7 sm:px-8 overflow-y-auto space-y-6">
+    <div class="flex-1 overflow-y-auto px-6 py-6 space-y-6">
+        <!-- Messaggio di successo -->
+    @if (session('message'))
+        @include('components.sessionMessage',["message" => session('message')])
+    @endif
         <div class="grid grid-cols-2 gap-5">
             <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-2">Tipo Lavoro</label>
-                <select wire:model.live="value" 
-                        class="w-full px-5 py-3.5 text-base font-medium text-gray-900 bg-gray-50 border-2 border-gray-300 rounded-xl focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/20 transition-all">
+                <label class="block text-base font-semibold text-gray-700 mb-2">Tipo Lavoro</label>
+                <select wire:model.live="value"
+                        class="w-full px-4 py-3.5 text-base bg-gray-50 border border-gray-300 rounded-xl focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/30">
                     @foreach(\App\Enums\WorkType::cases() as $type)
                         @if(!in_array($type->value, [\App\Enums\WorkType::FIXED->value, \App\Enums\WorkType::EXCLUDED->value]))
                             <option value="{{ $type->value }}">{{ $type->label() }}</option>
@@ -29,72 +32,69 @@
             </div>
 
             <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-2">Importo (€)</label>
+                <label class="block text-base font-semibold text-gray-700 mb-2">Importo (€)</label>
                 <div class="relative">
-                    <input type="number" step="0.01" wire:model.live="amount"
-                           class="w-full pl-11 pr-4 py-3.5 text-base font-medium text-gray-900 bg-gray-50 border-2 border-gray-300 rounded-xl focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/20 transition-all"
-                           placeholder="90.00" />
-                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-bold text-gray-500">€</span>
+                    <input type="number" step="0.01" wire:model.live="amount" placeholder="0.00"
+                           class="w-full pl-11 pr-4 py-3.5 text-base font-medium bg-gray-50 border border-gray-300 rounded-xl focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/30">
+                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-bold text-gray-600">€</span>
                 </div>
             </div>
         </div>
 
         @if($value === 'A')
             <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-2">Codice Agenzia</label>
-                <input type="text" wire:model.live="agency_code"
-                       class="w-full px-5 py-3.5 text-base font-medium text-gray-900 bg-gray-50 border-2 border-gray-300 rounded-xl focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/20 transition-all"
-                       placeholder="es. AG123" />
+                <label class="block text-base font-semibold text-gray-700 mb-2">Codice Agenzia</label>
+                <select
+                    wire:model.live="agency_code"
+                    class="w-full px-4 py-3.5 text-base bg-gray-50 border border-gray-300 rounded-xl focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500"
+                >
+                    <option value="">Modifica Agenzia</option>
+                    {{-- PLACEHOLDER: Qui devi ciclare la proprietà $agencyCodes del tuo componente --}}
+                    @foreach(\App\Models\Agency::select(['name','code'])->get() ?? [] as $key => $agency)
+
+                        <option value="{{ $agency['code'] }}">{{ $agency['name'] }} ({{ $agency['code'] }})</option>
+                    @endforeach
+                </select>
             </div>
         @endif
 
         <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">Voucher / Note</label>
-            <input type="text" wire:model.live="voucher"
-                   class="w-full px-5 py-3.5 text-base font-medium text-gray-900 bg-gray-50 border-2 border-gray-300 rounded-xl focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/20 transition-all"
-                   placeholder="Inserisci voucher o nota..." />
+            <label class="block text-base font-semibold text-gray-700 mb-2">Voucher / Nota</label>
+            <input type="text" wire:model.live="voucher" placeholder="Facoltativo..."
+                   class="w-full px-4 py-3.5 text-base bg-gray-50 border border-gray-300 rounded-xl">
         </div>
 
         <div class="space-y-4">
-            <div class="flex items-center justify-between bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4 border border-gray-200">
-                <div class="flex items-center gap-3.5">
+            <label class="flex items-center justify-between bg-gray-50 rounded-xl p-4 border border-gray-200">
+                <div class="flex items-center gap-4">
                     <input type="checkbox" x-model="excluded"
-                           @change="if ($event.target.checked) shared_from_first = false; excluded = $event.target.checked"
-                           class="h-5 w-5 rounded border-2 border-gray-300 text-emerald-600 focus:ring-emerald-500 focus:ring-offset-2 transition" />
-                    <label class="text-base font-semibold text-gray-800 cursor-pointer select-none">
-                        Escluso da ripartizione
-                    </label>
+                           @change="if($event.target.checked) shared_from_first = false"
+                           class="w-6 h-6 text-emerald-600 rounded focus:ring-emerald-500">
+                    <span class="text-base font-semibold">Escluso da ripartizione</span>
                 </div>
-                <span class="text-xs font-medium text-gray-500 bg-white/80 px-2.5 py-1.5 rounded-full">
-                    Non conta nel riepilogo
-                </span>
-            </div>
+                <span class="text-xs bg-white px-3 py-1.5 rounded-full text-gray-600">Non conta</span>
+            </label>
 
-            <div class="flex items-center justify-between bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4 border border-gray-200">
-                <div class="flex items-center gap-3.5">
+            <label class="flex items-center justify-between bg-gray-50 rounded-xl p-4 border border-gray-200">
+                <div class="flex items-center gap-4">
                     <input type="checkbox" x-model="shared_from_first"
-                           @change="if ($event.target.checked) excluded = false; shared_from_first = $event.target.checked"
-                           class="h-5 w-5 rounded border-2 border-gray-300 text-emerald-600 focus:ring-emerald-500 focus:ring-offset-2 transition" />
-                    <label class="text-base font-semibold text-gray-800 cursor-pointer select-none">
-                        Ripartito dal primo
-                    </label>
+                           @change="if($event.target.checked) excluded = false"
+                           class="w-6 h-6 text-emerald-600 rounded focus:ring-emerald-500">
+                    <span class="text-base font-semibold">Ripartito dal primo</span>
                 </div>
-                <span class="text-xs font-medium text-gray-500 bg-white/80 px-2.5 py-1.5 rounded-full">
-                    Ripartito dalla prima licenza
-                </span>
-            </div>
+                <span class="text-xs bg-white px-3 py-1.5 rounded-full text-gray-600">Prima licenza</span>
+            </label>
         </div>
     </div>
 
-    <!-- Footer fisso -->
-    <div class="px-6 py-5 sm:px-8 bg-gray-50 border-t border-gray-200">
-        <div class="flex flex-col sm:flex-row gap-3">
+    <div class="px-6 py-5 bg-gray-50 border-t border-gray-200">
+        <div class="grid grid-cols-2 gap-4">
             <button @click="flipped = false"
-                    class="order-2 sm:order-1 w-full px-6 py-3.5 text-base font-semibold-bold text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-xl transition-all">
+                    class="py-4 text-lg font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-xl transition">
                 Annulla
             </button>
             <button wire:click="save"
-                    class="order-1 sm:order-2 w-full px-8 py-3.5 text-base font-bold text-white bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 rounded-xl shadow-lg hover:shadow-xl focus:ring-4 focus:ring-emerald-500/50 transition-all">
+                    class="py-4 text-lg font-bold text-white bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 rounded-xl shadow-lg transition">
                 Salva Modifiche
             </button>
         </div>

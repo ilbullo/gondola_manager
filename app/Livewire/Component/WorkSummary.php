@@ -34,6 +34,7 @@ class WorkSummary extends Component
     {
         $results = WorkAssignment::query()
             ->whereIn('value', ['N', 'X', 'A', 'P'])
+            ->whereDate('timestamp',today())
             ->selectRaw('value, COUNT(*) as count')
             ->groupBy('value')
             ->pluck('count', 'value');

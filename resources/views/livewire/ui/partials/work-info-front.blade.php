@@ -1,86 +1,108 @@
-<div class="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-5">
-    <div class="flex items-center justify-between">
-        <h2 class="text-xl sm:text-2xl font-bold text-white">Dettagli Lavoro</h2>
-        <button wire:click="closeModal"
-            class="rounded-full p-2.5 text-white/80 hover:text-white hover:bg-white/20 transition">
-            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-        </button>
-    </div>
-</div>
+{{-- resources/views/livewire/ui/partials/work-info-front.blade.php --}}
+<div class="h-full flex flex-col bg-white">
 
-<div class="flex-1 px-6 py-6 sm:px-8 overflow-y-auto space-y-6">
-    @php
-        $data = $this->workData;
-        $workTypeEnum = \App\Enums\WorkType::tryFrom($data['value']);
-    @endphp
-
-    <!-- Tempo trascorso -->
-    <div class="text-center pt-3 pb-5 border-b-2 border-gray-100">
-        <span class="block text-sm font-semibold text-gray-600 mb-1">Tempo Trascorso</span>
-        <span class="text-4xl font-black text-red-600">{{ $data['time_elapsed'] }}</span>
-    </div>
-
-    <!-- Griglia info -->
-    <div class="grid grid-cols-2 gap-4 text-sm">
-        <div class="bg-gray-50 rounded-xl p-4 text-center">
-            <span class="text-gray-600 font-medium">Ora Partenza</span>
-            <p class="text-lg font-bold text-gray-900 mt-1">{{ $data['departure_time'] }}</p>
-        </div>
-        <div class="bg-gray-50 rounded-xl p-4 text-center">
-            <span class="text-gray-600 font-medium">Tipo</span>
-            <p class="mt-1">
-                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold {{ $workTypeEnum?->colourClass() ?? 'bg-gray-300 text-gray-800' }}">
-                    {{ $workTypeEnum?->label() ?? 'N/D' }}
-                </span>
-            </p>
-        </div>
-    </div>
-
-    @if ($data['value'] === 'A')
-        <div class="bg-indigo-50 border-2 border-indigo-200 rounded-xl p-5 text-center">
-            <span class="text-sm font-semibold text-indigo-700">Agenzia</span>
-            <p class="text-lg font-bold text-indigo-900 mt-1">
-                {{ $data['agency']['name'] }} ({{ $data['agency_code'] ?? '—' }})
-            </p>
-        </div>
-    @endif
-
-    @if (!empty($data['voucher']))
-        <div class="bg-amber-50 border-2 border-amber-300 rounded-xl p-5 text-center">
-            <span class="text-xs font-bold text-amber-700 uppercase tracking-wider block mb-2">Voucher / Nota</span>
-            <p class="text-base font-black text-amber-900 break-all">{{ $data['voucher'] }}</p>
-        </div>
-    @endif
-
-    <!-- Importo grande -->
-    <div class="text-center pt-4">
-        <span class="text-5xl font-black text-indigo-600">
-            €{{ number_format($data['amount'], 2) }}
-        </span>
-    </div>
-</div>
-
-<!-- FOOTER FISSO CON DUE PULSANTI -->
-<div class="px-6 py-5 sm:px-8 bg-gray-50 border-t border-gray-200">
-    <div class="flex flex-col sm:flex-row gap-3">
-        <!-- Pulsante Elimina -->
-        <button wire:click="confirmDelete({{ $data['id'] }})"
-                class="order-2 sm:order-1 w-full px-6 py-3.5 text-base font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-xl shadow-sm hover:shadow transition-all duration-200 ring-1 ring-red-200">
-            <span class="flex items-center justify-center gap-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-5">
+        <div class="flex justify-between items-center">
+            <h2 id="work-info-title" class="text-2xl font-bold text-white">Dettagli Lavoro</h2>
+            <button wire:click="closeModal" class="p-2 rounded-full bg-white/20 hover:bg-white/30 text-white transition">
+                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12" />
                 </svg>
-                Elimina Lavoro
-            </span>
-        </button>
+            </button>
+        </div>
+    </div>
 
-        <!-- Pulsante Modifica -->
-        <button @click="flipped = true"
-                class="order-1 sm:order-2 w-full px-8 py-3.5 text-base font-bold text-white bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 rounded-xl shadow-lg hover:shadow-xl focus:ring-4 focus:ring-emerald-500/50 transition-all duration-200">
-            Modifica Lavoro
-        </button>
+    <!-- Contenuto compatto e bellissimo -->
+    <div class="flex-1 px-6 py-4 space-y-6 overflow-y-auto text-gray-800">
+        @php $d = $this->workData; @endphp
+
+        <div class="space-y-3">
+            <!-- Ora partenza + Tipo -->
+            <div class="flex items-center justify-between py-3 border-b border-gray-200">
+                <div class="flex items-center gap-3">
+                    <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span class="font-medium text-gray-600">Tempo trascorso</span>
+                </div>
+                <span class="font-bold text-xl text-red-600">{{ $d['time_elapsed'] }}</span>
+            </div>
+
+            <div class="flex items-center justify-between py-3 border-b border-gray-200">
+                <div class="flex items-center gap-3">
+                    <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span class="font-medium text-gray-600">Ora Partenza</span>
+                </div>
+                <span class="font-bold text-xl text-gray-900">{{ $d['departure_time'] }}</span>
+            </div>
+
+            <!-- Tipo lavoro -->
+            <div class="flex items-center justify-between py-3 border-b border-gray-200">
+                <div class="flex items-center gap-3">
+                    <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h-4m-8 0H5" />
+                    </svg>
+                    <span class="font-medium text-gray-600">{{ $d['value']==='A' ? (\App\Enums\WorkType::tryFrom($d['value'])?->label() ?? 'N/D') : 'Tipo lavoro' }}</span>
+                </div>
+                @if ($d['value'] === 'A')
+                    <div class="text-right">
+                        <div class="font-bold text-gray-900">{{ $d['agency']['name'] ?? '—' }}</div>
+                        <div class="text-sm text-gray-500">({{ $d['agency_code'] ?? '—' }})</div>
+                    </div>
+                @else
+                    <div class="text-right">
+                        <div class="font-bold text-gray-900">{{ (\App\Enums\WorkType::tryFrom($d['value'])?->label() ?? 'N/D') }}</div>
+                    </div>
+                @endif
+            </div>
+
+            <!-- Voucher / Nota -->
+            @if (!empty($d['voucher']))
+                <div class="flex items-center justify-between py-3 border-b border-gray-200">
+                    <div class="flex items-center gap-3">
+                        <svg class="w-5 h-5 text-gray-500 mt-0.5" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12h6m-6-4h6m-6 8h6m-9 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span class="font-medium text-gray-600">Nota / Voucher</span>
+                    </div>
+                    <span class="font-bold text-xl text-gray-900">{{ $d['voucher'] }}</span>
+                </div>
+            @endif
+
+            <div class="flex items-center justify-between py-3 border-b border-gray-200">
+                <div class="flex items-center gap-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                        stroke="currentColor" class="w-66 h-6 text-gray-500">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M14.25 7.756a4.5 4.5 0 1 0 0 8.488M7.5 10.5h5.25m-5.25 3h5.25M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                    </svg>
+
+                    <span class="font-medium text-gray-600">Importo Totale</span>
+                </div>
+                <span class="font-bold text-xl text-gray-900">€ {{ number_format($d['amount'], 2) }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="px-6 py-5 bg-gray-50 border-t border-gray-200">
+        <div class="grid grid-cols-2 gap-4">
+            <button wire:click="confirmDelete({{ $d['id'] }})"
+                class="py-4 text-lg font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-xl border border-red-200 transition">
+                Elimina
+            </button>
+            <button @click="flipped = true"
+                class="py-4 text-lg font-bold text-white bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 rounded-xl shadow-lg transition">
+                Modifica Lavoro
+            </button>
+        </div>
     </div>
 </div>

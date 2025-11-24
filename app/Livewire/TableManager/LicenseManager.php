@@ -29,26 +29,20 @@ class LicenseManager extends Component
     // Public Actions
     // ===================================================================
 
-    public function selectUser(int $userId): void
+ public function selectUser(int $userId): void
 {
     $this->dispatch('toggleLoading', true);
 
     $user = User::findOrFail($userId);
 
-    $nextOrder = $this->getNextOrder();
-
     LicenseTable::create([
         'user_id' => $user->id,
         'date'    => today(),
-        'order'   => $nextOrder,
+        'order'   => $this->getNextOrder(),
     ]);
 
-    // RIMUOVI refreshData() qui
-    // $this->refreshData();
-
-    // Sostituisci con QUESTO:
-    $this->loadSelectedUsers();        // solo questo
-    $this->dispatch('selected-updated'); // forza Alpine a rileggere
+    // RICARICA TUTTO: availableUsers + selectedUsers
+    $this->refreshData();
 
     $this->dispatch('toggleLoading', false);
 }
@@ -59,9 +53,7 @@ public function removeUser(int $licenseTableId): void
 
     LicenseTable::findOrFail($licenseTableId)->delete();
 
-    // $this->refreshData();  → ELIMINA
-    $this->loadSelectedUsers();   // ← solo questo
-    $this->dispatch('selected-updated');
+    $this->refreshData(); // ← fa riapparire la licenza a sinistra
 
     $this->dispatch('toggleLoading', false);
 }

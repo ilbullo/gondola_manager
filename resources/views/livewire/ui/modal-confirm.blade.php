@@ -10,14 +10,14 @@
         x-transition:leave="transition ease-in duration-200"
         x-transition:leave-end="opacity-0"
         @keydown.escape.window="$wire.cancel()"
-        class="fixed inset-0 z-50 overflow-y-auto"
+        class="fixed inset-0 z-[9999] overflow-y-auto"  <!-- z-[9999] invece di z-50 -->
         aria-labelledby="confirm-modal-title"
         role="dialog"
         aria-modal="true"
     >
-        <!-- Backdrop -->
+        <!-- Backdrop (anche lui più alto) -->
         <div
-            class="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+            class="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm transition-opacity z-[9998]"
             @click="$wire.cancel()"
         ></div>
 
@@ -30,7 +30,7 @@
                 x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
                 x-transition:leave="transition ease-in duration-200 transform"
                 x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                class="relative w-full max-w-md transform overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black ring-opacity-5"
+                class="relative w-full max-w-md transform overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black ring-opacity-5 z-[9999]"
                 @click.stop
             >
                 <div class="bg-white px-6 pb-8 pt-10 sm:px-10">

@@ -42,17 +42,19 @@ class WorkAssignmentTable extends Component
     public function removeAssignment(array $payload): void
     {
         $this->dispatch('toggleLoading', true);
-        
         $licenseTableId = $payload['licenseTableId'] ?? null;
         $slot           = $payload['slot'] ?? null;
 
-        if (!$licenseTableId || !$slot) {
+        if (!$licenseTableId) {
             $this->errorMessage = 'Dati mancanti per rimuovere l\'assegnazione.';
             $this->dispatch('toggleLoading', false);
             return;
         }
         
+        $this->dispatch('closeWorkInfoModal');
+
         try {
+            
             WorkAssignment::find($licenseTableId)->delete();
             /*DB::transaction(function () use ($licenseTableId, $slot) {
                 $assignment = WorkAssignment::where('id', $licenseTableId)
@@ -67,7 +69,6 @@ class WorkAssignmentTable extends Component
                         //->delete());
                 }
             });*/
-
             $this->refreshTable();
             $this->errorMessage = '';
         } catch (\Throwable $e) {

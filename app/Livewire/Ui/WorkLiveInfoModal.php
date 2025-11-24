@@ -45,6 +45,7 @@ class WorkLiveInfoModal extends Component
         $this->dispatch('$refresh');
     }
 
+    #[On('closeWorkInfoModal')]
     public function closeModal(): void
     {
         $this->open = false;
@@ -120,6 +121,17 @@ class WorkLiveInfoModal extends Component
 
     // Questo è il trucco MAGICO
     $this->dispatch('flip-back');
+    }
+
+    public function confirmDelete($id) {
+        $this->dispatch('openConfirmModal', [
+            'message'      => 'Eliminare definitivamente questo lavoro',
+            'confirmEvent' => 'confirmRemoveAssignment',
+            'cancelEvent'  => 'showWorkInfo('.$id.')',
+            'payload'      => ['licenseTableId' => $id],
+        ]);
+
+        $this->closeModal();
     }
 
     public function render()

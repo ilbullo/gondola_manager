@@ -11,6 +11,7 @@ class ModalConfirm extends Component
     public string $message = 'Sei sicuro?';
 
     public ?string $confirmEvent = null;
+    public ?string $cancelEvent = null;
     public array|object|string|int|null $confirmPayload = null;
 
     #[On('openConfirmModal')]
@@ -19,6 +20,7 @@ class ModalConfirm extends Component
         // Estrazione dati dall'array con fallback (best practice per compatibilità)
         $this->message = $data['message'] ?? 'Sei sicuro?';
         $this->confirmEvent = $data['confirmEvent'] ?? null;
+        $this->cancelEvent = $data['cancelEvent'] ?? null;
         $this->confirmPayload = $data['payload'] ?? null;
         $this->show = true;
 
@@ -37,6 +39,9 @@ class ModalConfirm extends Component
     public function cancel(): void
     {
         $this->close();
+        if($this->cancelEvent) {
+            $this->dispatch($this->cancelEvent,$this->confirmPayload);
+        }
         $this->resetExcept('show');
     }
 
@@ -50,6 +55,7 @@ class ModalConfirm extends Component
     {
         $this->message = 'Sei sicuro?';
         $this->confirmEvent = null;
+        $this->cancelEvent = null;
         $this->confirmPayload = null;
     }
 

@@ -18,4 +18,19 @@ export default {
     },
 
     plugins: [forms],
+
+    safelist: [
+    // Singole classi
+    'bg-red-500',
+    'bg-green-500',
+    'bg-blue-500',
+    
+    // Pattern: ad esempio tutti i bg-* e text-*
+    { pattern: /^bg-(red|green|blue|yellow|gray|purple|pink|indigo)-\d{3}$/ },
+    { pattern: /^text-(red|green|blue|yellow|gray|purple|pink|indigo)-\d{3}$/ },
+    
+    // Classi che cambiano in base a condizioni dinamiche
+    'hidden',
+    'block',
+  ],
 };

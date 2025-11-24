@@ -21,6 +21,7 @@ Route::group(
         Route::view('dashboard', 'dashboard')->name('dashboard');
         Route::view('profile', 'profile')->name('profile');
         Route::view('agency-manager', 'livewire.pages.agency-manager')->name('agency-manager');
+        Route::view('user-manager', 'livewire.pages.user-manager')->name('user-manager');
         Route::view('table-manager', 'livewire.pages.table-manager')->name('table-manager');
         Route::get('generate-pdf', [PdfController::class, 'generate'])->name('generate.pdf');
     });

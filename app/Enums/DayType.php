@@ -11,7 +11,7 @@ enum DayType: string
     public function label(): string
     {
         return match($this) {
-            self::FULL => 'Tutto il dì',
+            self::FULL => 'Tutto il giorno',
             self::MORNING => 'Mattina',
             self::AFTERNOON => 'Pomeriggio',
         };

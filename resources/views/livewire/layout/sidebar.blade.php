@@ -38,6 +38,22 @@
 
         {{-- Riepilogo lavoro attivo (solo se selezionato) --}}
         @if($workType && $workType !== 'clear')
+        {{-- Note / Voucher --}}
+        @if ($config['sections']['notes']['enabled'] ?? true)
+            <div class="mt-5 space-y-2">
+                <label class="block text-sm font-extrabold text-gray-800 border-l-4 border-emerald-600 pl-3">
+                    {{ $config['sections']['notes']['label'] }}
+                </label>
+                <input
+                    type="text"
+                    wire:model.live="voucher"
+                    placeholder="{{ $config['sections']['notes']['placeholder'] }}"
+                    class="w-full h-11 px-4 text-sm font-medium bg-white border-2 border-emerald-300 rounded-lg focus:border-emerald-600 focus:ring-4 focus:ring-emerald-300 focus:outline-none transition-all"
+                />
+            </div>
+        @endif
+
+
             <div class="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4 text-sm shadow-inner">
                 <h3 class="font-extrabold text-gray-900 mb-3 text-base">Lavoro Attivo</h3>
 

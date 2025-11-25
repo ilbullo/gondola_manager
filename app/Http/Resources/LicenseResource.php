@@ -43,6 +43,7 @@ class LicenseResource extends JsonResource
                         'excluded'    => $work->excluded,
                         'shared_from_first' => $work->shared_from_first,
                         'created_at'  => optional($work->created_at)->toDateTimeString(),
+                        'updated_at'  => optional($work->updated_at)->toDateTimeString()
                     ];
                 }
             }

@@ -88,12 +88,37 @@
                                             wire:keydown.enter.prevent="@if ($hasWork) openInfoBox(@js($workData['id'] ?? null), {{ $index }}) @else assignWork({{ $license['id'] }}, {{ $index }}) @endif"
                                         >
                                             @if ($hasWork)
-                                                <livewire:component.work-cell
-                                                    :work="$workData"
-                                                    :license-id="$license['id']"
-                                                    :slot="$index"
-                                                    :key="$workData['id'] ?? 'empty-'.$license['id'].'-'.$index"
-                                                />
+                                                <span class="text-xs font-bold text-gray-900 block leading-tight">
+                                                    @if ($workData['value'] === 'A')
+                                                        {{ $workData['agency_code'] ?? 'N/A' }}
+                                                        @if ($workData['voucher'])
+                                                            <span class="block text-[10px] font-normal text-gray-600">
+                                                                ({{ Str::limit($workData['voucher'], 4, '') }})
+                                                            </span>
+                                                        @endif
+                                                    @elseif ($workData['value'] === 'X')
+                                                        X
+                                                        @if ($workData['voucher'])
+                                                            <span class="block text-[10px] font-normal text-gray-600">
+                                                                ({{ Str::limit($workData['voucher'], 4, '') }})
+                                                            </span>
+                                                        @endif
+                                                    @elseif (in_array($workData['value'], ['P', 'N']))
+                                                        {{ $workData['value'] }}
+                                                    @else
+                                                        {{ $workData['value'] }}
+                                                    @endif
+                                                    @if($workData['excluded'])
+                                                            <span class="inline-block px-1.5 py-0.5 mt-1 text-[9px] font-bold rounded-full bg-red-100 text-red-700">
+                                                                F
+                                                            </span>
+                                                    @endif
+                                                    @if($workData['shared_from_first'])
+                                                            <span class="inline-block px-1.5 py-0.5 mt-1 text-[9px] font-bold rounded-full bg-emerald-100 text-emerald-700">
+                                                                R
+                                                            </span>
+                                                    @endif
+                                                </span>
                                             @else
                                                 <div role="gridcell" aria-label="Cella vuota" class="p-1 text-center ...">
                                                     <span class="text-gray-300 text-xs">–</span>

@@ -134,7 +134,7 @@ class WorkAssignmentTable extends Component
     }
 
     #[On('refreshTableBoard')]
-    private function refreshTable(): void
+    public function refreshTable(): void
     {
         $licenses = LicenseTable::with([
                 'user:id,license_number',

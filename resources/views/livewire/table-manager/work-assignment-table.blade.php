@@ -88,30 +88,18 @@
                                             wire:keydown.enter.prevent="@if ($hasWork) openInfoBox(@js($workData['id'] ?? null), {{ $index }}) @else assignWork({{ $license['id'] }}, {{ $index }}) @endif"
                                         >
                                             @if ($hasWork)
-                                                <span class="text-xs font-bold text-gray-900 block leading-tight">
-                                                    @if ($workData['value'] === 'A')
-                                                        {{ $workData['agency_code'] ?? 'N/A' }}
-                                                        @if ($workData['voucher'])
-                                                            <span class="block text-[10px] font-normal text-gray-600">
-                                                                ({{ Str::limit($workData['voucher'], 4, '') }})
-                                                            </span>
-                                                        @endif
-                                                    @elseif ($workData['value'] === 'X')
-                                                        X
-                                                        @if ($workData['voucher'])
-                                                            <span class="block text-[10px] font-normal text-gray-600">
-                                                                ({{ Str::limit($workData['voucher'], 4, '') }})
-                                                            </span>
-                                                        @endif
-                                                    @elseif (in_array($workData['value'], ['P', 'N']))
-                                                        {{ $workData['value'] }}
-                                                    @else
-                                                        {{ $workData['value'] }}
-                                                    @endif
-                                                </span>
+                                                <livewire:component.work-cell
+                                                    :work="$workData"
+                                                    :license-id="$license['id']"
+                                                    :slot="$index"
+                                                    :key="$workData['id'] ?? 'empty-'.$license['id'].'-'.$index"
+                                                />
                                             @else
-                                                <span class="text-gray-300 text-xs select-none">-</span>
+                                                <div role="gridcell" aria-label="Cella vuota" class="p-1 text-center ...">
+                                                    <span class="text-gray-300 text-xs">–</span>
+                                                </div>
                                             @endif
+                                                  
                                         </td>
                                     @endfor
                                 </tr>

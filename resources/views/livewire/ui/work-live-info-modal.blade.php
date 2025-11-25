@@ -13,7 +13,8 @@
             }"
             x-init="flipped = false; $nextTick(() => $el.focus())"
             x-on:keydown.escape.window="if(!flipped) $wire.closeModal(); else flipped = false"
-            x-trap.noscroll.inert="true"
+            x-trap.noscroll.inert="true",
+            x-on:flip-to-front.window="flipped = false"
         >
             {{-- Container 3D --}}
             <div class="relative w-full max-w-xl mx-auto perspective-1000">

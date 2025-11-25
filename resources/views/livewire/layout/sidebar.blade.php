@@ -55,26 +55,67 @@
 
 
             <div class="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4 text-sm shadow-inner">
-                <h3 class="font-extrabold text-gray-900 mb-3 text-base">Lavoro Attivo</h3>
+    <h3 class="font-extrabold text-gray-900 mb-3 text-base flex items-center justify-between">
+        Lavoro Attivo
 
-                <dl class="space-y-2">
-                    <div class="flex justify-between"><dt class="font-bold text-gray-700">Tipo</dt><dd class="font-black text-blue-700">{{ $label }}</dd></div>
-                    @if($workType === 'A' && $agencyName)
-                        <div class="flex justify-between"><dt class="font-bold text-gray-700">Agenzia</dt><dd class="font-black text-indigo-700">{{ $agencyName }}</dd></div>
-                    @endif
-                    @if(trim($voucher))
-                        <div class="flex justify-between"><dt class="font-bold text-gray-700">Voucher</dt><dd class="font-mono text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded">{{ Str::limit($voucher, 15) }}</dd></div>
-                    @endif
-                    <div class="flex justify-between pt-2 border-t border-blue-200">
-                        <dt class="font-bold text-gray-700">Importo</dt>
-                        <dd class="text-base font-black text-indigo-700">€{{ number_format($amount, 2) }}</dd>
-                    </div>
-                    <div class="flex justify-between">
-                        <dt class="font-bold text-gray-700">Posti</dt>
-                        <dd class="font-black">{{ $slotsOccupied }}</dd>
-                    </div>
-                </dl>
+        {{-- Badge F o R – in alto a destra, piccolo ma evidente --}}
+        @if($excluded ?? false)
+            <span class="inline-block px-2 py-1 text-[10px] font-bold bg-red-100 text-red-700 rounded-full">
+                F – Fisso alla licenza
+            </span>
+        @elseif($sharedFromFirst ?? false)
+            <span class="inline-block px-2 py-1 text-[10px] font-bold bg-emerald-100 text-emerald-700 rounded-full">
+                R – Ripartito dal primo
+            </span>
+        @endif
+    </h3>
+
+    <dl class="space-y-2">
+        <div class="flex justify-between">
+            <dt class="font-bold text-gray-700">Tipo</dt>
+            <dd class="font-black text-blue-700">{{ $label }}</dd>
+        </div>
+
+        @if($workType === 'A' && $agencyName)
+            <div class="flex justify-between">
+                <dt class="font-bold text-gray-700">Agenzia</dt>
+                <dd class="font-black text-indigo-700">{{ $agencyName }}</dd>
             </div>
+        @endif
+
+        @if(trim($voucher ?? ''))
+            <div class="flex justify-between">
+                <dt class="font-bold text-gray-700">Voucher</dt>
+                <dd class="font-mono text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded">
+                    {{ Str::limit($voucher, 15) }}
+                </dd>
+            </div>
+        @endif
+
+        <div class="flex justify-between pt-2 border-t border-blue-200">
+            <dt class="font-bold text-gray-700">Importo</dt>
+            <dd class="text-base font-black @if($excluded) text-red-600 @elseif($sharedFromFirst) text-emerald-700 @else text-indigo-700 @endif">
+                €{{ number_format($amount, 2) }}
+            </dd>
+        </div>
+
+        <div class="flex justify-between">
+            <dt class="font-bold text-gray-700">Posti</dt>
+            <dd class="font-black">{{ $slotsOccupied }}</dd>
+        </div>
+
+        {{-- Info aggiuntiva chiara se escluso o ripartito --}}
+        @if($excluded ?? false)
+            <div class="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-800">
+                Questo lavoro è <strong>fisso alla licenza</strong> e <strong>non conta</strong> nella ripartizione.
+            </div>
+        @elseif($sharedFromFirst ?? false)
+            <div class="mt-3 p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-xs text-emerald-800">
+                L'importo viene <strong>ripartito a partire dalla prima licenza</strong> del turno.
+            </div>
+        @endif
+    </dl>
+</div>
         @endif
 
         {{-- Configura Lavoro --}}

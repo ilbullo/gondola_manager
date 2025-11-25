@@ -26,8 +26,8 @@ export default {
     'bg-blue-500',
     
     // Pattern: ad esempio tutti i bg-* e text-*
-    { pattern: /^bg-(red|green|blue|yellow|gray|purple|pink|indigo)-\d{3}$/ },
-    { pattern: /^text-(red|green|blue|yellow|gray|purple|pink|indigo)-\d{3}$/ },
+    { pattern: /^bg-(red|green|blue|yellow|gray|purple|pink|indigo|teal)-\d{3}$/ },
+    { pattern: /^text-(red|green|blue|yellow|gray|purple|pink|indigo|teal)-\d{3}$/ },
     
     // Classi che cambiano in base a condizioni dinamiche
     'hidden',

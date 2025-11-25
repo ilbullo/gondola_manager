@@ -166,11 +166,11 @@ class WorkSplitterServiceTest extends TestCase
     private function creaLavoriDaRipartire(int $quanti, string $tipo, ?string $ora = null, bool $dalPrimo = false): void
     {
         $base = $ora ? Carbon::today()->setTimeFromTimeString($ora) : now();
-
+        $fakeLicense = LicenseTable::factory()->create();
         for ($i = 0; $i < $quanti; $i++) {
             $work = WorkAssignment::factory()->create([
-                'license_table_id'  => null,
-                'slot'              => null,
+                'license_table_id'  => $fakeLicense->id,
+                'slot'              => rand(1,25),
                 'value'             => $tipo,
                 'slots_occupied'    => 1,
                 'excluded'          => false,

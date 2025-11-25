@@ -72,7 +72,7 @@
                 </div>
                 <div class="ml-3 text-sm">
                     <label for="excluded" class="font-medium text-gray-700">Escluso da ripartizione</label>
-                    <p class="text-gray-500 text-xs">Il lavoro non verrà conteggiato nei calcoli finali.</p>
+                    <p class="text-gray-500 text-xs">Il lavoro non verrà conteggiato nella ripartizione.</p>
                 </div>
             </div>
 

@@ -65,4 +65,5 @@ class WorkAssignment extends Model
     {
         return $this->agency?->code;
     }
+
 }

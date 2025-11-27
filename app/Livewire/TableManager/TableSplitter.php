@@ -24,6 +24,22 @@ class TableSplitter extends Component
     public function mount(): void
     {
         $this->generateTable();
+        $licenses = LicenseTable::with([
+                'user:id,license_number',
+                'works' => fn($q) => $q->whereDate('timestamp', today())
+                    ->orderBy('slot')
+                    ->with('agency:id,name,code')
+            ])
+            ->whereDate('date', today())
+            ->orderBy('order')
+            ->get();
+
+            /******TEST DATA WHILE CREATING MATRIX SPLITTER SERVICE */
+            $licenseTable = \App\Http\Resources\LicenseResource::collection($licenses)->resolve();
+            $service = new \App\Services\MatrixSplitterService($licenseTable);
+            //$matrix = new \App\Services\MatrixSplitterService($originalMatrix);
+            //dd($matrix->processMatrix());
+            /***************************************** */
     }
 
     #[On('callRedistributeWorks')]

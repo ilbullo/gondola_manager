@@ -35,6 +35,7 @@ class LicenseResource extends JsonResource
 
                     $worksMap[$i] = [
                         'id'          => $work->id,
+                        'license_table_id' => $work->license_table_id,
                         'value'       => $work->value,
                         'agency_code' => $work->agency?->code,
                         'agency'      => $work->agency?->name,

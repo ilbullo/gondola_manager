@@ -139,22 +139,46 @@ class TableSplitter extends Component
     }
 
     // PDF FUNZIONANTI
-    public function printSplitTable(): void
-    {
-        Session::flash('pdf_generate', [
-            'view' => 'pdf.split-table',
-            'data' => [
-                'splitTable'  => collect($this->matrix),
-                'bancaleCost' => $this->bancaleCost,
-                'bancaleName' => Auth::user()->name,
-                'timestamp'   => now()->format('d/m/Y H:i'),
-            ],
-            'filename' => 'ripartizione_' . today()->format('Ymd') . '.pdf',
-            'orientation' => 'landscape',
-        ]);
+public function printSplitTable(): void
+{
+    // Prepara i dati esattamente come li usi nella vista attuale
+    $matrixData = collect($this->matrix)->map(function ($license) {
+        return [
+            'license_number' => $license['user']['license_number'] ?? '—',
+            'worksMap'       => $license['worksMap'],
+            'slots'          => $license['slots'] ?? 25,
+            'n_count'        => collect($license['worksMap'])->where('value', 'N')->count(),
+            'p_count'        => collect($license['worksMap'])->where('value', 'P')->count(),
+            'occupied'       => collect($license['worksMap'])->filter()->count(),
+            'cash_total'     => collect($license['worksMap'])->where('value', 'X')->sum('amount') ?? 0,
+        ];
+    })->sortBy('license_number')->values();
 
-        $this->redirectRoute('generate.pdf');
-    }
+    // Calcola totali per il footer del PDF (opzionale ma utile)
+    $totalN = $matrixData->sum('n_count');
+    $totalP = $matrixData->sum('p_count');
+    $totalOccupied = $matrixData->sum('occupied');
+    $totalCash = $matrixData->sum('cash_total') - $this->bancaleCost;
+
+    Session::flash('pdf_generate', [
+        'view'        => 'pdf.split-table',
+        'data'        => [
+            'matrix'       => $matrixData,
+            'bancaleCost'  => $this->bancaleCost,
+            'totalN'       => $totalN,
+            'totalP'       => $totalP,
+            'totalOccupied'=> $totalOccupied,
+            'totalCash'    => $totalCash,
+            'generatedBy'  => Auth::user()->name,
+            'generatedAt'  => now()->format('d/m/Y H:i'),
+            'date'         => now()->format('d/m/Y'),
+        ],
+        'filename'     => 'ripartizione_lavori_' . now()->format('Ymd') . '.pdf',
+        'orientation'  => 'landscape',
+    ]);
+
+    $this->redirectRoute('generate.pdf');
+}
 
     public function printAgencyReport(): void
     {

@@ -131,13 +131,39 @@
                                             wire:keydown.enter.prevent="{{ $isEmpty ? 'assignToSlot('.$licenseKey.', '.$slotIndex.')' : 'removeWork('.$licenseKey.', '.$slotIndex.')' }}"
                                         >
                                             @if($work)
-                                                <div class="flex flex-col justify-center h-14 leading-tight">
+                                                <div class="flex flex-col justify-center h-14 leading-tight relative">
+
+                                                    {{-- Valore principale --}}
                                                     <span class="font-bold text-sm">
                                                         {{ $work['value'] === 'A' ? ($work['agency_code'] ?? 'A') : strtoupper($work['value']) }}
                                                     </span>
-                                                    <span class="text-[10px] text-gray-600">
-                                                        {{ \Carbon\Carbon::parse($work['timestamp'])->format('H:i') }}
-                                                    </span>
+
+                                                    {{-- Ora --}}
+                                                   <!-- <span class="text-[10px] text-gray-600">
+                                                        {{--  --}}
+                                                    </span>-->
+
+                                                    {{-- Badge F (excluded) --}}
+                                                    @if($work['excluded'] ?? false)
+                                                        <span class="absolute top-0 right-0 inline-block px-1.5 py-0.5 mt-1 mr-1 text-[9px] font-bold rounded-full bg-red-100 text-red-700">
+                                                            F
+                                                        </span>
+                                                    @endif
+
+                                                    {{-- Badge R (shared_from_first) --}}
+                                                    @if($work['shared_from_first'] ?? false)
+                                                        <span class="absolute top-0 right-0 inline-block px-1.5 py-0.5 mt-1 mr-1 text-[9px] font-bold rounded-full bg-emerald-100 text-emerald-700">
+                                                            R
+                                                        </span>
+                                                    @endif
+
+                                                    {{-- Se entrambi i badge, li spostiamo leggermente per non sovrapporsi --}}
+                                                    @if(($work['excluded'] ?? false) && ($work['shared_from_first'] ?? false))
+                                                        <style>
+                                                            td .bg-red-100 { top: 2px; right: 14px; }
+                                                            td .bg-emerald-100 { top: 2px; right: 2px; }
+                                                        </style>
+                                                    @endif
                                                 </div>
                                             @else
                                                 <span class="text-gray-300 text-lg leading-none">–</span>
@@ -188,11 +214,17 @@
                     </div>
                 @endif
 
-                <div class="text-xs text-gray-600 grid grid-cols-4 gap-4">
+                <div class="text-xs text-gray-600 grid grid-cols-5 gap-4">
                     <div><span class="inline-block w-4 h-4 rounded bg-green-100 mr-2"></span>Contanti (X)</div>
                     <div><span class="inline-block w-4 h-4 rounded bg-indigo-100 mr-2"></span>Agenzie (A)</div>
                     <div><span class="inline-block w-4 h-4 rounded bg-yellow-100 mr-2"></span>Nolo (N)</div>
                     <div><span class="inline-block w-4 h-4 rounded bg-red-100 mr-2"></span>Perdi Volta (P)</div>
+                    <div class="flex items-center gap-2">
+                        <span class="inline-block px-1.5 py-0.5 text-[9px] font-bold rounded-full bg-red-100 text-red-700">F</span>
+                        <span>Escluso</span>
+                        <span class="inline-block px-1.5 py-0.5 ml-2 text-[9px] font-bold rounded-full bg-emerald-100 text-emerald-700">R</span>
+                        <span>Ripetuto</span>
+                    </div>
                 </div>
 
             </footer>

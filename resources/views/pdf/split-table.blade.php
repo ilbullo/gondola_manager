@@ -2,166 +2,142 @@
 <html lang="it">
 <head>
     <meta charset="utf-8">
-    <title>Ripartizione Lavori - {{ $timestamp }}</title>
-<style>
-    body {
-        font-family: "Calibri", Arial, sans-serif;
-        font-size: 9.5pt;
-        margin: 12mm 10mm;
-        color: #000;
-        line-height: 1.3;
-    }
-    h1 {
-        font-size: 16pt;
-        font-weight: bold;
-        text-align: center;
-        margin: 0 0 8px 0;
-        border-bottom: 1.5pt solid #000;   /* più sottile */
-        padding-bottom: 6px;
-    }
-    .header {
-        text-align: center;
-        font-size: 10pt;
-        margin-bottom: 12px;
-        font-weight: bold;
-    }
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 8px;
-        border: 1pt solid #999;            /* bordo esterno leggero */
-    }
-    th, td {
-        border: 0.5pt solid #aaa;          /* bordi interni leggerissimi */
-        padding: 6px 4px;
-        text-align: center;
-        font-size: 9.2pt;
-        vertical-align: middle;
-        background-color: transparent !important;
-    }
-    th {
-        font-weight: bold;
+    <title>Pagamento {{ $date }}</title>
+    <style>
+        @page { margin: 7mm 5mm; size: A4 landscape; }
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 8.4pt;
+            line-height: 1.25;
+            margin: 0;
+            color: #000;
+        }
+        h1 {
+            text-align: center;
+            font-size: 14pt;
+            font-weight: bold;
+            margin: 0 0 4px 0;
+            border-bottom: 1.5pt solid #000;
+        }
+        .info {
+            text-align: center;
+            font-size: 9pt;
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+            border: 0.5pt solid #000;           /* bordino sottilissimo esterno */
+        }
+        th, td {
+            border: 0.5pt solid #000;           /* bordi interni leggerissimi */
+            text-align: center;
+            vertical-align: middle;
+            padding: 3px 1px;
+            font-size: 8.6pt;
+        }
+        th {
+            font-weight: bold;
+            border-bottom: 2pt solid #000;
+            padding: 4px 1px;
+        }
+        /* larghezze */
+        .lic  { width: 62px; font-weight: bold; }
+        .cash { width: 78px; font-weight: bold; font-size: 9.8pt; }
+        .np   { width: 36px; font-weight: bold; }
+        .slot {
+            width: 29px !important;
+            height: 32px;
+            font-size: 9.4pt;
+            font-weight: normal;
+        }
+        .excluded { text-decoration: underline; text-decoration-thickness: 1.8pt; }
+        .shared   { font-weight: bold; }
 
-        border-bottom: 1.5pt solid #000;   /* solo header più marcato */
-    }
-    .license {
-        text-align: left;
-        font-weight: bold;
-        padding-left: 8px;
-        width: 145px;
-        border-left: 2pt solid #000;       /* bordo sinistro licenza più evidente */
-    }
-    .cash {
-        font-weight: bold;
-        font-size: 10.5pt;
-    }
-    .summary {
-        font-weight: bold;
-    }
-    .slot {
-        font-size: 8.8pt;
-    }
-    /* Lavoro fisso → grassetto + sottolineato */
-    .excluded {
-        font-weight: bold !important;
-        text-decoration: underline !important;
-    }
-    /* Lavoro condiviso → asterisco */
-    .sff::after {
-        content: "*";
-        font-weight: bold;
-    }
-    tfoot td {
-        font-weight: bold;
-        font-size: 10.5pt;
-        background-color: transparent !important;
-        border-top: 1.5pt solid #000;      /* totale con linea leggera ma visibile */
-    }
-    .footer-note {
-        margin-top: 15px;
-        font-size: 8.5pt;
-        color: #000;
-    }
-</style>
+        tfoot td {
+            font-weight: bold;
+            font-size: 10pt;
+            border-top: 2pt solid #000;
+        }
+        .note {
+            margin-top: 8px;
+            font-size: 8.6pt;
+            line-height: 1.3;
+        }
+        footer {
+            text-align:center;
+        }
+    </style>
 </head>
 <body>
 
-    <h1>RIPARTIZIONE LAVORI GIORNALIERA</h1>
-    <div class="header">
-        {{ $timestamp }} — Costo bancale: € {{ number_format($bancaleCost, 2) }}
-        @if(isset($bancaleName))
-            — Bancale in servizio: {{ $bancaleName }}
-        @endif
+    <h1>PAGAMENTO LAVORI</h1>
+    <div class="info">
+        {{ $date }} — Costo Bancale € {{ number_format($bancaleCost, 2) }} - Bancale in servizio <strong>{{ $generatedBy }}</strong>
     </div>
 
     <table>
         <thead>
             <tr>
-                <th class="license">Licenza / Operatore</th>
-                <th class="cash">Contanti Dovuti</th>
-                <th class="summary">N</th>
-                <th class="summary">P</th>
+                <th class="lic">Lic.</th>
+                <th class="cash">Cash</th>
+                <th class="np">N</th>
+                <th class="np">P</th>
                 @for($i = 1; $i <= 25; $i++)
-                    <th style="font-size:8.5pt;">{{ $i }}</th>
+                    <th class="slot">{{ $i }}</th>
                 @endfor
             </tr>
         </thead>
         <tbody>
-            @foreach($splitTable as $row)
+            @foreach($matrix as $row)
+                @php $netCash = $row['cash_total'] - $bancaleCost; @endphp
                 <tr>
-                    <td class="license">
-                        {{ $row['license'] }} 
-                        <small style="color:#555;font-size:8pt;">{{ $row['user_name'] }}</small>
-                    </td>
-                    <td class="cash">€ {{ number_format($row['cash_due'], 2) }}</td>
-                    <td class="summary">{{ $row['n_count'] }}</td>
-                    <td class="summary">{{ $row['p_count'] }}</td>
+                    <td class="lic">{{ $row['license_number'] }}</td>
+                    <td class="cash">€ {{ number_format($netCash, 0) }}</td>
+                    <td class="np">{{ $row['n_count'] }}</td>
+                    <td class="np">{{ $row['p_count'] }}</td>
 
-                    @for($s = 1; $s <= 25; $s++)
+                    @for($slot = 0; $slot < 25; $slot++)
                         @php
-                            $work = $row['assignments'][$s] ?? null;
-                            $isMain = $work && ($work->slot ?? null) === $s;
+                            $work = $row['worksMap'][$slot] ?? null;
+                            $isAgency   = $work && $work['value'] === 'A';
+                            $isExcluded = $work && ($work['excluded'] ?? false);
+                            $isShared   = $work && ($work['shared_from_first'] ?? false);
                         @endphp
-
-                        @if($isMain)
-                            <td colspan="{{ $work->slots_occupied }}"
-                                class="slot {{ $work->value }}
-                                       {{ ($work->excluded ?? false) ? 'excluded' : '' }}
-                                       {{ ($work->shared_from_first ?? false) ? 'sff' : '' }}">
-                                @if($work->value === 'A')
-                                    <strong>{{ $work->agency->code ?? 'AG' }}</strong>
-                                @else
-                                    {{ $work->value }}
-                                @endif
-                            </td>
-                        @elseif(!$work)
-                            <td></td>
-                        @endif
+                        <td class="slot">
+                            @if($work)
+                                <span class="{{ $isExcluded ? 'excluded' : '' }} {{ $isShared ? 'shared' : '' }}">
+                                    {{ $isAgency ? ($work['agency_code'] ?? 'AG') : strtoupper($work['value']) }}
+                                </span>
+                            @else
+                                –
+                            @endif
+                        </td>
                     @endfor
                 </tr>
             @endforeach
         </tbody>
         <tfoot>
             <tr>
-                <td style="text-align:right; font-weight:bold;">TOTALE GENERALE</td>
-                <td>€ {{ number_format(collect($splitTable)->sum('cash_due'), 2) }}</td>
-                <td>{{ collect($splitTable)->sum('n_count') }}</td>
-                <td>{{ collect($splitTable)->sum('p_count') }}</td>
+                <td>Tot.</td>
+                <td class="cash">€ {{ number_format($totalCash, 0) }}</td>
+                <td class="np">{{ $totalN }}</td>
+                <td class="np">{{ $totalP }}</td>
                 <td colspan="25"></td>
             </tr>
         </tfoot>
     </table>
 
-    <div class="footer-note">
-        <strong>Legenda:</strong>
-        • Codice in grassetto = Lavoro Agenzia
-        • Sottolineato = Lavoro fisso (escluso da ripartizione)
-        • * = Lavoro ripartito dal primo turno
-        • N = Nolo
-        • X = Contanti
-        • P = Perdi Volta
-
+    <div class="note">
+        <strong>Legenda:</strong> 
+        Normale = lavoro normale • 
+        <strong>Grassetto</strong> = ufficio • 
+        <u>Sottolineato</u> = lavoro fisso alla licenza
     </div>
-
+    <footer>
+       Generato alle {{ $generatedAt }} da {{ $generatedBy }}
+    </footer>
 </body>
 </html>

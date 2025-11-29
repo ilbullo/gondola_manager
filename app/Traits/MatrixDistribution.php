@@ -2,9 +2,7 @@
 
 namespace App\Traits;
 
-use DateTimeInterface;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
 trait MatrixDistribution {
@@ -35,7 +33,7 @@ trait MatrixDistribution {
     private function isAllowedToBeAdded($key,$work) {
         $matrixItem = $this->matrix->toArray()[$key];
         $value = $work['value'];
-        if ($key == 1 && $work['value'] == "A") {return false;}
+        //if ($key == 2 && $work['value'] == "A") {return false;}
         return !(!empty($matrixItem['blocked_works']) && in_array($value, $matrixItem['blocked_works'], true));
             
     }
@@ -114,14 +112,13 @@ trait MatrixDistribution {
                     
                     if($worksToAssign->isEmpty()) {break 2;}
                 }
-
-                //lavori rimasti non assegnati
-                foreach($worksToAssign as $work) {
-                    $this->addToUnassigned($work);
-                }
             }
         }
     }
+    //lavori rimasti non assegnati
+                foreach($worksToAssign as $work) {
+                    $this->addToUnassigned($work);
+                }
    }
 
    public function distributeFixed($worksToAssign) {

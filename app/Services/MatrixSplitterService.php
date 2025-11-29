@@ -30,11 +30,9 @@ class MatrixSplitterService
         $this->distribute($this->sharableFirstWorks()->values(),true);
         $this->distribute($this->pendingCashWorks()); 
         $this->distributeFixed($this->pendingNPWorks());
-        dump($this->unassignedWorks);
-        dump($this->debugInfo());
+        //dump($this->unassignedWorks);
+        //dump($this->debugInfo());
         //dump($this->allWorks());
-
-        //QUINTO UOMO !!!!!!!!!!!!!!!
     }
 
 }

@@ -180,63 +180,79 @@ public function printSplitTable(): void
     $this->redirectRoute('generate.pdf');
 }
 
-    public function printAgencyReport(): void
-    {
-        $agencyReport = $this->prepareAgencyReport();
+public function printAgencyReport(): void
+{
+    $agencyReport = $this->prepareAgencyReport();
 
-        Session::flash('pdf_generate', [
-            'view' => 'pdf.agency-report',
-            'data' => [
-                'agencyReport' => $agencyReport,
-                'timestamp'   => now()->format('d/m/Y H:i'),
-            ],
-            'filename' => 'report_agenzie_' . today()->format('Ymd') . '.pdf',
-            'orientation' => 'portrait',
-        ]);
+    Session::flash('pdf_generate', [
+        'view'        => 'pdf.agency-report',
+        'data'        => [
+            'agencyReport' => $agencyReport,
+            'generatedBy'  => Auth::user()->name,
+            'generatedAt'  => now()->format('d/m/Y H:i'),
+            'date'         => today()->format('d/m/Y'),        // <-- serve per la vista
+            'totalLicenses' => collect($this->matrix)->count(),
+        ],
+        'filename'     => 'report_agenzie_' . today()->format('Ymd') . '.pdf',
+        'orientation'  => 'portrait',
+    ]);
 
-        $this->redirectRoute('generate.pdf');
-    }
+    $this->redirectRoute('generate.pdf');
+}
 
-    private function prepareAgencyReport(): array
-    {
-        $report = [];
+private function prepareAgencyReport(): array
+{
+    $services = [];
 
-        foreach ($this->matrix as $license) {
-            $licenseNumber = $license['user']['license_number'] ?? 'N/D';
+    foreach ($this->matrix as $licenseRow) {
+        $licenseNumber = $licenseRow['user']['license_number'] ?? 'N/D';
 
-            foreach ($license['worksMap'] as $slot => $work) {
-                if (!$work || ($work['value'] ?? '') !== 'A') continue;
-
-                $agencyName = $work['agency']['name'] ?? 'N/A';
-                $voucher   = $work['voucher'] ?? '-';
-                $time = \Carbon\Carbon::parse($work['timestamp'])->format('H:i');
-
-                $key = $agencyName . '|' . \Carbon\Carbon::parse($work['timestamp'])->format('YmdHi') . '|' . $voucher;
-
-                if (!isset($report[$key])) {
-                    $report[$key] = [
-                        'agency_name'     => $agencyName,
-                        'time'           => $time,
-                        'voucher'        => $voucher,
-                        'license_numbers' => [],
-                    ];
-                }
-                $report[$key]['license_numbers'][] = $licenseNumber;
+        foreach ($licenseRow['worksMap'] as $work) {
+            if (empty($work) || ($work['value'] ?? '') !== 'A') {
+                continue;
             }
-        }
 
-        return collect($report)
-            ->map(fn($item) => [
-                ...$item,
-                'license_numbers' => collect($item['license_numbers'])->unique()->sort()->implode(', ')
-            ])
-            ->sortBy('time')
-            ->values()
-            ->groupBy('agency_name')
-            ->map(fn($g) => $g->values()->toArray())
-            ->toArray();
+            $agencyName = $work['agency']['name']
+                ?? $work['agency_name']
+                ?? $work['agency']
+                ?? 'Agenzia sconosciuta';
+
+            $voucher = trim($work['voucher'] ?? '') ?: '–';
+            $timestamp = $work['timestamp'] ?? now();
+            $time = \Carbon\Carbon::parse($timestamp)->format('H:i');
+
+            // Chiave univoca: Agenzia + Voucher
+            $key = $agencyName . '|||' . $voucher;
+
+            if (!isset($services[$key])) {
+                $services[$key] = [
+                    'agency_name' => $agencyName,
+                    'voucher'     => $voucher,
+                    'times'       => [],
+                    'licenses'    => [],
+                ];
+            }
+
+            $services[$key]['times'][]     = $time;
+            $services[$key]['licenses'][]  = $licenseNumber;
+        }
     }
 
+    // Ordina per nome agenzia
+    ksort($services);
+
+    return collect($services)->map(function ($item) {
+        $uniqueLicenses = collect($item['licenses'])->unique()->sort()->values();
+        $uniqueTimes    = collect($item['times'])->unique()->sort()->values();
+
+        return [
+            'agency_display' => $item['agency_name'] . ($item['voucher'] !== '–' ? ' – ' . $item['voucher'] : ''),
+            'times'          => $uniqueTimes->implode(' | '),   // ← tutte le ore
+            'licenses'       => $uniqueLicenses->implode(' - '),
+            'count'          => $uniqueLicenses->count(),
+        ];
+    })->values()->toArray();
+}
     public function render()
     {
         //return view('livewire.table-manager.table-splitter'); // ← usa questa vista!

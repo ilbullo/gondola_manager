@@ -4,132 +4,192 @@
 
 namespace App\Traits;
 
+use DateTimeInterface;
 use Illuminate\Support\Collection;
 
 trait HasWorkQueries
 {
-    /**
-     * Tutti i lavori "A" (Agenzie) nella matrice
-     */
-    public function agencyWorks(): Collection
-    {
-        return $this->worksByType('A');
-    }
+    //use DistributesWorksToMatrix;
 
-    /**
-     * Tutti i lavori "X"
-     */
-    public function extraWorks(): Collection
-    {
-        return $this->worksByType('X');
-    }
+    /** @var array|Collection */
+    public $licenseTable = [];
 
-    /**
-     * Tutti i lavori "P" o "N"
-     */
-    public function presenceWorks(): Collection
-    {
-        return $this->worksByType(['P', 'N']);
-    }
+    /** @var Collection */
+    public $matrix;
 
-    /**
-     * Lavori esclusi (excluded = true)
-     */
-    public function excludedWorks(): Collection
-    {
-        return $this->allWorks()->where('excluded', true);
-    }
+    // =====================================================================
+    // 1. METODI BASE – Tutti funzionano e restituiscono Collection
+    // =====================================================================
 
-    /**
-     * Lavori ripartiti dal primo
-     */
-    public function sharedFromFirstWorks(): Collection
-    {
-        return $this->allWorks()->where('shared_from_first', true);
-    }
-
-    /**
-     * Tutti i lavori occupati (non null)
-     */
     public function allWorks(): Collection
     {
         return collect($this->licenseTable ?? [])
-            ->flatMap->worksMap
-            ->filter(); // rimuove automaticamente i null
+            ->flatMap(fn ($license) => $license['worksMap'] ?? [])
+            ->filter()
+            ->sortBy('timestamp')
+            ->values(); // rimuove null e valori vuoti
     }
 
-    /**
-     * Guadagno totale (esclusi i lavori fissi)
-     */
-    public function totalEarnings(): float
+    public function sharableWorks(): Collection
     {
         return $this->allWorks()
             ->where('excluded', false)
-            ->sum('amount');
+            ->where('shared_from_first', false);
     }
 
-    /**
-     * Guadagno totale inclusi fissi
-     */
-    public function totalEarningsWithFixed(): float
+    public function unsharableWorks() : Collection 
     {
-        return $this->allWorks()->sum('amount');
+        return $this->allWorks()
+            ->where('excluded',true)
+            ->where('shared_from_first',false);
     }
 
-    /**
-     * Riepilogo completo in una riga
-     */
-    public function workSummary(): array
+    public function sharableFirstWorks() : Collection 
+    {
+        return $this->allWorks()
+            ->where('excluded',false)
+            ->where('shared_from_first',true);
+    }
+
+    public function morningWorks(): Collection
+    {
+        return $this->sharableWorks()->filter(fn ($work) => $this->isMorning($work));
+    }
+
+    public function afternoonWorks(): Collection
+    {
+        return $this->sharableWorks()->filter(fn ($work) => $this->isAfternoon($work));
+    }
+
+    // =====================================================================
+    // 2. METODI PRONTI ALL'USO – USA QUESTI NEL SERVICE (FUNZIONANO!)
+    // =====================================================================
+
+    public function fixedAgencyWorks() : Collection 
+    {
+        return $this->unsharableWorks()->where('value','A');
+    }
+
+    public function pendingMorningAgencyWorks(): Collection
+    {
+        return $this->morningWorks()->where('value', 'A');
+    }
+
+    public function pendingAfternoonAgencyWorks(): Collection
+    {
+        return $this->afternoonWorks()->where('value', 'A');
+    }
+
+    public function pendingCashWorks(): Collection
+    {
+        return $this->sharableWorks()->where('value', 'X');
+    }
+
+    public function pendingNPWorks(): Collection
+    {
+        return $this->sharableWorks()->whereIn('value', ['P', 'N']);
+    }
+    
+
+    // =====================================================================
+    // 3. PREPARE MATRIX – OBBLIGATORIO PRIMA DI DISTRIBUTE
+    // =====================================================================
+
+    public function prepareMatrix(): void
+    {
+        $emptyRow = [
+            'id' => null,
+            'license_table_id' => null,
+            'user' => null,
+            'shift' => 'full',
+            'real_slots_today' => 25,
+            'capacity' => 0,
+            'blocked_works' => [],
+            'worksMap' => array_fill(0, 25, null),
+        ];
+
+        $this->matrix = collect($this->licenseTable ?? [])
+            ->map(fn () => $emptyRow)
+            ->values();
+
+        foreach ($this->licenseTable ?? [] as $index => $license) {
+            $this->matrix[$index] = array_merge($this->matrix[$index], [
+                'id' => $license['id'] ?? null,
+                'license_table_id' => $license['id'] ?? null,        // ← IMPORTANTE
+                'user' => $license['user'] ?? null,
+                'shift' => $license['shift'] ?? 'full',
+                'capacity' => $license['capacity'],
+                'slots'    => $license['slots'],
+                'real_slots_today' => $license['real_slots_today'] ?? 25,
+            ]);
+        }
+
+        $this->matrix = $this->matrix->values(); // indici 0,1,2... per round-robin
+    }
+
+    // =====================================================================
+    // 4. HELPER PRIVATI – Robustissimi
+    // =====================================================================
+
+    private function isMorning($work): bool
+    {
+        $time = $this->extractTime($work);
+
+        return $time !== null && $time <= '13:00';
+    }
+
+    private function isAfternoon($work): bool
+    {
+        $time = $this->extractTime($work);
+
+        return $time !== null && $time >= '13:31';
+    }
+
+    private function extractTime($work): ?string
+    {
+        $ts = $work['timestamp'] ?? null;
+        if (! $ts) {
+            return null;
+        }
+
+        // DateTime object
+        if ($ts instanceof DateTimeInterface) {
+            return $ts->format('H:i');
+        }
+
+        // Stringa completa: "2025-11-28 12:30:00"
+        if (is_string($ts) && strlen($ts) >= 19) {
+            return substr($ts, 11, 5);
+        }
+
+        // Solo orario: "14:30:00" o "14:30"
+        if (is_string($ts) && preg_match('/^(\d{2}:\d{2})/', $ts, $matches)) {
+            return $matches[1];
+        }
+
+        return null;
+    }
+
+    // =====================================================================
+    // 5. DEBUG & REPORT (opzionali ma utili)
+    // =====================================================================
+
+    public function debugInfo(): array
     {
         return [
-            'total_works'           => $this->allWorks()->count(),
-            'agency_works'          => $this->agencyWorks()->count(),
-            'extra_works'           => $this->extraWorks()->count(),
-            'excluded_works'        => $this->excludedWorks()->count(),
-            'shared_from_first'     => $this->sharedFromFirstWorks()->count(),
-            'total_earnings'        => $this->totalEarnings(),
-            'total_including_fixed' => $this->totalEarningsWithFixed(),
+            'total_licenses' => count($this->licenseTable ?? []),
+            'total_works' => $this->allWorks()->count(),
+            'sharable_works' => $this->sharableWorks()->count(),
+            'morning_agencies' => $this->pendingMorningAgencyWorks()->count(),
+            'afternoon_agencies' => $this->pendingAfternoonAgencyWorks()->count(),
+            'extra_works' => $this->pendingCashWorks()->count(),
+            'n_or_p_works' => $this->pendingNPWorks()->count(),
+            'sample_morning_A' => $this->pendingMorningAgencyWorks()->take(2)->toArray(),
         ];
     }
 
-    /**
-     * Metodo generico privato – riutilizzato da tutti
-     */
-    private function worksByType(string|array $type): Collection
+    public function totalEarnings(): float
     {
-        $types = is_array($type) ? $type : [$type];
-
-        return $this->allWorks()->whereIn('value', $types);
+        return (float) $this->sharableWorks()->sum('amount');
     }
-
-    /**
- * Crea una matrice vuota con lo stesso numero di righe della matrice corrente
- */
-public function emptyMatrixLike(): array
-{
-    return collect($this->licenseTable ?? [])
-        ->keys()
-        ->map(fn() => [
-            'id'               => null,
-            'license_table_id' => null,
-            'user'             => null,
-            'worksMap'         => array_fill(1, 25, null),
-        ])
-        ->all();
-}
-
-private function prepareMatrix() {
-        
-        $this->matrix = $this->emptyMatrixLike(); //prepara la matrice vuota
-
-        $columnsToCopy = array_flip(['id', 'license_table_id', 'user']); //inserisco le colonne da copiare
-        
-        foreach ($this->licenseTable as $rowKey => $dataRow) {
-            $this->matrix[$rowKey] = array_merge(
-                $this->matrix[$rowKey],
-                array_intersect_key($dataRow, $columnsToCopy)
-            );
-        }
-    }
-
 }

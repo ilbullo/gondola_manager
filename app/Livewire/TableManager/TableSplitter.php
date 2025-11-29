@@ -18,6 +18,9 @@ class TableSplitter extends Component
     public array $excludedFromA = [];
     public array $shifts = [];
 
+    //added
+    public $matrix;
+
     // NUOVO: Statistiche di validazione (Expected vs Actual)
     public array $validationStats = []; 
 
@@ -30,13 +33,14 @@ class TableSplitter extends Component
                     ->orderBy('slot')
                     ->with('agency:id,name,code')
             ])
+            ->withCount(['works' => fn($q) => $q->whereDate('timestamp', today())])
             ->whereDate('date', today())
             ->orderBy('order')
             ->get();
-
             /******TEST DATA WHILE CREATING MATRIX SPLITTER SERVICE */
             $licenseTable = \App\Http\Resources\LicenseResource::collection($licenses)->resolve();
             $service = new \App\Services\MatrixSplitterService($licenseTable);
+            $this->matrix = $service->matrix;
             //$matrix = new \App\Services\MatrixSplitterService($originalMatrix);
             //dd($matrix->processMatrix());
             /***************************************** */
@@ -188,6 +192,7 @@ class TableSplitter extends Component
 
     public function render()
     {
-        return view('livewire.table-manager.table-splitter');
+        return view('debug.matrix-preview',['matrix' => $this->matrix]);
+        //return view('livewire.table-manager.table-splitter');
     }
 }

@@ -42,7 +42,9 @@ class LicenseResource extends JsonResource
                         'amount'      => $work->amount,
                         'voucher'     => $work->voucher,
                         'excluded'    => $work->excluded,
+                        'slot'        => $work->slots_occupied,
                         'shared_from_first' => $work->shared_from_first,
+                        'timestamp'   => $work->timestamp->toDateTimeString(),
                         'created_at'  => optional($work->created_at)->toDateTimeString(),
                         'updated_at'  => optional($work->updated_at)->toDateTimeString()
                     ];
@@ -50,13 +52,15 @@ class LicenseResource extends JsonResource
             }
 
             return [
-                'id'               => $this->id,
-                'license_table_id' => $this->id,
-                'user'             => $this->user ? [
-                    'id'             => $this->user->id,
-                    'license_number' => $this->user->license_number,
+                'id'                => $this->id,
+                'license_table_id'  => $this->id,
+                'user'              => $this->user ? [
+                    'id'            => $this->user->id,
+                    'license_number'=> $this->user->license_number,
                 ] : null,
-                'worksMap'         => $worksMap,
+                'capacity'          => $this->works_count,
+                'slots'             =>  array_sum(array_column($worksMap, 'slot')),
+                'worksMap'          => $worksMap,
             ];
         } catch (Throwable $e) {
             // In caso di errore GRAVE, restituisci comunque una struttura valida

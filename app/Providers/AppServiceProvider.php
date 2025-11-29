@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Gate;
 
 class AppServiceProvider extends AuthServiceProvider
 {
+
     /**
      * The policy mappings for the application.
      *
@@ -88,5 +89,6 @@ class AppServiceProvider extends AuthServiceProvider
                 'isUser'    => auth()->check() && auth()->user()->role === UserRole::USER,
             ]);
         });
+
     }
 }

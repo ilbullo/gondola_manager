@@ -252,6 +252,6 @@ private function prepareAgencyReport(): array
     public function render()
     {
         //return view('livewire.table-manager.table-splitter'); // ← usa questa vista!
-        return view('debug.matrix-preview');
+        return view('livewire.table-manager.matrix-preview');
     }
 }

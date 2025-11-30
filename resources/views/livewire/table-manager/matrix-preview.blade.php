@@ -47,7 +47,40 @@
 
         {{-- Tabella matrice --}}
         <div class="flex-1 bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden flex flex-col">
-
+                            @if ($unassignedWorks)
+                    <div class="bg-amber-50 border border-amber-400 rounded-xl p-3">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm font-bold text-amber-900">
+                                Lavori da assegnare ({{ count($unassignedWorks) }})
+                            </span>
+                            @if ($selectedWork)
+                                <span class="text-xs font-medium text-blue-700">
+                                    → Selezionato: <strong>{{ strtoupper($selectedWork['value']) }}</strong>
+                                    <button wire:click="deselectWork"
+                                        class="ml-1 underline text-blue-600">deseleziona</button>
+                                </span>
+                            @endif
+                        </div>
+                        <div class="grid grid-cols-8 sm:grid-cols-10 lg:grid-cols-12 gap-2">
+                            @foreach ($unassignedWorks as $index => $work)
+                                @php $type = \App\Enums\WorkType::tryFrom($work['value']); @endphp
+                                <button wire:click="selectUnassignedWork({{ $index }})"
+                                    wire:key="unassigned-{{ $index }}"
+                                    class="p-2 rounded-lg border text-center text-xs font-medium transition-all hover:scale-105 focus:ring-2 focus:ring-blue-400
+                                               {{ $selectedWork && data_get($selectedWork, 'id') == data_get($work, 'id')
+                                                   ? 'bg-blue-600 text-white border-blue-800 ring-2 ring-blue-400 shadow-md'
+                                                   : $type?->colourClass() ?? 'bg-gray-100 border-gray-300' }}">
+                                    <div class="font-bold text-sm">
+                                        {{ $work['value'] === 'A' ? $work['agency_code'] ?? 'A' : strtoupper($work['value']) }}
+                                    </div>
+                                    <div class="text-[10px] opacity-80">
+                                        {{ \Carbon\Carbon::parse($work['timestamp'])->format('H:i') }}
+                                    </div>
+                                </button>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
             <div class="flex-1 overflow-auto">
                 <div class="min-w-[1450px]">
                     <table class="w-full border-collapse text-xs">
@@ -208,42 +241,6 @@
 
             {{-- Footer --}}
             <footer class="bg-gray-50 border-t border-gray-200 p-4 space-y-4">
-
-                @if ($unassignedWorks)
-                    <div class="bg-amber-50 border border-amber-400 rounded-xl p-3">
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="text-sm font-bold text-amber-900">
-                                Lavori da assegnare ({{ count($unassignedWorks) }})
-                            </span>
-                            @if ($selectedWork)
-                                <span class="text-xs font-medium text-blue-700">
-                                    → Selezionato: <strong>{{ strtoupper($selectedWork['value']) }}</strong>
-                                    <button wire:click="deselectWork"
-                                        class="ml-1 underline text-blue-600">deseleziona</button>
-                                </span>
-                            @endif
-                        </div>
-                        <div class="grid grid-cols-8 sm:grid-cols-10 lg:grid-cols-12 gap-2">
-                            @foreach ($unassignedWorks as $index => $work)
-                                @php $type = \App\Enums\WorkType::tryFrom($work['value']); @endphp
-                                <button wire:click="selectUnassignedWork({{ $index }})"
-                                    wire:key="unassigned-{{ $index }}"
-                                    class="p-2 rounded-lg border text-center text-xs font-medium transition-all hover:scale-105 focus:ring-2 focus:ring-blue-400
-                                               {{ $selectedWork && data_get($selectedWork, 'id') == data_get($work, 'id')
-                                                   ? 'bg-blue-600 text-white border-blue-800 ring-2 ring-blue-400 shadow-md'
-                                                   : $type?->colourClass() ?? 'bg-gray-100 border-gray-300' }}">
-                                    <div class="font-bold text-sm">
-                                        {{ $work['value'] === 'A' ? $work['agency_code'] ?? 'A' : strtoupper($work['value']) }}
-                                    </div>
-                                    <div class="text-[10px] opacity-80">
-                                        {{ \Carbon\Carbon::parse($work['timestamp'])->format('H:i') }}
-                                    </div>
-                                </button>
-                            @endforeach
-                        </div>
-                    </div>
-                @endif
-
                 <div class="text-xs text-gray-600 grid grid-cols-5 gap-4">
                     <div><span class="inline-block w-4 h-4 rounded bg-green-100 mr-2"></span>Contanti (X)</div>
                     <div><span class="inline-block w-4 h-4 rounded bg-indigo-100 mr-2"></span>Agenzie (A)</div>

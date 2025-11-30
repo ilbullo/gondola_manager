@@ -195,7 +195,7 @@ class TableSplitter extends Component
 
     public function render()
     {
-        return view('debug.matrix-preview',[
+        return view('livewire.table-manager.matrix-preview',[
             'matrix' => $this->matrix,    
             'unassignedWorks' => $this->unassignedWorks,
         ]);

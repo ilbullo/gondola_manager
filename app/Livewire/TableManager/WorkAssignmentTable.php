@@ -5,6 +5,8 @@ namespace App\Livewire\TableManager;
 use App\Http\Resources\LicenseResource;
 use App\Models\{Agency, LicenseTable, WorkAssignment};
 use Livewire\Attributes\On;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Session;
 use Livewire\Component;
 
 class WorkAssignmentTable extends Component
@@ -44,27 +46,26 @@ class WorkAssignmentTable extends Component
     {
         // Rimosse chiamate esplicite a dispatch('toggleLoading', ...)
         // perché in conflitto con wire:loading.flex
-        
+
         $licenseTableId = $payload['licenseTableId'] ?? null;
 
         if (!$licenseTableId) {
             $this->errorMessage = 'Dati mancanti per rimuovere l\'assegnazione.';
             return;
         }
-        
+
         $this->dispatch('closeWorkInfoModal');
 
         try {
             // Uso sicuro di destroy per eliminare l'assegnazione
             $deleted = WorkAssignment::destroy($licenseTableId);
-            
+
             if ($deleted > 0) {
                 $this->refreshTable();
                 $this->errorMessage = '';
             } else {
-                 $this->errorMessage = 'Lavoro già rimosso o ID non trovato.';
+                $this->errorMessage = 'Lavoro già rimosso o ID non trovato.';
             }
-
         } catch (\Throwable $e) {
             report($e);
             $this->errorMessage = 'Errore durante la rimozione del lavoro: ' . $e->getMessage();
@@ -80,10 +81,11 @@ class WorkAssignmentTable extends Component
 
         $this->saveAssignment($licenseTableId, $slot, $this->selectedWork['slotsOccupied'] ?? 1);
     }
-    
-    public function openInfoBox($workId) {
+
+    public function openInfoBox($workId)
+    {
         // wire:loading si attiverà automaticamente
-        $this->dispatch('showWorkInfo', $workId);    
+        $this->dispatch('showWorkInfo', $workId);
     }
 
     private function saveAssignment(int $licenseTableId, int $slot, int $slotsOccupied): void
@@ -100,7 +102,7 @@ class WorkAssignmentTable extends Component
                 ->whereDate('timestamp', today())
                 ->where(function ($q) use ($slot, $slotsOccupied) {
                     $q->where('slot', '<=', $slot + $slotsOccupied - 1)
-                      ->whereRaw('slot + slots_occupied - 1 >= ?', [$slot]);
+                        ->whereRaw('slot + slots_occupied - 1 >= ?', [$slot]);
                 })
                 ->exists();
 
@@ -119,14 +121,13 @@ class WorkAssignmentTable extends Component
                 'voucher'          => $this->selectedWork['voucher'] ?? null,
                 'slots_occupied'   => $slotsOccupied,
                 'excluded'         => $this->selectedWork['excluded'] ?? false,
-                'shared_from_first'=> $this->selectedWork['sharedFromFirst'] ?? false,
+                'shared_from_first' => $this->selectedWork['sharedFromFirst'] ?? false,
                 'timestamp'        => now(),
             ]);
 
             $this->refreshTable();
             $this->errorMessage = '';
             $this->dispatch('workAssigned');
-            
         } catch (\Throwable $e) {
             report($e);
             $this->errorMessage = 'Errore durante l\'assegnazione del lavoro: ' . $e->getMessage();
@@ -137,16 +138,43 @@ class WorkAssignmentTable extends Component
     public function refreshTable(): void
     {
         $licenses = LicenseTable::with([
-                'user:id,license_number',
-                'works' => fn($q) => $q->whereDate('timestamp', today())
-                    ->orderBy('slot')
-                    ->with('agency:id,name,code')
-            ])
+            'user:id,license_number',
+            'works' => fn($q) => $q->whereDate('timestamp', today())
+                ->orderBy('slot')
+                ->with('agency:id,name,code')
+        ])
             ->whereDate('date', today())
             ->orderBy('order')
             ->get();
 
         $this->licenses = LicenseResource::collection($licenses)->resolve();
+    }
+
+    #[On('printWorksTable')]    
+    public function printTable(): void
+    {
+        // Usa gli stessi dati già calcolati nel component
+        $matrixData = collect($this->licenses)->map(function ($license) {
+            return [
+                'license_number' => $license['user']['license_number'] ?? '—',
+                'worksMap'       => $license['worksMap'],
+            ];
+        })->sortBy('user.license_number')->values();
+
+        Session::flash('pdf_generate', [
+            'view'       => 'pdf.work-assignment-table', // crea questa vista (vedi sotto)
+            'data'       => [
+                'matrix'      => $matrixData,
+                'generatedBy' => Auth::user()->name ?? 'Sistema',
+                'generatedAt' => now()->format('d/m/Y H:i'),
+                'date'        => today()->format('d/m/Y'),
+            ],
+            'filename'    => 'tabella_assegnazione_' . today()->format('Ymd') . '.pdf',
+            'orientation' => 'landscape',
+            'paper'       => 'a2', // o 'a1' se serve più spazio
+        ]);
+
+        $this->redirectRoute('generate.pdf');
     }
 
     // ===================================================================

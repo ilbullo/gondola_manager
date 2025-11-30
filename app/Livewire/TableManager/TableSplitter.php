@@ -208,9 +208,7 @@ private function prepareAgencyReport(): array
         $licenseNumber = $licenseRow['user']['license_number'] ?? 'N/D';
 
         foreach ($licenseRow['worksMap'] as $work) {
-            if (empty($work) || ($work['value'] ?? '') !== 'A') {
-                continue;
-            }
+            if (empty($work) || ($work['value'] ?? '') !== 'A') continue;
 
             $agencyName = $work['agency']['name']
                 ?? $work['agency_name']
@@ -218,38 +216,36 @@ private function prepareAgencyReport(): array
                 ?? 'Agenzia sconosciuta';
 
             $voucher = trim($work['voucher'] ?? '') ?: '–';
-            $timestamp = $work['timestamp'] ?? now();
-            $time = \Carbon\Carbon::parse($timestamp)->format('H:i');
+            $time    = \Carbon\Carbon::parse($work['timestamp'] ?? now())->format('H:i');
 
-            // Chiave univoca: Agenzia + Voucher
-            $key = $agencyName . '|||' . $voucher;
+            // Raggruppa per Agenzia + Voucher + Orario (unico orario per servizio)
+            $key = $agencyName . '|' . $voucher . '|' . $time;
 
             if (!isset($services[$key])) {
                 $services[$key] = [
                     'agency_name' => $agencyName,
                     'voucher'     => $voucher,
-                    'times'       => [],
+                    'time'        => $time,
                     'licenses'    => [],
                 ];
             }
-
-            $services[$key]['times'][]     = $time;
-            $services[$key]['licenses'][]  = $licenseNumber;
+            $services[$key]['licenses'][] = $licenseNumber;
         }
     }
 
-    // Ordina per nome agenzia
-    ksort($services);
+    // Ordina per agenzia → voucher → orario
+    uasort($services, function ($a, $b) {
+        return strtotime($a['time']) <=> strtotime($b['time']);
+    });
 
     return collect($services)->map(function ($item) {
-        $uniqueLicenses = collect($item['licenses'])->unique()->sort()->values();
-        $uniqueTimes    = collect($item['times'])->unique()->sort()->values();
-
+        $licenses = collect($item['licenses'])->unique()->sort()->values();
         return [
-            'agency_display' => $item['agency_name'] . ($item['voucher'] !== '–' ? ' – ' . $item['voucher'] : ''),
-            'times'          => $uniqueTimes->implode(' | '),   // ← tutte le ore
-            'licenses'       => $uniqueLicenses->implode(' - '),
-            'count'          => $uniqueLicenses->count(),
+            'agency_name' => $item['agency_name'],
+            'voucher'     => $item['voucher'],
+            'time'        => $item['time'],
+            'licenses'    => $licenses->implode(' - '),
+            'count'       => $licenses->count(),
         ];
     })->values()->toArray();
 }

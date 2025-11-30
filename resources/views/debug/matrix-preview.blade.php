@@ -27,9 +27,6 @@
                            class="w-28 px-3 py-2 text-sm text-right border rounded-lg focus:ring-2 focus:ring-blue-500">
                 </div>
                 <div class="flex flex-wrap gap-2">
-                    <button wire:click="generateTable" class="px-4 py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition">
-                        Rigenera
-                    </button>
                     <button wire:click="printSplitTable" class="px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition">
                         Stampa Tabella
                     </button>

@@ -133,7 +133,15 @@
                     </table>
                 </div>
             </div>
-
+            <div class="bg-gray-50 border-t border-gray-200 p-4 flex justify-between items-center">
+    <div class="text-sm text-gray-600">
+        @if($errorMessage)
+            <span class="text-red-600">{{ $errorMessage }}</span>
+        @else
+            Tabella aggiornata al {{ now()->format('H:i') }}
+        @endif
+    </div>
+</div>
             {{-- Footer / Modali aggiuntivi --}}
             <div class="bg-gray-50 border-t border-gray-200 p-2">
                 @livewire('component.rules-modal')

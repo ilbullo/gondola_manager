@@ -43,6 +43,7 @@ class Sidebar extends Component
                 ['id' => 'redistributeButton', 'label' => 'RIPARTISCI',        'classes' => 'text-white bg-emerald-600 hover:bg-emerald-700', 'wire' => 'redistributeWorks'],
                 ['id' => 'undoButton',         'label' => 'ANNULLA RIPARTIZIONE', 'classes' => 'text-white bg-orange-500 hover:bg-orange-600', 'wire' => 'backToOriginal', 'hidden' => true],
                 ['id' => 'updateButton',       'label' => 'MODIFICA TABELLA',  'classes' => 'text-white bg-indigo-600 hover:bg-indigo-700', 'wire' => 'editTable'],
+                ['id' => 'printButton',       'label' => 'STAMPA TABELLA',  'classes' => 'text-white bg-blue-600 hover:bg-blue-700', 'wire' => 'printWorks'],
                 ['id' => 'resetButton',        'label' => 'RESET TABELLA',     'classes' => 'text-white bg-red-600 hover:bg-red-700', 'wire' => 'resetTable'],
             ],
         ],
@@ -204,6 +205,10 @@ class Sidebar extends Component
             'slotsOccupied'   => $this->slotsOccupied,
             'amount'          => $this->amount,
         ]);
+    }
+
+    public function printWorks() {
+        $this->dispatch("printWorksTable");
     }
 
     // ===================================================================

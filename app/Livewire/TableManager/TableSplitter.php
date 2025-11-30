@@ -132,10 +132,11 @@ class TableSplitter extends Component
     // Helper per confrontare due lavori (perché array non sono ===)
     private function areWorksEqual(?array $a, ?array $b): bool
     {
+        //dd([$a['id'],$b['id']]);
         if ($a === null || $b === null) return false;
-        return ($a['id'] ?? null) == ($b['id'] ?? null)
-            || ($a['value'] ?? '') === ($b['value'] ?? '')
-               && ($a['timestamp'] ?? '') === ($b['timestamp'] ?? '');
+        return ($a['id'] ?? null) == ($b['id'] ?? null);
+            //|| ($a['value'] ?? '') === ($b['value'] ?? '')
+            //   && ($a['timestamp'] ?? '') === ($b['timestamp'] ?? '');
     }
 
     // PDF FUNZIONANTI

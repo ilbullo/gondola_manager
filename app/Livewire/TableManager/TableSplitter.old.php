@@ -23,7 +23,7 @@ class TableSplitter extends Component
     public $unassignedWorks;
 
     // NUOVO: Statistiche di validazione (Expected vs Actual)
-    public array $validationStats = []; 
+    public array $validationStats = [];
 
     public function mount(): void
     {
@@ -38,15 +38,12 @@ class TableSplitter extends Component
             ->whereDate('date', today())
             ->orderBy('order')
             ->get();
-            
-            /******TEST DATA WHILE CREATING MATRIX SPLITTER SERVICE */
+
             $licenseTable = \App\Http\Resources\LicenseResource::collection($licenses)->resolve();
             $service = new \App\Services\MatrixSplitterService($licenseTable);
-            $this->matrix = $service->matrix;
-            $this->unassignedWorks = $service->unassignedWorks;
-            //$matrix = new \App\Services\MatrixSplitterService($originalMatrix);
-            //dd($matrix->processMatrix());
-            /***************************************** */
+
+            $this->matrix = $service->matrix->toArray();
+            $this->unassignedWorks = $service->unassignedWorks->toArray();
     }
 
     #[On('callRedistributeWorks')]
@@ -79,15 +76,15 @@ class TableSplitter extends Component
             ->get();
 
         $splitter = new WorkSplitterService(
-            $licenses, 
-            $sharableWorks, 
-            $this->excludedFromA, 
+            $licenses,
+            $sharableWorks,
+            $this->excludedFromA,
             $this->shifts
         );
 
         // Ottieni tabella ripartita
         $this->splitTable = $splitter->getSplitTable($this->bancaleCost ?? 0);
-        
+
         // Ottieni statistiche di validazione
         $this->validationStats = $splitter->getValidationStats();
     }
@@ -115,7 +112,7 @@ class TableSplitter extends Component
     public function printSplitTable(): void
     {
         $this->generateTable();
-        
+
         Session::flash('pdf_generate', [
             'view'        => 'pdf.split-table',
             'data'        => [
@@ -133,9 +130,9 @@ class TableSplitter extends Component
 
     public function printAgencyReport(): void
     {
-        $this->generateTable(); 
+        $this->generateTable();
         $agencyReport = $this->prepareAgencyReport();
-        
+
         Session::flash('pdf_generate', [
             'view'        => 'pdf.agency-report',
             'data'        => [
@@ -161,11 +158,11 @@ class TableSplitter extends Component
                 }
                 $agencyName = $assignment->agency->name ?? 'N/A';
                 $voucher    = trim($assignment->voucher ?? '') ?: '-';
-                $time       = $assignment->timestamp instanceof \Carbon\Carbon 
-                                ? $assignment->timestamp->format('H:i') 
-                                : \Carbon\Carbon::parse($assignment->timestamp)->format('H:i'); 
-                $key = $agencyName . '|' . ($assignment->timestamp instanceof \Carbon\Carbon 
-                                ? $assignment->timestamp->format('YmdHi') 
+                $time       = $assignment->timestamp instanceof \Carbon\Carbon
+                                ? $assignment->timestamp->format('H:i')
+                                : \Carbon\Carbon::parse($assignment->timestamp)->format('H:i');
+                $key = $agencyName . '|' . ($assignment->timestamp instanceof \Carbon\Carbon
+                                ? $assignment->timestamp->format('YmdHi')
                                 : \Carbon\Carbon::parse($assignment->timestamp)->format('YmdHi')) . '|' . $voucher;
                 if (!isset($report[$key])) {
                     $report[$key] = [
@@ -187,7 +184,7 @@ class TableSplitter extends Component
                 return $item;
             })
             ->sortBy('time')
-            ->values()  
+            ->values()
             ->groupBy('agency_name')
             ->map(fn(Collection $group) => $group->values())
             ->toArray();
@@ -196,7 +193,7 @@ class TableSplitter extends Component
     public function render()
     {
         return view('livewire.table-manager.matrix-preview',[
-            'matrix' => $this->matrix,    
+            'matrix' => $this->matrix,
             'unassignedWorks' => $this->unassignedWorks,
         ]);
         //return view('livewire.table-manager.table-splitter');

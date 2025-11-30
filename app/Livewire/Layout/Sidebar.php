@@ -185,6 +185,7 @@ class Sidebar extends Component
         $this->sharedFromFirst = false;
         $this->agencyName = null;
         $this->agencyId = null;
+        $this->excluded = false;
         $this->slotsOccupied = 1;
         $this->amount = 90;
 

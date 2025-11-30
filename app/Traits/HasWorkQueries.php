@@ -37,14 +37,14 @@ trait HasWorkQueries
             ->where('shared_from_first', false);
     }
 
-    public function unsharableWorks() : Collection 
+    public function unsharableWorks() : Collection
     {
         return $this->allWorks()
             ->where('excluded',true)
             ->where('shared_from_first',false);
     }
 
-    public function sharableFirstWorks() : Collection 
+    public function sharableFirstWorks() : Collection
     {
         return $this->allWorks()
             ->where('excluded',false)
@@ -65,7 +65,7 @@ trait HasWorkQueries
     // 2. METODI PRONTI ALL'USO – USA QUESTI NEL SERVICE (FUNZIONANO!)
     // =====================================================================
 
-    public function fixedAgencyWorks() : Collection 
+    public function fixedAgencyWorks() : Collection
     {
         return $this->unsharableWorks()->where('value','A');
     }
@@ -89,7 +89,7 @@ trait HasWorkQueries
     {
         return $this->sharableWorks()->whereIn('value', ['P', 'N']);
     }
-    
+
 
     // =====================================================================
     // 3. PREPARE MATRIX – OBBLIGATORIO PRIMA DI DISTRIBUTE
@@ -98,14 +98,15 @@ trait HasWorkQueries
     public function prepareMatrix(): void
     {
         $emptyRow = [
-            'id' => null,
-            'license_table_id' => null,
-            'user' => null,
-            'shift' => 'full',
-            'real_slots_today' => 25,
-            'capacity' => 0,
-            'blocked_works' => [],
-            'worksMap' => array_fill(0, 25, null),
+            'id'                => null,
+            'license_table_id'  => null,
+            'user'              => null,
+            'shift'             => 'full',
+            'real_slots_today'  => 25,
+            'capacity'          => 0,
+            'blocked_works'     => [],
+            'wallet'            => 0,
+            'worksMap'          => array_fill(0, 25, null),
         ];
 
         $this->matrix = collect($this->licenseTable ?? [])
@@ -114,13 +115,14 @@ trait HasWorkQueries
 
         foreach ($this->licenseTable ?? [] as $index => $license) {
             $this->matrix[$index] = array_merge($this->matrix[$index], [
-                'id' => $license['id'] ?? null,
-                'license_table_id' => $license['id'] ?? null,        // ← IMPORTANTE
-                'user' => $license['user'] ?? null,
-                'shift' => $license['shift'] ?? 'full',
-                'capacity' => $license['capacity'],
-                'slots'    => $license['slots'],
-                'real_slots_today' => $license['real_slots_today'] ?? 25,
+                'id'                    => $license['id'] ?? null,
+                'license_table_id'      => $license['id'] ?? null,        // ← IMPORTANTE
+                'user'                  => $license['user'] ?? null,
+                'shift'                 => $license['shift'] ?? 'full',
+                'capacity'              => $license['capacity'],
+                'slots'                 => $license['slots'],
+                'wallet'                => $license['wallet'],
+                'real_slots_today'      => $license['real_slots_today'] ?? 25,
             ]);
         }
 

@@ -123,7 +123,9 @@
                                     $occupied = collect($works)->filter()->count();
                                     $capacity = $license['slots'] ?? 25;
                                     $cashTotal = collect($works)->where('value', 'X')->sum('amount') ?? 0;
-                                    $cashNet = $cashTotal - $bancaleCost;
+                                    $walletBalance = $license['wallet'] - ($nCount * 90);
+                                    $cashNet = $cashTotal - $bancaleCost - $walletBalance;
+
                                 @endphp
                                 <tr class="hover:bg-gray-50/50 transition-colors">
 
@@ -134,7 +136,7 @@
             {{ $license['user']['license_number'] ?? '—' }}
         </div>
         <button
-            wire:click="$dispatch('open-license-receipt', { 
+            wire:click="$dispatch('open-license-receipt', {
                 license: {{ \Illuminate\Support\Js::from($license) }},
                 bancaleCost: {{ $bancaleCost }}
             })"

@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 namespace App\Traits;
 
@@ -35,7 +35,7 @@ trait MatrixDistribution {
         $value = $work['value'];
         //if ($key == 2 && $work['value'] == "A") {return false;}
         return !(!empty($matrixItem['blocked_works']) && in_array($value, $matrixItem['blocked_works'], true));
-            
+
     }
 
     private function getCapacityLeft($key,$forFixed=false)
@@ -69,9 +69,9 @@ trait MatrixDistribution {
    public function distribute($worksToAssign,$fromFirst = false) {
 
         // 1. Determina il numero di slot (Colonne). Dal tuo snippet, sono 25 (indice 0 a 24).
-    $MAX_SLOTS_INDEX = 24; 
+    $MAX_SLOTS_INDEX = 24;
     //dd($worksToAssign->first());
-    // 2. Pre-carica gli elementi della Collection in un array per semplicità, 
+    // 2. Pre-carica gli elementi della Collection in un array per semplicità,
     //    sebbene Collection supporti il foreach diretto.
     // $slotIndex andrà da 0 a 24
 
@@ -85,31 +85,31 @@ trait MatrixDistribution {
     }
 
     for ($slotIndex = $startingIndex; $slotIndex <= $MAX_SLOTS_INDEX; $slotIndex++) {
-        
+
         foreach ($this->matrix as $key => $licenseData) {
-            
+
             //$licenseId = $licenseData['id'];
             $worksMap = $licenseData['worksMap'];
-                        
+
             // Accedi alla cella specifica (fissando lo slot e variando la licenza)
             $work = $worksMap[$slotIndex] ?? null;
-            
+
             // Logica Round-Robin (esegue un'azione per quello slot per tutte le licenze)
             if (!is_null($work)) {
                 continue;
             } else {
                 // La cella è vuota in questo slot per questa licenza
-                
+
                 if ($this->getCapacityLeft($key)>0 && !$worksToAssign->isEmpty()) {
-                    
+
                     $nextWork = $worksToAssign->first();
-                    
+
                     if ($this->isAllowedToBeAdded($key,$nextWork)) {
                         $matrix[$key]['worksMap'][$slotIndex] = $nextWork;
                         $this->saveMatrix($matrix);
                         $worksToAssign->shift();
                     }
-                    
+
                     if($worksToAssign->isEmpty()) {break 2;}
                 }
             }
@@ -126,12 +126,12 @@ trait MatrixDistribution {
         $matrix = $this->getMatrix();
 
         foreach($worksToAssign as $work) {
-            
+
             $index = array_search($work['license_table_id'], array_column($matrix, 'license_table_id'));
-            
+
             // Cerca il primo valore 'null' e restituisce la sua chiave (l'indice)
             $slotIndex = array_search(null, $matrix[$index]['worksMap'], true);
-            
+
             //controllo capacità
 
             if ($this->getCapacityLeft($index,true)>0) {
@@ -139,7 +139,11 @@ trait MatrixDistribution {
                 $matrix[$index]['worksMap'][$slotIndex] = $worksToAssign->shift();
                 $this->saveMatrix($matrix);
             }
-        } 
-    }  
+            else {
+                //lavoro non assegnabile - necessario intervento manuale
+                $this->addToUnassigned($work);
+            }
+        }
+    }
 
 }

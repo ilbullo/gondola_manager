@@ -60,6 +60,8 @@ class LicenseResource extends JsonResource
                 ] : null,
                 'capacity'          => $this->works_count,
                 'slots'             =>  array_sum(array_column($worksMap, 'slot')),
+                //wallet => cosa ha in tasca ciascuna licenza (i lavori N sono incassati dalla licenza stessa)
+                'wallet'            => $this->works->sum(fn ($work) => $work['value'] === 'N' ? $work['amount'] : 0),
                 'worksMap'          => $worksMap,
             ];
         } catch (Throwable $e) {

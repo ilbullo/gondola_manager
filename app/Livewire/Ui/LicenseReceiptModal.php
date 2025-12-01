@@ -54,12 +54,12 @@ class LicenseReceiptModal extends Component
 
     public function getCashTotal()
     {
-        return $this->getCashWorks()->sum('amount') - $this->getWalletAmount() ?? 0;
+        return $this->getCashWorks()->sum('amount') + $this->getWalletAmount() ?? 0;
     }
 
     public function getWalletAmount() {
 
-        return $this->getPCount() * 90 - $this->license['wallet'];
+        return  ($this->getNCount() * 90) - $this->license['wallet'];
     }
 
     public function getFinalCash()

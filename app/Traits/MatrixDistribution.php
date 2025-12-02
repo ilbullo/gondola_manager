@@ -22,9 +22,10 @@ trait MatrixDistribution {
     return collect($original['worksMap'])
         ->filter(function ($work) {
             return $work &&
-                (
+                (   
+                    //controllo il numero di N e P e lavori esclusi 
                     in_array($work['value'], ['N', 'P']) ||
-                    ($work['excluded'] ?? false) === true
+                    (($work['excluded'] ?? false) === true && $work['value'] != 'A')
                 );
         })
         ->count();
@@ -41,13 +42,15 @@ trait MatrixDistribution {
     private function getCapacityLeft($key,$forFixed=false)
     {
         $matrixItem = $this->matrix->toArray()[$key];
-        $totalSlots = $matrixItem['slots'] ?? 0;
+        
+        $totalSlots = $matrixItem['slots_occupied'] ?? 0;
 
         // Somma tutti gli slot già occupati nella matrice
         $usedSlots = collect($matrixItem['worksMap'])
             ->filter()                     // ignora i null
-            ->sum('slot');                 // somma i valori di slot
+            ->count();                 // somma i valori di slot
 
+        //dump($matrixItem['worksMap']);    
         if ($forFixed) { return $totalSlots - $usedSlots; }
         return $totalSlots - $usedSlots - $this->countFixedWorks($key);
     }

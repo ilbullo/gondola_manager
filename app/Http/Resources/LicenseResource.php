@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
 use Throwable;
+use Illuminate\Support\Collection;
 
 class LicenseResource extends JsonResource
 {
@@ -42,7 +43,8 @@ class LicenseResource extends JsonResource
                         'amount'      => $work->amount,
                         'voucher'     => $work->voucher,
                         'excluded'    => $work->excluded,
-                        'slot'        => $work->slots_occupied,
+                        'slot'        => $work->slot,
+                        'slots_occupied' => $work->slots_occupied,
                         'shared_from_first' => $work->shared_from_first,
                         'timestamp'   => $work->timestamp->toDateTimeString(),
                         'created_at'  => optional($work->created_at)->toDateTimeString(),
@@ -58,8 +60,9 @@ class LicenseResource extends JsonResource
                     'id'            => $this->user->id,
                     'license_number'=> $this->user->license_number,
                 ] : null,
-                'capacity'          => $this->works_count,
-                'slots'             =>  array_sum(array_column($worksMap, 'slot')),
+                //'capacity'          => $this->works_count,
+                'slots_occupied'    => Collection::make($worksMap)->whereNotNull()->count(),
+                //'slots_occupied'    =>  array_sum(array_column($worksMap, 'slots_occupied')),
                 //wallet => cosa ha in tasca ciascuna licenza (i lavori N sono incassati dalla licenza stessa)
                 'wallet'            => $this->works->sum(fn ($work) => $work['value'] === 'N' ? $work['amount'] : 0),
                 'worksMap'          => $worksMap,

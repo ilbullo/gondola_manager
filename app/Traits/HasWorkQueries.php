@@ -103,9 +103,10 @@ trait HasWorkQueries
             'user'              => null,
             'shift'             => 'full',
             'real_slots_today'  => 25,
-            'capacity'          => 0,
+            //'capacity'          => 0,
             'blocked_works'     => [],
             'wallet'            => 0,
+            'slots_occupied'    => 0,
             'worksMap'          => array_fill(0, 25, null),
         ];
 
@@ -119,8 +120,9 @@ trait HasWorkQueries
                 'license_table_id'      => $license['id'] ?? null,        // ← IMPORTANTE
                 'user'                  => $license['user'] ?? null,
                 'shift'                 => $license['shift'] ?? 'full',
-                'capacity'              => $license['capacity'],
-                'slots'                 => $license['slots'],
+                //'capacity'              => $license['capacity'],
+                //'slots'                 => $license['slots'],
+                'slots_occupied'        => $license['slots_occupied'],
                 'wallet'                => $license['wallet'],
                 'real_slots_today'      => $license['real_slots_today'] ?? 25,
             ]);

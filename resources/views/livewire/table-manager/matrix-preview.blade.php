@@ -121,7 +121,7 @@
                                     $nCount = collect($works)->where('value', 'N')->count();
                                     $pCount = collect($works)->where('value', 'P')->count();
                                     $occupied = collect($works)->filter()->count();
-                                    $capacity = $license['slots'] ?? 25;
+                                    $capacity = $license['slots_occupied'] ?? 25;
                                     $cashTotal = collect($works)->where('value', 'X')->sum('amount') ?? 0;
                                     $walletBalance = $license['wallet'] - ($nCount * 90);
                                     $cashNet = $cashTotal - $bancaleCost - $walletBalance;

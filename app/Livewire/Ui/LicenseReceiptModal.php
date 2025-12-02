@@ -64,7 +64,8 @@ class LicenseReceiptModal extends Component
 
     public function getFinalCash()
     {
-        return max(0, $this->getCashTotal() - $this->bancaleCost);
+        //return max(0, $this->getCashTotal() - $this->bancaleCost);
+        return $this->getCashTotal() - $this->bancaleCost;
     }
 
     public function render()

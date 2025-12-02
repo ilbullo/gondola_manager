@@ -138,7 +138,7 @@
         <button
             wire:click="$dispatch('open-license-receipt', {
                 license: {{ \Illuminate\Support\Js::from($license) }},
-                bancaleCost: {{ $bancaleCost }}
+                bancaleCost: {{ $bancaleCost }},
             })"
             class="text-[11px] px-2 py-0.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded">
             Scontrino

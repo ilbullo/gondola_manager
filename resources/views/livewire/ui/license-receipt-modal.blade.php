@@ -77,7 +77,7 @@
                             @endif
 
                             <div class="flex justify-between text-xl font-bold border-t pt-3
-                                {{ $this->getFinalCash() > 0 ? 'text-green-600' : 'text-gray-700' }}">
+                                {{ $this->getFinalCash() > 0 ? 'text-green-600' : 'text-red-700' }}">
                                 <span>TOTALE DA RICEVERE:</span>
                                 <span>€ {{ number_format($this->getFinalCash(), 2) }}</span>
                             </div>

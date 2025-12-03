@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Enums\WorkType;
 
 class WorkAssignment extends Model
 {
@@ -64,6 +65,22 @@ class WorkAssignment extends Model
     public function getAgencyCodeAttribute(): ?string
     {
         return $this->agency?->code;
+    }
+
+    public function isAgency() {
+        return $this->value === WorkType::AGENCY->value;
+    }
+
+    public function isCash() {
+        return $this->value === WorkType::CASH->value;
+    }
+
+    public function isNolo() {
+        return $this->value === WorkType::NOLO->value;
+    }
+
+    public function isPerdiVolta() {
+        return $this->value === WorkType::PERDI_VOLTA->value;
     }
 
 }

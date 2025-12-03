@@ -62,32 +62,35 @@
             <input type="text" wire:model.live="voucher" placeholder="Facoltativo..."
                    class="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
         </div>
-
-        <div class="pt-2 space-y-3">
-            <div class="flex items-start">
-                <div class="flex h-5 items-center">
-                    <input id="excluded" type="checkbox" x-model="excluded"
-                           @change="if($event.target.checked) shared_from_first = false"
-                           class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+        
+        @if($work->isAgency())
+            <div class="pt-2 space-y-3">
+                <div class="flex items-start">
+                    <div class="flex h-5 items-center">
+                        <input id="excluded" type="checkbox" x-model="excluded"
+                            @change="if($event.target.checked) shared_from_first = false"
+                            class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                    </div>
+                    <div class="ml-3 text-sm">
+                        <label for="excluded" class="font-medium text-gray-700">Escluso da ripartizione</label>
+                        <p class="text-gray-500 text-xs">Il lavoro non verrà conteggiato nella ripartizione.</p>
+                    </div>
                 </div>
-                <div class="ml-3 text-sm">
-                    <label for="excluded" class="font-medium text-gray-700">Escluso da ripartizione</label>
-                    <p class="text-gray-500 text-xs">Il lavoro non verrà conteggiato nella ripartizione.</p>
+
+                <div class="flex items-start">
+                    <div class="flex h-5 items-center">
+                        <input id="shared_from_first" type="checkbox" x-model="shared_from_first"
+                            @change="if($event.target.checked) excluded = false"
+                            class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                    </div>
+                    <div class="ml-3 text-sm">
+                        <label for="shared_from_first" class="font-medium text-gray-700">Ripartito dal primo</label>
+                        <p class="text-gray-500 text-xs">Assegnazione prioritaria dalla prima licenza.</p>
+                    </div>
                 </div>
             </div>
+        @endif
 
-            <div class="flex items-start">
-                <div class="flex h-5 items-center">
-                    <input id="shared_from_first" type="checkbox" x-model="shared_from_first"
-                           @change="if($event.target.checked) excluded = false"
-                           class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                </div>
-                <div class="ml-3 text-sm">
-                    <label for="shared_from_first" class="font-medium text-gray-700">Ripartito dal primo</label>
-                    <p class="text-gray-500 text-xs">Assegnazione prioritaria dalla prima licenza.</p>
-                </div>
-            </div>
-        </div>
     </div>
 
     <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end gap-3">

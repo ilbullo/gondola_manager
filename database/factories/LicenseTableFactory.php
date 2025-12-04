@@ -13,9 +13,11 @@ class LicenseTableFactory extends Factory
     public function definition()
     {
         return [
-            'user_id' => User::factory(),
-            'date'    => $this->faker->date,
-            'order'   => $this->faker->unique()->numberBetween(1, 25)
+            'user_id'         => User::factory(),
+            'date'            => $this->faker->date,
+            'only_cash_works' => false,
+            'turn'            => 'full',
+            'order'           => $this->faker->unique()->numberBetween(1, 25)
         ];
     }
 }

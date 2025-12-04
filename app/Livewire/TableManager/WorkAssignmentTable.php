@@ -41,6 +41,11 @@ class WorkAssignmentTable extends Component
         $this->errorMessage = '';
     }
 
+    public function openEditLicenseModal($id) {
+        
+        $this->dispatch('openEditLicense', ['id' => $id]);
+    }
+
     #[On('confirmRemoveAssignment')]
     public function removeAssignment(array $payload): void
     {
@@ -110,7 +115,8 @@ class WorkAssignmentTable extends Component
                 $this->errorMessage = 'Lo slot è già occupato o si sovrappone.';
                 return;
             }
-
+            //se il lavoro occupa più di uno slot rimane fisso alla licenza che lo fa
+            $excluded = $slotsOccupied > 1 ? true : ($this->selectedWork['excluded'] ?? false); 
             // Creazione del nuovo record
             WorkAssignment::create([
                 'license_table_id' => $licenseTableId,
@@ -120,7 +126,7 @@ class WorkAssignmentTable extends Component
                 'amount'           => $this->selectedWork['amount'] ?? 90,
                 'voucher'          => $this->selectedWork['voucher'] ?? null,
                 'slots_occupied'   => $slotsOccupied,
-                'excluded'         => $this->selectedWork['excluded'] ?? false,
+                'excluded'         => $excluded,
                 'shared_from_first' => $this->selectedWork['sharedFromFirst'] ?? false,
                 'timestamp'        => now(),
             ]);
@@ -176,6 +182,7 @@ class WorkAssignmentTable extends Component
 
         $this->redirectRoute('generate.pdf');
     }
+
 
     // ===================================================================
     // Render

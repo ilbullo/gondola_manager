@@ -17,6 +17,8 @@ return new class extends Migration
             $table->index('date');
             $table->unsignedBigInteger('user_id');
             $table->integer('order')->default(0);
+            $table->enum('turn',['morning', 'afternoon', 'full']);
+            $table->boolean('only_cash_works')->default(false);
             $table->unique(['date', 'order']);
             $table->index('order');
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');            

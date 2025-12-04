@@ -4,6 +4,7 @@
 
 namespace App\Traits;
 
+use App\Enums\DayType;
 use DateTimeInterface;
 use Illuminate\Support\Collection;
 
@@ -101,10 +102,9 @@ trait HasWorkQueries
             'id'                => null,
             'license_table_id'  => null,
             'user'              => null,
-            'shift'             => 'full',
+            'turn'             => DayType::FULL->value,
             'real_slots_today'  => 25,
-            //'capacity'          => 0,
-            'blocked_works'     => [],
+            'only_cash_works'   => false,
             'wallet'            => 0,
             'slots_occupied'    => 0,
             'worksMap'          => array_fill(0, 25, null),
@@ -119,9 +119,8 @@ trait HasWorkQueries
                 'id'                    => $license['id'] ?? null,
                 'license_table_id'      => $license['id'] ?? null,        // ← IMPORTANTE
                 'user'                  => $license['user'] ?? null,
-                'shift'                 => $license['shift'] ?? 'full',
-                //'capacity'              => $license['capacity'],
-                //'slots'                 => $license['slots'],
+                'turn'                  => $license['turn'] ?? DayType::FULL->value,
+                'only_cash_works'       => $license['only_cash_works'],
                 'slots_occupied'        => $license['slots_occupied'],
                 'wallet'                => $license['wallet'],
                 'real_slots_today'      => $license['real_slots_today'] ?? 25,

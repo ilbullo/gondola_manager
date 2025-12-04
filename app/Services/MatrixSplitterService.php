@@ -15,15 +15,14 @@ class MatrixSplitterService
 
     public function __construct($licenseTable)
     {
-        // $licenseTable è un array o Collection di licenze con:
-        // id, user, shift, real_slots_today, worksMap (opzionale)
+        // $licenseTable è un array o Collection di licenze:
         $this->licenseTable = $licenseTable instanceof \Illuminate\Support\Collection
             ? $licenseTable->toArray()
             : $licenseTable;
 
         $this->unassignedWorks = collect($this->unassignedWorks ?? []);
 
-        $this->prepareMatrix();                    // crea matrice vuota + copia id/user/shift
+        $this->prepareMatrix();                    // crea matrice vuota
         $this->distributeFixed($this->fixedAgencyWorks()->values());
         $this->distribute($this->pendingMorningAgencyWorks()->values());
         $this->distribute($this->pendingAfternoonAgencyWorks()->values());

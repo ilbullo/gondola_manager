@@ -52,9 +52,32 @@
                                 <tr class="hover:bg-gray-50/50 transition-colors">
 
                                     {{-- Colonna Licenza (Sticky Left) --}}
-                                    <th scope="row" class="p-3 text-sm font-semibold text-gray-900 sticky left-0 bg-white border-r border-gray-200 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
-                                        <div class="flex items-center gap-2">
-                                            <span class="truncate">{{ $license['user']['license_number'] ?? 'N/A' }}</span>
+                                    <th scope="row"
+                                        class="p-3 text-sm font-semibold text-gray-900 sticky left-0 bg-white border-r border-gray-200 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] 
+                                               cursor-pointer hover:bg-gray-100 focus-within:bg-gray-100 transition-colors group"
+                                        wire:click="openEditLicenseModal({{ $license['id'] }})"                                       
+                                        wire:keydown.enter.prevent="$dispatch('openEditLicense', { id: {{ $license['id'] }} })"
+                                        wire:keydown.space.prevent="$dispatch('openEditLicense', { id: {{ $license['id'] }} })"
+                                        role="button"
+                                        tabindex="0"
+                                        aria-label="Modifica impostazioni licenza {{ $license['user']['license_number'] ?? 'N/A' }} (turno e contanti)">
+
+                                        <div class="flex items-center justify-between gap-3">
+                                            <div class="flex items-center gap-2 flex-1">
+                                                <span class="truncate font-bold text-gray-900">
+                                                    {{ $license['user']['license_number'] ?? 'N/A' }}
+                                                </span>
+                                                <x-day-badge day="{{ $license['turn'] }}" />
+                                                <x-no-agency-badge noAgency="{{ $license['only_cash_works'] }}" />
+                                            </div>
+
+                                            {{-- Icona matita (visibile solo su hover o focus) --}}
+                                            <svg class="w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-opacity"
+                                                 xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                                 aria-hidden="true">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                            </svg>
                                         </div>
                                     </th>
 
@@ -146,6 +169,7 @@
             <div class="bg-gray-50 border-t border-gray-200 p-2">
                 @livewire('component.rules-modal')
             </div>
+                @livewire('ui.edit-license-modal')
         </main>
     </div>
 </div>

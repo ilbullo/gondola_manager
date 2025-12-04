@@ -60,6 +60,8 @@ class LicenseResource extends JsonResource
                     'id'            => $this->user->id,
                     'license_number'=> $this->user->license_number,
                 ] : null,
+                'turn'              => $this->turn,
+                'only_cash_works'   => $this->only_cash_works,
                 //'capacity'          => $this->works_count,
                 'slots_occupied'    => Collection::make($worksMap)->whereNotNull()->count(),
                 //'slots_occupied'    =>  array_sum(array_column($worksMap, 'slots_occupied')),

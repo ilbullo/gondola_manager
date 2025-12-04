@@ -134,6 +134,8 @@
     <div class="space-y-1">
         <div class="text-lg font-bold">
             {{ $license['user']['license_number'] ?? '—' }}
+             <x-day-badge day="{{ $license['turn'] }}" />
+            <x-no-agency-badge noAgency="{{ $license['only_cash_works'] }}" />
         </div>
         <button
             wire:click="$dispatch('open-license-receipt', {

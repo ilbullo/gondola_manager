@@ -28,7 +28,7 @@ class Agency extends Model
     {
         parent::boot();
 
-        // Aggiunge un Global Scope per ordinare sempre per 'id' in modo ascendente
+        // Aggiunge un Global Scope per ordinare sempre per 'name' in modo ascendente
         static::addGlobalScope('order', function (Builder $builder) {
             $builder->orderBy('name', 'asc');
         });

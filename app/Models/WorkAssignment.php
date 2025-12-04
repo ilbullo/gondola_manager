@@ -34,6 +34,21 @@ class WorkAssignment extends Model
         'amount'    => 'float'
     ];
 
+    /**
+     * Solo i lavori di tipo "A" possono essere shared_from_first
+     */
+    protected static function booted(): void
+    {
+        static::saving(function ($work) {
+            if ($work->shared_from_first && $work->value !== WorkType::AGENCY->value) {
+                throw new \Exception(
+                    "Il campo shared_from_first può essere true solo per lavori di tipo 'A' (agenzia). " .
+                    "Valore attuale: '{$work->value}'"
+                );
+            }
+        });
+    }
+
 
     /**
      * Relazione con l'utente.

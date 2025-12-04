@@ -13,16 +13,22 @@ class WorkAssignmentFactory extends Factory
 
     public function definition()
     {
+
+        $value = $this->faker->randomElement(['N', 'X', 'A', 'P']);
+        if ($value === "A") {
+            $agency = Agency::factory();
+        }
+
         return [
             'license_table_id' => LicenseTable::factory(),
-            'agency_id' => Agency::factory(),
+            'agency_id' => $agency->id ?? null,
             'slot' => $this->faker->numberBetween(1, 25),
-            'value' => $this->faker->randomElement(['N', 'X', 'A', 'P']),
+            'value' => $value,
             'voucher' => $this->faker->optional()->word,
             'timestamp' => now(),
             'slots_occupied' => $this->faker->numberBetween(1, 5),
-            'excluded' => $this->faker->boolean,
-            'shared_from_first' => $this->faker->boolean,
+            'excluded' => $value === "A" ? $this->faker->boolean : 0,
+            'shared_from_first' => $value === "A" ? $this->faker->boolean : 0,
         ];
     }
 }

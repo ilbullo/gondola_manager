@@ -91,7 +91,7 @@
                             <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
-
+                    @if($value === "A")
                     {{-- Checkbox Opzioni --}}
                     <div class="space-y-4 pt-2">
 
@@ -130,7 +130,8 @@
                                 <p class="text-gray-500 text-xs">Il guadagno parte dalla prima licenza</p>
                             </div>
                         </div>
-                    </div>
+                    </div>  
+                    @endif
 
                     {{-- Pulsanti --}}
                     <div class="grid grid-cols-2 gap-3 pt-4 mt-auto border-t border-gray-100">

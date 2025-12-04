@@ -13,6 +13,7 @@ class WorkDetailsModal extends Component
     // === Dati del form ===
     public float|int $amount = 90;
     public int $slotsOccupied = 1;
+    public string $value = "";
     public bool $excluded = false;
     public bool $sharedFromFirst = false;
 
@@ -38,6 +39,7 @@ class WorkDetailsModal extends Component
     #[On('workSelected')]
     public function updateFromSelectedWork(array $work): void
     {
+        $this->value            = $work['value'] ?? "X";
         $this->amount           = $work['amount'] ?? 90;
         $this->slotsOccupied    = $work['slotsOccupied'] ?? 1;
         $this->excluded         = $work['excluded'] ?? false;

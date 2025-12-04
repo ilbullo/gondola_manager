@@ -147,7 +147,7 @@ class WorkSplitterServiceTest extends TestCase
             'license_table_id' => $licenza->id,
             'value'            => $tipo,
             'excluded'         => false,
-            'slot'             => fn() => fake()->numberBetween(1, 30),
+            'slot'             => fn() => fake()->numberBetween(1, 25),
             'slots_occupied'   => 1,
         ]);
     }

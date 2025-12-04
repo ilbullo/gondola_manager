@@ -28,6 +28,13 @@ class LicenseTableTest extends TestCase
     }
 
     #[Test]
+    public function it_set_day_type_field() {
+        $licenseTable = LicenseTable::factory()->create(['turn' => 'morning']);
+        $this->assertEquals('morning',$licenseTable->turn);
+    }
+
+
+    #[Test]
     public function it_belongs_to_a_user()
     {
         $user = User::factory()->create();

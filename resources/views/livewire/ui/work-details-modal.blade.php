@@ -127,7 +127,7 @@
                                 <label for="sharedFromFirst" class="font-medium text-gray-700 cursor-pointer">
                                     Ripartisci dal primo
                                 </label>
-                                <p class="text-gray-500 text-xs">Il guadagno parte dalla prima licenza</p>
+                                <p class="text-gray-500 text-xs">La ripartizione parte dalla prima licenza</p>
                             </div>
                         </div>
                     </div>  

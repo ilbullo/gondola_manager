@@ -5,6 +5,9 @@
     <meta charset="UTF-8">
     <title>Tabella Assegnazione - {{ $date }}</title>
     <style>
+        :root {
+        --total-slots: {{ config('constants.matrix.total_slots') }};
+        }
         body {
             font-family: DejaVu Sans, Helvetica, Arial, sans-serif;
             margin: 15mm;
@@ -56,7 +59,7 @@
         }
         /* Tutte le 25 colonne slot hanno larghezza identica */
         .slot-col {
-            width: calc((100% - 90px) / {{ config('constants.matrix.total_slots')) }}; /* Distribuisce uniformemente lo spazio restante */
+            width: calc(100% - 90px) / var(--total-slots); /* Distribuisce uniformemente lo spazio restante */
             font-size: 8pt;
         }
         .voucher {

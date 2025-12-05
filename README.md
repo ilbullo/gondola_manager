@@ -1,59 +1,156 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 🚤 Work Assignment Manager
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Un’applicazione Laravel progettata per gestire, organizzare e monitorare i lavori giornalieri di una flotta di mezzi o squadre operative.  
+Il sistema permette l’inserimento rapido dei lavori, la loro suddivisione (splitting) per licenze, la gestione dei conteggi e l’analisi complessiva delle attività.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## ✨ Funzionalità principali
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### 📌 1. Gestione dei lavori (Work Assignments)
+- Inserimento dei lavori con attributi come:
+  - tipo lavoro (A, X, P, N…)
+  - orari
+  - quantità
+  - note
+  - licenza assegnata
+- Validazione lato server tramite Livewire.
+- Aggiornamento immediato senza ricaricare la pagina.
+- Salvataggio in tempo reale.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+### 📊 2. Riassunto e conteggi automatici
+Il sistema calcola automaticamente:
+- totale lavori per categoria  
+- numero lavori assegnati  
+- lavori non assegnati  
+- metriche personalizzate basate sulle regole interne
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+Il metodo `refreshCounts()` è idempotente, assicurando conteggi sempre coerenti.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+---
 
-## Laravel Sponsors
+### 🔄 3. Splitter delle tabelle
+Un algoritmo dedicato gestisce la distribuzione automatica dei lavori alle licenze disponibili:
+- processa i lavori in base agli slot disponibili  
+- assegna i lavori alle licenze seguendo le regole scelte  
+- identifica i lavori che rimangono non assegnati  
+- permette correzioni manuali  
+- tiene conto di limiti come max_slots per ciascuna licenza
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+---
 
-### Premium Partners
+### 🖥️ 4. Interfaccia Livewire dinamica
+L’app utilizza componenti Livewire per una UI ultra-reattiva:
+- aggiornamenti al volo  
+- modali dinamici  
+- loading modal smart che compare SOLO durante azioni lente (come inserimento lavoro)  
+- interazioni fluide grazie anche ad Alpine.js
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+---
 
-## Contributing
+### 🛠️ 5. Architettura estendibile
+Il progetto è pensato per essere espanso facilmente:
+- aggiunta di nuove tipologie di lavori  
+- modifiche alle logiche di splitting  
+- integrazione con API  
+- implementazione profili e permessi  
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+---
 
-## Code of Conduct
+## 🔧 Stack tecnologico
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+- **Laravel**  
+- **Livewire**  
+- **Blade**  
+- **MySQL/MariaDB**  
+- **Tailwind CSS** (o Bootstrap, secondo la configurazione)  
+- **Alpine.js**
 
-## Security Vulnerabilities
+---
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## 📁 Struttura del progetto
 
-## License
+```
+app/
+  Http/
+    Livewire/
+      WorkAssignmentTable.php
+      TableSplitter.php
+      WorkSummary.php
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+resources/
+  views/
+    livewire/
+      work-assignment-table.blade.php
+      table-splitter.blade.php
+      work-summary.blade.php
+```
+
+---
+
+## 🚀 Avvio rapido
+
+### 1. Clona il progetto
+```bash
+git clone https://github.com/<username>/<repo>.git
+cd <repo>
+```
+
+### 2. Installa dipendenze
+```bash
+composer install
+npm install && npm run build
+```
+
+### 3. Configura ambiente
+```bash
+cp .env.example .env
+php artisan key:generate
+```
+
+### 4. Migrazioni database
+```bash
+php artisan migrate
+```
+
+### 5. Avvia il server
+```bash
+php artisan serve
+```
+
+---
+
+## 🧪 Esecuzione test
+
+```bash
+php artisan test
+```
+
+Test inclusi:
+- assegnazione lavori  
+- splitting  
+- idempotenza conteggi  
+- validazioni dedicate (es. shared_from_first solo per lavori 'A')
+
+---
+
+## 📜 Licenza
+
+Questo progetto è distribuito sotto licenza MIT.
+
+---
+
+## 🤝 Contributi
+
+Le pull request sono benvenute.  
+Apri una issue per richieste, miglioramenti o segnalazioni.
+
+---
+
+## 📧 Contatti
+
+Per supporto, segnalazioni o richieste:  
+**<ilbullo@gmail.com>**
+

@@ -62,17 +62,6 @@ trait HasWorkQueries
         return $this->sharableWorks()->filter(fn ($work) => $this->isAfternoon($work));
     }
 
-    public function calculateUnassignedWorks(): Collection
-    {
-        $assignedIds = $this->matrix
-            ->pluck('worksMap')
-            ->collapse()
-            ->filter()
-            ->pluck('id');
-
-        return $this->allWorks()->whereNotIn('id', $assignedIds);
-    }
-
     // =====================================================================
     // 2. METODI PRONTI ALL'USO – USA QUESTI NEL SERVICE (FUNZIONANO!)
     // =====================================================================
@@ -114,11 +103,11 @@ trait HasWorkQueries
             'license_table_id'  => null,
             'user'              => null,
             'turn'             => DayType::FULL->value,
-            'real_slots_today'  => 25,
+            'real_slots_today'  => config('constants.matrix.total_slots'),
             'only_cash_works'   => false,
             'wallet'            => 0,
             'slots_occupied'    => 0,
-            'worksMap'          => array_fill(0, 25, null),
+            'worksMap'          => array_fill(0, config('constants.matrix.total_slots'), null),
         ];
 
         $this->matrix = collect($this->licenseTable ?? [])
@@ -134,7 +123,7 @@ trait HasWorkQueries
                 'only_cash_works'       => $license['only_cash_works'],
                 'slots_occupied'        => $license['slots_occupied'],
                 'wallet'                => $license['wallet'],
-                'real_slots_today'      => $license['real_slots_today'] ?? 25,
+                'real_slots_today'      => $license['real_slots_today'] ?? config('constants.matrix.total_slots'),
             ]);
         }
 
@@ -149,14 +138,14 @@ trait HasWorkQueries
     {
         $time = $this->extractTime($work);
 
-        return $time !== null && $time <= '13:00';
+        return $time !== null && $time <= config('constants.matrix.morning_end');
     }
 
     private function isAfternoon($work): bool
     {
         $time = $this->extractTime($work);
 
-        return $time !== null && $time >= '13:31';
+        return $time !== null && $time >= config('constants.matrix.afternoon_start');
     }
 
     private function extractTime($work): ?string

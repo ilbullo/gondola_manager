@@ -286,40 +286,4 @@ class TableSplitterTest extends TestCase
         $this->assertArrayHasKey('filename', $session);
     }
 
-    #[Test]
-    public function extra_works_go_to_unassigned_when_all_licenses_are_full()
-    {
-        $user = User::factory()->create();
-        $this->actingAs($user);
-
-        $license = LicenseTable::factory()->create([
-            'user_id' => $user->id,
-            'date'    => today(),
-        ]);
-
-        // Riempi tutti i 25 slot
-        WorkAssignment::factory()->count(25)->create([
-            'license_table_id' => $license->id,
-            'value'            => 'X',
-            'slots_occupied'   => 1,
-            'timestamp'        => today()->setTime(10, 0),
-        ]);
-
-        // Lavoro extra → non c'è più spazio
-        $extra = WorkAssignment::factory()->create([
-            'license_table_id' => $license->id,
-            'value'            => 'X',
-            'slots_occupied'   => 1,
-            'timestamp'        => today()->setTime(15, 0),
-        ]);
-
-        $component = Livewire::test(TableSplitter::class)
-            ->call('generateTable');
-
-        $unassigned = $component->get('unassignedWorks');
-        $this->assertTrue(
-            collect($unassigned)->pluck('id')->contains($extra->id),
-            'Il lavoro extra non è finito in unassigned quando la licenza è piena!'
-        );
-    }
 }

@@ -83,7 +83,7 @@
                         <th scope="col" class="px-3 py-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider border-r border-gray-300 w-12 bg-red-100">
                             P
                         </th>
-                        @for ($i = 1; $i <= 25; $i++)
+                        @for ($i = 1; $i <= config('constants.matrix.total_slots'); $i++)
                             <th scope="col" class="text-center text-xs font-semibold text-gray-600 tracking-wider w-8">
                                 {{ $i }}
                             </th>
@@ -135,7 +135,7 @@
                                 $assignments = $row['assignments'];
                             @endphp
 
-                            @for ($slot = 1; $slot <= 25; $slot++)
+                            @for ($slot = 1; $slot <= config('constants.matrix.total_slots'); $slot++)
                                 @php
                                     $work = $assignments[$slot] ?? null;
                                     $isMainWork = $work && ($work instanceof WorkAssignment || $work instanceof \stdClass) && ($work->slot ?? 0) === $slot;

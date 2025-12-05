@@ -156,6 +156,14 @@ public function updateOrder(array $orderedIds): void
             return;
         }
 
+        //controllo che non ce ne siano di più di quelli consentiti
+        if(count($this->selectedUsers) > config('constants.max_users_in_table')) {
+            $this->errorMessage = 'Hai selezionato più licenze di quelle consentite.';
+            $this->dispatch('toggleLoading', false);
+
+            return;
+        }
+
         $this->errorMessage = '';
 
         session()->flash('success', 'Selezione confermata con successo!');

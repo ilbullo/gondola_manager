@@ -48,6 +48,13 @@ class WorkAssignment extends Model
                     "Valore attuale: '{$work->value}'"
                 );
             }
+
+            if (! $work->exists) { // solo per nuovi record
+            $count = self::where('license_table_id', $work->license_table_id)->count();
+            if ($count >=config('constants.matrix.total_slots')) {
+                throw new \Exception("Non puoi aggiungere più di 25 lavori per questa license_table_id.");
+            }
+        }
         });
     }
 

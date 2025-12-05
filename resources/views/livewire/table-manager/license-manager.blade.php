@@ -85,7 +85,7 @@
                     aria-live="polite"
                     class="ml-auto bg-white/20 px-4 py-1.5 rounded-full text-sm font-medium backdrop-blur-sm"
                 >
-                    {{ count($selectedUsers) }}/25
+                    {{ count($selectedUsers) }}/{{ config('constants.max_users_in_table') }}
                 </span>
             </header>
 

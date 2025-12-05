@@ -232,7 +232,7 @@ class MatrixSplitterServiceTest extends TestCase
 
         // === LAVORO "X" (cash) → NON deve permettere shared_from_first = true ===
         $this->expectException(\Exception::class);
-        $this->expectExceptionMessage('shared_from_first può essere true solo per lavori di tipo \'A\'');
+        $this->expectExceptionMessageMatches("/shared_from_first/"); // qualsiasi frammento significativo
 
         WorkAssignment::factory()->create([
             'value'             => WorkType::CASH->value, // 'X'

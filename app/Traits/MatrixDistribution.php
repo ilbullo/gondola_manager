@@ -52,10 +52,10 @@ trait MatrixDistribution {
         if (in_array($turn, [DayType::MORNING->value, DayType::AFTERNOON->value], true)) {
             $workTime = $this->extractWorkTime($work);
 
-            if ($turn === DayType::MORNING->value && $workTime > '13:00') {
+            if ($turn === DayType::MORNING->value && $workTime > config('constants.matrix.morning_end')) {
                 return false;
             }
-            if ($turn === DayType::AFTERNOON->value && $workTime < '13:31') {
+            if ($turn === DayType::AFTERNOON->value && $workTime < config('constants.matrix.afternoon_start')) {
                 return false;
             }
         }
@@ -75,11 +75,13 @@ trait MatrixDistribution {
         $matrixItem = $this->matrix->toArray()[$key];
         
         $totalSlots = $matrixItem['slots_occupied'] ?? 0;
-
+        
+        
         // Somma tutti gli slot già occupati nella matrice
         $usedSlots = collect($matrixItem['worksMap'])
             ->filter()                     // ignora i null
             ->count();                 // somma i valori di slot
+
 
         if ($forFixed) { return $totalSlots - $usedSlots; }
         return $totalSlots - $usedSlots - $this->countFixedWorks($key);
@@ -119,7 +121,7 @@ trait MatrixDistribution {
    public function distribute($worksToAssign,$fromFirst = false) {
 
         // 1. Determina il numero di slot (Colonne). Dal tuo snippet, sono 25 (indice 0 a 24).
-    $MAX_SLOTS_INDEX = 24;
+    $MAX_SLOTS_INDEX = config('constants.matrix.total_slots') - 1;
     // 2. Pre-carica gli elementi della Collection in un array per semplicità,
     //    sebbene Collection supporti il foreach diretto.
     // $slotIndex andrà da 0 a 24
@@ -139,11 +141,12 @@ trait MatrixDistribution {
 
             //$licenseId = $licenseData['id'];
             $worksMap = $licenseData['worksMap'];
+
             // Accedi alla cella specifica (fissando lo slot e variando la licenza)
             $work = $worksMap[$slotIndex] ?? null;
            
             // Logica Round-Robin (esegue un'azione per quello slot per tutte le licenze)
-            if (!is_null($work)) {
+            if ((!is_null($work))){
                 continue;
             } else {
                 // La cella è vuota in questo slot per questa licenza

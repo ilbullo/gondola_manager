@@ -38,7 +38,7 @@
                                 <th scope="col" class="p-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider sticky left-0 bg-gray-50 border-b border-r border-gray-200 w-32 z-30">
                                     Licenza
                                 </th>
-                                @for ($i = 1; $i <= 25; $i++)
+                                @for ($i = 1; $i <= config('constants.matrix.total_slots'); $i++)
                                     <th scope="col" class="p-2 text-center text-xs font-bold text-gray-600 uppercase border-b border-gray-200 min-w-[3rem]">
                                         {{ $i }}
                                     </th>

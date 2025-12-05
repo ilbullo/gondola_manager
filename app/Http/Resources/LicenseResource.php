@@ -11,15 +11,15 @@ class LicenseResource extends JsonResource
     public function toArray($request): array
     {
         try {
-            // Inizializza la mappa dei 25 slot
-            $worksMap = array_fill(1, 25, null);
+            // Inizializza la mappa dei 25 (costants value config/costants.php) slot
+            $worksMap = array_fill(1, config('constants.matrix.total_slots'), null);
 
             foreach ($this->works as $work) {
                 $start = $work->slot;
                 $end   = $start + ($work->slots_occupied ?? 1) - 1;
 
                 for ($i = $start; $i <= $end; $i++) {
-                    if ($i < 1 || $i > 25) {
+                    if ($i < 1 || $i > config('constants.matrix.total_slots')) {
                         continue; // Protezione da dati corrotti
                     }
 
@@ -77,7 +77,7 @@ class LicenseResource extends JsonResource
                 'id'               => $this->id,
                 'license_table_id' => $this->id,
                 'user'             => null,
-                'worksMap'         => array_fill(1, 25, null),
+                'worksMap'         => array_fill(1, config('constants.matrix.total_slots'), null),
             ];
         }
     }

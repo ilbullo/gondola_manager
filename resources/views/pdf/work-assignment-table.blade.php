@@ -56,7 +56,7 @@
         }
         /* Tutte le 25 colonne slot hanno larghezza identica */
         .slot-col {
-            width: calc((100% - 90px) / 25); /* Distribuisce uniformemente lo spazio restante */
+            width: calc((100% - 90px) / {{ config('constants.matrix.total_slots')) }}; /* Distribuisce uniformemente lo spazio restante */
             font-size: 8pt;
         }
         .voucher {
@@ -100,7 +100,7 @@
         <thead>
             <tr>
                 <th class="license-col">Lic.</th>
-                @for($i = 1; $i <= 25; $i++)
+                @for($i = 1; $i <= config('constants.matrix.total_slots'); $i++)
                     <th class="slot-col">{{ $i }}</th>
                 @endfor
             </tr>

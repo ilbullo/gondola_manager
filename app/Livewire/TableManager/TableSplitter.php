@@ -147,7 +147,7 @@ public function printSplitTable(): void
         return [
             'license_number' => $license['user']['license_number'] ?? '—',
             'worksMap'       => $license['worksMap'],
-            'slots'          => $license['slots'] ?? 25,
+            'slots'          => $license['slots'] ?? config('constants.matrix.total_slots'),
             'n_count'        => collect($license['worksMap'])->where('value', 'N')->count(),
             'p_count'        => collect($license['worksMap'])->where('value', 'P')->count(),
             'occupied'       => collect($license['worksMap'])->filter()->count(),

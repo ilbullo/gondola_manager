@@ -32,16 +32,100 @@ class GenerateTestData extends Command
         $this->info('Inizio creazione dati di test...');
         $this->line('Reset database in corso...');
         $this->call('migrate:fresh');
+        $users = [
+            [137,"ROSSO GIORGIO"],
+            [138,"MIANI MARCO"],
+            [139,"MARIUZZO ALESSANDRO"],
+            [140,"BULLO MARCO"],
+            [141,"TAGLIAPIETRA GIUSEPPE"],
+            [142,"ANDRIUZZI LUCA"],
+            [143,"MARESCA NICOLA"],
+            [144,"PENGO FRANCESCO"],
+            [145,"NARDIN GIORGIO"],
+            [146,"ZANCHI MAURO"],
+            [147,"TREVISAN ANDREA"],
+            [148,"FALCER LORENZO"],
+            [149,"VIANELLO GIANNI"],
+            [150,"CAPOLLA CRISTIANO"],
+            [151,"CASIMIRO SERGIO"],
+            [152,"RAGAZZI MARCO"],
+            [153,"MAZZUCCATO RICCARDO"],
+            [154,"PEDRALI MARCO"],
+            [155,"COLLAVINI MATTIA"],
+            [156,"SANTINI ALESSANDRO"],
+            [157,"PAVEGGIO DANIELE"],
+            [158,"BALLARIN ROBERTO"],
+            [159,"GABRIELI SOPPELSA STEFANO"],
+            [160,"TEDESCHI EROS"],
+            [161,"PENZO FRANCESCO"],
+            [162,"RUSSO LORENZO"],
+            [163,"FASAN RICCARDO"],
+            [164,"GALANTE MATTEO"],
+            [165,"TONELLO MASSIMO"],
+            [166,"PERIOTTO DENIS"],
+            [167,"DIANA VITTORIO"],
+            [168,"ZANCHI EUGENIO"],
+            [169,"ZANNI UMBERTO"],
+            [170,"MANZONI NICOLA"],
+            [171,"FONGHER ALESSANDRO"],
+            [172,"BATTISTON SIMONE"],
+            [173,"RIZZO ANDREA"],
+            [174,"CAVAGNIS MARCO"],
+            [175,"CAVAGNIS ALESSANDRO"],
+            [176,"BOLDRIN STEFANO"],
+            [177,"CARLOTTO MAURIZIO"],
+            [178,"TABACCO GABRIELE"], 
+        ];
+
+        $agencies = [
+            'ALBATRAVEL' => 'ALBA',
+            "ITC" => "ITC", 
+            "GONDOLIERI TRAVEL" => "GT", 
+            "VENEZIA SERVICE" => "VENS",
+            "BASSANI" => "BASS", 
+            "BUCINTORO" => "BUCI", 
+            "CONTIKI" => "CONT", 
+            "GLOBUS" => "GLOB", 
+            "COSMOS" => "COSM", 
+            "TRUMPY" => "TRUM",
+            "CLEMENTSON" => "CLEM",
+            "INSIGHT" => "INSI",
+            "TURIVE" => "TUVE"
+        ];
 
         //creo gli utenti
-        $this->line('Creazione utenti in corso...');
-        for ($i = 137; $i <= 178; $i++) {
+        $this->line('Creazione utenti e agenzie in corso...');
+
+        foreach($users as $user){
+            
+            if ($user[0] == 143 || $user[0] == 172 || $user[0] == 166 || $user[0] == 162) {
+                $role = \App\Enums\UserRole::BANCALE->value;
+            }
+            else if($user[0] == 140) {
+                $role = \App\Enums\UserRole::ADMIN->value;
+            }
+            else {
+                $role = \App\Enums\UserRole::USER->value;
+            }
+            \App\Models\User::factory()->create([
+                'license_number' => $user[0],
+                'name'           => $user[1],
+                'email'          => $user[0]. '@dogana.it',
+                'role'           => $role
+            ]);
+        }
+
+        //creo le agenzie
+        foreach($agencies as $name => $code) {
+            \App\Models\Agency::factory()->create(['name' => $name,'code' => $code]);
+        }
+       /* for ($i = 137; $i <= 178; $i++) {
             if ($i != 140) {
                 \App\Models\User::factory()->create(['license_number' => $i]);
             } else {
                 \App\Models\User::factory()->create(['license_number' => $i, 'name' => "Marco Bullo", "email" => "ilbullo@gmail.com", "role" => "admin"]);
             }
-        }
+        }*/
         $this->info('Completato');
 
         $this->line('Creazione licenze in servizio in corso...');

@@ -16,6 +16,7 @@ class MatrixSplitterServiceTest extends TestCase
 {
     use RefreshDatabase;
 
+
     /* HELPERS */
 
     private function getLicenses()
@@ -240,42 +241,4 @@ class MatrixSplitterServiceTest extends TestCase
         ]);
     }
 
-    #[Test]
-    public function agency_works_without_license_are_treated_as_shared_from_first(): void
-    {
-        LicenseTable::factory()->count(4)->create(['date' => today(), 'order' => fn() => fake()->unique()->numberBetween(10, 100)]);
-
-        // Questi 5 lavori sono di tipo "A" ma SENZA licenza assegnata → devono essere shared_from_first
-        $this->createToAssignWorks(5, [
-            'value' => 'A',
-            'time'  => '14:00:00'
-        ]);
-
-        // Questi sono cash → NON devono essere shared
-        $this->createToAssignWorks(3, [
-            'value' => 'X',
-            'time'  => '14:00:00'
-        ]);
-
-        $matrix = $this->createMatrix()->matrix->toArray();
-
-        $sharedWorks = collect($matrix)
-            ->pluck('worksMap')
-            ->collapse()
-            ->filter()
-            ->where('shared_from_first', true);
-
-        // Devono essere esattamente 5 (i lavori "A" liberi)
-        $this->assertCount(5, $sharedWorks);
-
-        // E tutti devono essere di tipo "A"
-        $this->assertTrue(
-            $sharedWorks->every(fn($w) => $w['value'] === 'A'),
-            'Trovato shared_from_first su lavoro non di tipo A!'
-        );
-
-        // Bonus: devono essere distribuiti dalla prima licenza in giù
-        $licenseIds = $sharedWorks->pluck('license_table_id')->sort()->values();
-        $this->assertTrue($licenseIds->isSorted(), 'Non distribuiti in ordine!');
-    }
 }

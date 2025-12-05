@@ -62,6 +62,17 @@ trait HasWorkQueries
         return $this->sharableWorks()->filter(fn ($work) => $this->isAfternoon($work));
     }
 
+    public function calculateUnassignedWorks(): Collection
+    {
+        $assignedIds = $this->matrix
+            ->pluck('worksMap')
+            ->collapse()
+            ->filter()
+            ->pluck('id');
+
+        return $this->allWorks()->whereNotIn('id', $assignedIds);
+    }
+
     // =====================================================================
     // 2. METODI PRONTI ALL'USO – USA QUESTI NEL SERVICE (FUNZIONANO!)
     // =====================================================================

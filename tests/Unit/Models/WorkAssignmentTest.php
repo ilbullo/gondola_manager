@@ -56,7 +56,7 @@ class WorkAssignmentTest extends TestCase
     public function it_belongs_to_an_agency()
     {
         $agency = Agency::factory()->create();
-        $workAssignment = WorkAssignment::factory()->create(['agency_id' => $agency->id]);
+        $workAssignment = WorkAssignment::factory()->create(['agency_id' => $agency->id,'value' => 'A']);
 
         $this->assertInstanceOf(Agency::class, $workAssignment->agency);
         $this->assertEquals($agency->id, $workAssignment->agency->id);
@@ -86,7 +86,7 @@ class WorkAssignmentTest extends TestCase
     #[Test]
     public function it_casts_slot_to_integer()
     {
-        $workAssignment = WorkAssignment::factory()->create(['slot' => '3']);
+        $workAssignment = WorkAssignment::factory()->create(['slot' => '3','value'=>'A']);
 
         $this->assertIsInt($workAssignment->slot);
         $this->assertEquals(3, $workAssignment->slot);
@@ -104,7 +104,7 @@ class WorkAssignmentTest extends TestCase
     #[Test]
     public function it_casts_excluded_to_boolean()
     {
-        $workAssignment = WorkAssignment::factory()->create(['excluded' => '1']);
+        $workAssignment = WorkAssignment::factory()->create(['excluded' => '1','value' => 'A']);
 
         $this->assertIsBool($workAssignment->excluded);
         $this->assertTrue($workAssignment->excluded);
@@ -118,12 +118,12 @@ class WorkAssignmentTest extends TestCase
     #[Test]
     public function it_casts_shared_from_first_to_boolean()
     {
-        $workAssignment = WorkAssignment::factory()->create(['shared_from_first' => '1']);
+        $workAssignment = WorkAssignment::factory()->create(['shared_from_first' => '1','value' => 'A']);
 
         $this->assertIsBool($workAssignment->shared_from_first);
         $this->assertTrue($workAssignment->shared_from_first);
 
-        $workAssignment = WorkAssignment::factory()->create(['shared_from_first' => '0']);
+        $workAssignment = WorkAssignment::factory()->create(['shared_from_first' => '0','excluded'=>'0']);
 
         $this->assertIsBool($workAssignment->shared_from_first);
         $this->assertFalse($workAssignment->shared_from_first);
@@ -133,7 +133,7 @@ class WorkAssignmentTest extends TestCase
     public function it_returns_agency_name_accessor()
     {
         $agency = Agency::factory()->create(['name' => 'Test Agency']);
-        $workAssignment = WorkAssignment::factory()->create(['agency_id' => $agency->id]);
+        $workAssignment = WorkAssignment::factory()->create(['agency_id' => $agency->id,'value' => 'A']);
 
         $this->assertEquals('Test Agency', $workAssignment->agency_name);
 

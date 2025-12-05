@@ -26,12 +26,12 @@ class WorkAssignment extends Model
     ];
 
     protected $casts = [
-        'timestamp' => 'datetime',
-        'slots_occupied' => 'integer',
-        'slot' => 'integer',
-        'excluded' => 'boolean',
+        'timestamp'         => 'datetime',
+        'slots_occupied'    => 'integer',
+        'slot'              => 'integer',
+        'excluded'          => 'boolean',
         'shared_from_first' => 'boolean',
-        'amount'    => 'float'
+        'amount'            => 'float',
     ];
 
     /**
@@ -40,15 +40,33 @@ class WorkAssignment extends Model
     protected static function booted(): void
     {
         static::saving(function ($work) {
-            if ($work->shared_from_first && $work->value !== WorkType::AGENCY->value) {
+            if (($work->shared_from_first && $work->value !== WorkType::AGENCY->value) ||
+               ($work->excluded && $work->value !== WorkType::AGENCY->value))
+            {
                 throw new \Exception(
-                    "Il campo shared_from_first può essere true solo per lavori di tipo 'A' (agenzia). " .
+                    "Il campo shared_from_first o excluded può essere true solo per lavori di tipo 'A' (agenzia). " .
                     "Valore attuale: '{$work->value}'"
                 );
             }
         });
     }
 
+    public function setValueAttribute($value)
+{
+    // 1. Blocca array e oggetti
+    if (is_array($value) || is_object($value)) {
+        $this->attributes['value'] = null;
+        return;
+    }
+
+    // 2. Lista valori validi dell’enum
+    $valid = array_column(WorkType::cases(), 'value');
+
+    // 3. Se il valore è nell’enum → ok, altrimenti null
+    $this->attributes['value'] = in_array($value, $valid, true)
+        ? $value
+        : null;
+}
 
     /**
      * Relazione con l'utente.

@@ -17,7 +17,7 @@ return new class extends Migration
             $table->index('date');
             $table->unsignedBigInteger('user_id');
             $table->integer('order')->default(0);
-            $table->enum('turn',['morning', 'afternoon', 'full']);
+            $table->enum('turn',['morning', 'afternoon', 'full'])->default('full');
             $table->boolean('only_cash_works')->default(false);
             $table->unique(['date', 'order']);
             $table->index('order');

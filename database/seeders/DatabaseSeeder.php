@@ -25,7 +25,7 @@ class DatabaseSeeder extends Seeder
         ]);*/
 
         //User::factory(40)->create();
-
+/*
         $agencies = [
             'ALBATRAVEL' => 'ALBA',
             "ITC" => "ITC", 
@@ -44,7 +44,7 @@ class DatabaseSeeder extends Seeder
 
         foreach($agencies as $name => $code) {
             \App\Models\Agency::factory()->create(['name' => $name,'code' => $code]);
-        }
+        }*/
         
     }
 }

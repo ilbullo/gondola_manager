@@ -9,20 +9,46 @@ use Illuminate\Support\Facades\DB;
 
 class TableManager extends Component
 {
-    public bool $hasLicenses = false;        // più chiaro di $licenses
-    public bool $tableConfirmed = false;     // stato attuale della tabella
-    public bool $isRedistributed = false;
+    /** 
+     * Indica se esistono licenze registrate per la data odierna.
+     * Controllato automaticamente al mount.
+     */
+    public bool $hasLicenses = false;
+
+    /** 
+     * Indica se la tabella delle licenze è stata confermata.
+     * Quando true, la tabella non è più modificabile.
+     */
+    public bool $tableConfirmed = false;
 
     /**
-     * Mount: verifica se esistono licenze per oggi
+     * Indica se la modalità di redistribuzione lavori è attiva.
+     * Gestisce la vista TableSplitter.
+     */
+    public bool $isRedistributed = false;
+
+    // ===================================================================
+    // Lifecycle
+    // ===================================================================
+
+    /**
+     * All’avvio del componente controlla se esistono licenze per oggi
+     * e aggiorna lo stato interno.
      */
     public function mount(): void
     {
         $this->checkTodayLicenses();
     }
 
+    // ===================================================================
+    // Helpers principali
+    // ===================================================================
+
     /**
-     * Controlla se esistono record nella tabella per la data corrente
+     * Verifica se esistono record in license_table per la data corrente.
+     * Aggiorna:
+     * - hasLicenses → ci sono licenze?
+     * - tableConfirmed → lo stato della tabella corrisponde alla presenza licenze
      */
     private function checkTodayLicenses(): void
     {
@@ -30,8 +56,14 @@ class TableManager extends Component
         $this->tableConfirmed = $this->hasLicenses;
     }
 
-    // === Eventi Livewire (Livewire v3 style) ===
+    // ===================================================================
+    // Eventi Livewire (v3)
+    // ===================================================================
 
+    /**
+     * Conferma ufficialmente la tabella delle licenze.
+     * Usato dopo il click "Conferma" in LicenseManager.
+     */
     #[On('confirmLicenses')]
     public function confirmTable(): void
     {
@@ -39,6 +71,10 @@ class TableManager extends Component
         $this->isRedistributed = false;
     }
 
+    /**
+     * Rende nuovamente modificabile la tabella licenze.
+     * Usato quando l’utente clicca "Modifica".
+     */
     #[On('editLicenses')]
     public function enterEditMode(): void
     {
@@ -46,18 +82,25 @@ class TableManager extends Component
         $this->isRedistributed = false;
     }
 
+    /**
+     * Esce dalla modalità di redistribuzione lavori e torna alla tabella principale.
+     */
     #[On('goToAssignmentTable')]
     public function exitRedistributionMode(): void
     {
         $this->isRedistributed = false;
-        // $this->tableConfirmed rimane true
+        // tableConfirmed rimane invariato (true)
     }
 
+    /**
+     * Cancella tutte le licenze presenti, tipicamente alla fine della giornata.
+     * L’operazione è eseguita in transazione per garantirne l’integrità.
+     */
     #[On('resetLicenses')]
     public function clearLicenses(): void
     {
         DB::transaction(function () {
-            // TODO: Aggiungere qui la logica per salvare le fatture splittate
+            // TODO: salvare le assegnazioni o fatture splittate prima della cancellazione
             // WorkAssignment::where(...)->update([...]);
 
             LicenseTable::query()->delete();
@@ -66,28 +109,42 @@ class TableManager extends Component
         $this->hasLicenses = false;
         $this->tableConfirmed = false;
 
-        // Notifica gli altri componenti (es. WorkDetailsModal, ecc.)
+        // Notifica altri componenti che dipendono dallo stato della tabella
         $this->dispatch('licensesCleared');
         $this->dispatch('tableReset');
     }
 
-    // === Metodi di utilità (opzionali ma utili) ===
+    // ===================================================================
+    // Utility
+    // ===================================================================
 
     /**
-     * Forza il refresh dello stato (utile se cambi data manualmente)
+     * Rinfresca manualmente lo stato della tabella.
+     * Utile quando la data di lavoro cambia.
      */
     public function refreshLicenseStatus(): void
     {
         $this->checkTodayLicenses();
     }
 
+    /**
+     * Attiva la modalità "redistribuzione lavori".
+     * Mostra la vista TableSplitter e notifica gli altri componenti.
+     */
     #[On('callRedistributeWorks')]
-    public function redistributeWorks() {
-        $this->isRedistributed = true; // Attiva la vista TableSplitter
+    public function redistributeWorks()
+    {
+        $this->isRedistributed = true;
         $this->dispatch('redistributeWorks');
     }
 
-    // === Render ===
+    // ===================================================================
+    // Render
+    // ===================================================================
+
+    /**
+     * Rendering del componente TableManager.
+     */
     public function render()
     {
         return view('livewire.table-manager.table-manager');

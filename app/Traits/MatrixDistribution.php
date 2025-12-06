@@ -8,46 +8,72 @@ use Illuminate\Support\Collection;
 use RuntimeException;
 use DateTimeInterface;
 
+trait MatrixDistribution
+{
+    // =====================================================================
+    // 1. GET / SAVE MATRICE
+    // =====================================================================
 
-trait MatrixDistribution {
-
-    private function getMatrix() {
+    /**
+     * Restituisce la matrice come array.
+     *
+     * @return array
+     */
+    private function getMatrix(): array
+    {
         return $this->matrix->toArray();
     }
 
-    private function saveMatrix($matrix) {
+    /**
+     * Salva la matrice aggiornata come Collection.
+     *
+     * @param array $matrix
+     */
+    private function saveMatrix(array $matrix): void
+    {
         $this->matrix = collect($matrix);
     }
 
-    private function countFixedWorks($key) : int 
-{
-    $original = $this->licenseTable[$key]; // matrice originale
+    // =====================================================================
+    // 2. HELPER PRIVATI – Controlli e calcoli
+    // =====================================================================
 
-    if (!$original) { 
-        throw new RuntimeException('Tabella inesistente');
+    /**
+     * Conta i lavori fissi (N, P o esclusi non A) per una licenza.
+     *
+     * @param int $key
+     * @return int
+     * @throws RuntimeException
+     */
+    private function countFixedWorks(int $key): int
+    {
+        $original = $this->licenseTable[$key] ?? null;
+
+        if (!$original) {
+            throw new RuntimeException('Tabella inesistente per il key specificato.');
+        }
+
+        return collect($original['worksMap'])
+            ->filter(fn($work) => $work &&
+                (in_array($work['value'], ['N', 'P'], true) ||
+                 (($work['excluded'] ?? false) === true && $work['value'] !== 'A')))
+            ->count();
     }
 
-    return collect($original['worksMap'])
-        ->filter(function ($work) {
-            return $work &&
-                (   
-                    //controllo il numero di N e P e lavori esclusi 
-                    in_array($work['value'], ['N', 'P']) ||
-                    (($work['excluded'] ?? false) === true && $work['value'] != 'A')
-                );
-        })
-        ->count();
-}
-
-    private function isAllowedToBeAdded($key,$work) : bool{
+    /**
+     * Controlla se un lavoro può essere aggiunto alla licenza.
+     *
+     * @param int $key
+     * @param array $work
+     * @return bool
+     */
+    private function isAllowedToBeAdded(int $key, array $work): bool
+    {
         $matrixItem = $this->matrix->toArray()[$key];
-        //turno mattina pomeriggio o full
         $turn = $matrixItem['turn'];
-        //accetta solo lavori cash
-        $only_cash = $matrixItem['only_cash_works'];
-        //tipo di lavoro A, N, P, X
+        $onlyCash = $matrixItem['only_cash_works'];
         $value = $work['value'];
-        
+
         // Rispetto turno mezza giornata
         if (in_array($turn, [DayType::MORNING->value, DayType::AFTERNOON->value], true)) {
             $workTime = $this->extractWorkTime($work);
@@ -60,40 +86,52 @@ trait MatrixDistribution {
             }
         }
 
-        if ($only_cash && $value === WorkType::AGENCY->value) {
+        // Solo lavori cash se licenza cash-only
+        if ($onlyCash && $value === WorkType::AGENCY->value) {
             return false;
         }
 
         return true;
-        //if ($key == 2 && $work['value'] == "A") {return false;}
-        //return !(!empty($matrixItem['blocked_works']) && in_array($value, $matrixItem['blocked_works'], true));
-
     }
 
-    private function getCapacityLeft($key,$forFixed=false) : int
+    /**
+     * Restituisce la capacità residua di una licenza.
+     *
+     * @param int $key
+     * @param bool $forFixed
+     * @return int
+     */
+    private function getCapacityLeft(int $key, bool $forFixed = false): int
     {
         $matrixItem = $this->matrix->toArray()[$key];
-        
         $totalSlots = $matrixItem['slots_occupied'] ?? 0;
-        
-        
-        // Somma tutti gli slot già occupati nella matrice
+
         $usedSlots = collect($matrixItem['worksMap'])
-            ->filter()                     // ignora i null
-            ->count();                 // somma i valori di slot
+            ->filter()
+            ->count();
 
+        if ($forFixed) {
+            return $totalSlots - $usedSlots;
+        }
 
-        if ($forFixed) { return $totalSlots - $usedSlots; }
         return $totalSlots - $usedSlots - $this->countFixedWorks($key);
     }
 
-    private function addToUnassigned($work)
+    /**
+     * Aggiunge un lavoro alla lista dei lavori non assegnati.
+     *
+     * @param array $work
+     */
+    private function addToUnassigned(array $work): void
     {
         $this->unassignedWorks->push($work);
     }
 
     /**
-     * Estrae l'orario HH:ii dal timestamp del lavoro
+     * Estrae l'orario HH:ii dal timestamp del lavoro.
+     *
+     * @param array $work
+     * @return string
      */
     private function extractWorkTime(array $work): string
     {
@@ -104,97 +142,73 @@ trait MatrixDistribution {
         }
 
         if (is_string($ts) && strlen($ts) >= 19) {
-            return substr($ts, 11, 5); // "14:30"
+            return substr($ts, 11, 5);
         }
 
         return '00:00';
     }
 
+    // =====================================================================
+    // 3. DISTRIBUZIONE LAVORI
+    // =====================================================================
+
     /**
      * Distribuisce i lavori in round-robin rispettando:
      * - turno mezza giornata (morning/afternoon)
-     * - capacità reale della licenza (real_slots_today)
+     * - capacità residua
      * - primo slot libero disponibile
-     * - round-robin perfetto (ricomincia dalla prima)
+     * - round-robin
+     *
+     * @param Collection $worksToAssign
+     * @param bool $fromFirst Se true parte dallo slot iniziale
      */
+    public function distribute(Collection $worksToAssign, bool $fromFirst = false): void
+    {
+        $maxSlotsIndex = config('constants.matrix.total_slots') - 1;
+        $matrix = $this->getMatrix();
+        $startingIndex = $fromFirst ? array_search(null, $matrix[0]['worksMap'], true) : 0;
 
-   public function distribute($worksToAssign,$fromFirst = false) {
+        for ($slotIndex = $startingIndex; $slotIndex <= $maxSlotsIndex; $slotIndex++) {
+            foreach ($this->matrix as $key => $licenseData) {
+                $work = $licenseData['worksMap'][$slotIndex] ?? null;
+                if (!is_null($work)) continue;
 
-        // 1. Determina il numero di slot (Colonne). Dal tuo snippet, sono 25 (indice 0 a 24).
-    $MAX_SLOTS_INDEX = config('constants.matrix.total_slots') - 1;
-    // 2. Pre-carica gli elementi della Collection in un array per semplicità,
-    //    sebbene Collection supporti il foreach diretto.
-    // $slotIndex andrà da 0 a 24
-
-    $matrix = $this->getMatrix();
-
-    if ($fromFirst) {
-        $startingIndex = array_search(null, $matrix[0]['worksMap'], true);
-    }
-    else {
-        $startingIndex = 0;
-    }
-
-    for ($slotIndex = $startingIndex; $slotIndex <= $MAX_SLOTS_INDEX; $slotIndex++) {
-
-        foreach ($this->matrix as $key => $licenseData) {
-
-            //$licenseId = $licenseData['id'];
-            $worksMap = $licenseData['worksMap'];
-
-            // Accedi alla cella specifica (fissando lo slot e variando la licenza)
-            $work = $worksMap[$slotIndex] ?? null;
-           
-            // Logica Round-Robin (esegue un'azione per quello slot per tutte le licenze)
-            if ((!is_null($work))){
-                continue;
-            } else {
-                // La cella è vuota in questo slot per questa licenza
-
-                if ($this->getCapacityLeft($key)>0 && !$worksToAssign->isEmpty()) {
-
+                if ($this->getCapacityLeft($key) > 0 && !$worksToAssign->isEmpty()) {
                     $nextWork = $worksToAssign->first();
-
-                    if ($this->isAllowedToBeAdded($key,$nextWork)) {
+                    if ($this->isAllowedToBeAdded($key, $nextWork)) {
                         $matrix[$key]['worksMap'][$slotIndex] = $nextWork;
                         $this->saveMatrix($matrix);
                         $worksToAssign->shift();
                     }
-
-                    if($worksToAssign->isEmpty()) {break 2;}
+                    if ($worksToAssign->isEmpty()) break 2;
                 }
             }
         }
+
+        foreach ($worksToAssign as $work) {
+            $this->addToUnassigned($work);
+        }
     }
-    //lavori rimasti non assegnati
-                foreach($worksToAssign as $work) {
-                    $this->addToUnassigned($work);
-                }
-   }
 
-   public function distributeFixed($worksToAssign) {
-
+    /**
+     * Distribuisce lavori fissi alle licenze rispettando la capacità.
+     *
+     * @param Collection $worksToAssign
+     */
+    public function distributeFixed(Collection $worksToAssign): void
+    {
         $matrix = $this->getMatrix();
 
-        foreach($worksToAssign as $work) {
-
+        foreach ($worksToAssign as $work) {
             $index = array_search($work['license_table_id'], array_column($matrix, 'license_table_id'));
-
-            // Cerca il primo valore 'null' e restituisce la sua chiave (l'indice)
             $slotIndex = array_search(null, $matrix[$index]['worksMap'], true);
 
-            //controllo capacità
-
-            if ($this->getCapacityLeft($index,true)>0) {
-                //assign work
+            if ($this->getCapacityLeft($index, true) > 0) {
                 $matrix[$index]['worksMap'][$slotIndex] = $worksToAssign->shift();
                 $this->saveMatrix($matrix);
-            }
-            else {
-                //lavoro non assegnabile - necessario intervento manuale
+            } else {
                 $this->addToUnassigned($work);
             }
         }
     }
-
 }

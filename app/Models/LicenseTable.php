@@ -10,49 +10,88 @@ class LicenseTable extends Model
 {
     use HasFactory;
 
+    /**
+     * Nome della tabella nel database
+     * @var string
+     */
     protected $table = 'license_table';
 
+    /**
+     * Attributi assegnabili in massa
+     * @var array<int,string>
+     */
     protected $fillable = [
-        'user_id',
-        'order',
-        'turn',
-        'only_cash_works',
-        'date'
-    ];
-
-    protected $casts = [
-        'date' => 'date', // Assicura che date sia castato come Carbon
-        'only_cash_works' => 'boolean',
+        'user_id',          // ID dell'utente associato
+        'order',            // Ordine nella lista/licenza
+        'turn',             // Turno: full, morning, afternoon
+        'only_cash_works',  // Flag se lavora solo con incarichi X (cash)
+        'date'              // Data della licenza
     ];
 
     /**
-     * Relazione con User
-     * Ogni record appartiene a un specifico utente.
+     * Cast automatico degli attributi
+     * @var array<string,string>
+     */
+    protected $casts = [
+        'date' => 'date',               // Converte automaticamente in Carbon
+        'only_cash_works' => 'boolean', // Converte in booleano
+    ];
+
+    // === Relazioni ===
+
+    /**
+     * Relazione con l'utente
+     * Ogni licenza appartiene a un singolo utente
      */
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    public function works() {
-        return $this->hasMany(WorkAssignment::class,'license_table_id','id');
+    /**
+     * Relazione con i lavori assegnati
+     * Una licenza può avere molti lavori (WorkAssignment)
+     */
+    public function works()
+    {
+        return $this->hasMany(WorkAssignment::class, 'license_table_id', 'id');
     }
 
-    public function isFullDay() {
+    // === Helper / Metodi di utilità ===
+
+    /**
+     * Controlla se il turno è Full Day
+     * @return bool
+     */
+    public function isFullDay(): bool
+    {
         return $this->turn === DayType::FULL->value;
     }
 
-    public function isMorning() {
+    /**
+     * Controlla se il turno è Morning
+     * @return bool
+     */
+    public function isMorning(): bool
+    {
         return $this->turn === DayType::MORNING->value;
     }
 
-    public function isAfternoon() {
+    /**
+     * Controlla se il turno è Afternoon
+     * @return bool
+     */
+    public function isAfternoon(): bool
+    {
         return $this->turn === DayType::AFTERNOON->value;
     }
 
-    public function onlyCash() {
+    /**
+     * Controlla se la licenza è solo per lavori cash (X)
+     * @return bool
+     */
+    public function onlyCash(): bool
+    {
         return $this->only_cash_works;
     }
 }
-
-

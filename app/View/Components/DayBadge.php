@@ -9,14 +9,28 @@ use App\Enums\DayType;
 
 class DayBadge extends Component
 {
+    /**
+     * Tipo di giorno associato al badge.
+     *
+     * @var DayType
+     */
     public DayType $day;
+
+    /**
+     * Crea un nuovo componente DayBadge.
+     *
+     * @param string $day Valore del giorno come stringa (es. 'FULL', 'MORNING', 'AFTERNOON')
+     */
     public function __construct(string $day)
     {
+        // Converte la stringa in enum DayType; default FULL se invalido
         $this->day = DayType::tryFrom($day) ?? DayType::FULL;
     }
 
     /**
-     * Get the view / contents that represent the component.
+     * Restituisce la view associata al componente.
+     *
+     * @return View|Closure|string
      */
     public function render(): View|Closure|string
     {

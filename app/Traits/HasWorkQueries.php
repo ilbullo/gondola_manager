@@ -10,27 +10,30 @@ use Illuminate\Support\Collection;
 
 trait HasWorkQueries
 {
-    //use DistributesWorksToMatrix;
-
+    // =====================================================================
+    // Proprietà del trait
+    // =====================================================================
     /** @var array|Collection */
-    public $licenseTable = [];
+    public $licenseTable = [];   // Array o Collection di licenze da cui derivare i lavori
 
     /** @var Collection */
-    public $matrix;
+    public $matrix;              // Matrice preparata per l'assegnazione dei lavori
 
     // =====================================================================
-    // 1. METODI BASE – Tutti funzionano e restituiscono Collection
+    // 1. METODI BASE – Restituiscono tutte le collezioni di lavori filtrati
     // =====================================================================
 
+    /** Restituisce tutti i lavori ordinati per timestamp */
     public function allWorks(): Collection
     {
         return collect($this->licenseTable ?? [])
             ->flatMap(fn ($license) => $license['worksMap'] ?? [])
-            ->filter()
+            ->filter()           // rimuove valori null o vuoti
             ->sortBy('timestamp')
-            ->values(); // rimuove null e valori vuoti
+            ->values();          // ri-indicizza la Collection
     }
 
+    /** Lavori condivisibili e non esclusi */
     public function sharableWorks(): Collection
     {
         return $this->allWorks()
@@ -38,71 +41,79 @@ trait HasWorkQueries
             ->where('shared_from_first', false);
     }
 
+    /** Lavori non condivisibili (excluded = true) */
     public function unsharableWorks() : Collection
     {
         return $this->allWorks()
-            ->where('excluded',true)
-            ->where('shared_from_first',false);
+            ->where('excluded', true)
+            ->where('shared_from_first', false);
     }
 
+    /** Lavori condivisibili ma obbligatoriamente nel primo slot */
     public function sharableFirstWorks() : Collection
     {
         return $this->allWorks()
-            ->where('excluded',false)
-            ->where('shared_from_first',true);
+            ->where('excluded', false)
+            ->where('shared_from_first', true);
     }
 
+    /** Lavori della mattina (sharable) */
     public function morningWorks(): Collection
     {
         return $this->sharableWorks()->filter(fn ($work) => $this->isMorning($work));
     }
 
+    /** Lavori del pomeriggio (sharable) */
     public function afternoonWorks(): Collection
     {
         return $this->sharableWorks()->filter(fn ($work) => $this->isAfternoon($work));
     }
 
     // =====================================================================
-    // 2. METODI PRONTI ALL'USO – USA QUESTI NEL SERVICE (FUNZIONANO!)
+    // 2. METODI PRONTI ALL'USO – Da usare direttamente nel service
     // =====================================================================
 
+    /** Lavori di agenzia non condivisibili (fissi) */
     public function fixedAgencyWorks() : Collection
     {
         return $this->unsharableWorks()->where('value','A');
     }
 
+    /** Lavori mattutini di agenzia ancora pendenti */
     public function pendingMorningAgencyWorks(): Collection
     {
         return $this->morningWorks()->where('value', 'A');
     }
 
+    /** Lavori pomeridiani di agenzia ancora pendenti */
     public function pendingAfternoonAgencyWorks(): Collection
     {
         return $this->afternoonWorks()->where('value', 'A');
     }
 
+    /** Lavori in contanti ancora pendenti */
     public function pendingCashWorks(): Collection
     {
         return $this->sharableWorks()->where('value', 'X');
     }
 
+    /** Lavori di tipo N o P ancora pendenti */
     public function pendingNPWorks(): Collection
     {
         return $this->sharableWorks()->whereIn('value', ['P', 'N']);
     }
 
-
     // =====================================================================
-    // 3. PREPARE MATRIX – OBBLIGATORIO PRIMA DI DISTRIBUTE
+    // 3. PREPARAZIONE MATRICE – Obbligatoria prima di distribuire i lavori
     // =====================================================================
-
     public function prepareMatrix(): void
     {
+        // Riga vuota template
         $emptyRow = [
             'id'                => null,
             'license_table_id'  => null,
             'user'              => null,
-            'turn'             => DayType::FULL->value,
+            'turn'              => DayType::FULL->value,
             'real_slots_today'  => config('constants.matrix.total_slots'),
             'only_cash_works'   => false,
             'wallet'            => 0,
@@ -110,14 +121,16 @@ trait HasWorkQueries
             'worksMap'          => array_fill(0, config('constants.matrix.total_slots'), null),
         ];
 
+        // Crea la matrice base con tante righe quante licenze
         $this->matrix = collect($this->licenseTable ?? [])
             ->map(fn () => $emptyRow)
             ->values();
 
+        // Merge dei dati reali delle licenze nella matrice
         foreach ($this->licenseTable ?? [] as $index => $license) {
             $this->matrix[$index] = array_merge($this->matrix[$index], [
                 'id'                    => $license['id'] ?? null,
-                'license_table_id'      => $license['id'] ?? null,        // ← IMPORTANTE
+                'license_table_id'      => $license['id'] ?? null,
                 'user'                  => $license['user'] ?? null,
                 'turn'                  => $license['turn'] ?? DayType::FULL->value,
                 'only_cash_works'       => $license['only_cash_works'],
@@ -127,45 +140,39 @@ trait HasWorkQueries
             ]);
         }
 
-        $this->matrix = $this->matrix->values(); // indici 0,1,2... per round-robin
+        // Assicura che gli indici siano 0,1,2... utili per round-robin
+        $this->matrix = $this->matrix->values();
     }
 
     // =====================================================================
-    // 4. HELPER PRIVATI – Robustissimi
+    // 4. HELPER PRIVATI – Determinano turno della giornata
     // =====================================================================
-
     private function isMorning($work): bool
     {
         $time = $this->extractTime($work);
-
         return $time !== null && $time <= config('constants.matrix.morning_end');
     }
 
     private function isAfternoon($work): bool
     {
         $time = $this->extractTime($work);
-
         return $time !== null && $time >= config('constants.matrix.afternoon_start');
     }
 
+    /** Estrae l'orario da timestamp in diversi formati */
     private function extractTime($work): ?string
     {
         $ts = $work['timestamp'] ?? null;
-        if (! $ts) {
-            return null;
-        }
+        if (! $ts) return null;
 
-        // DateTime object
         if ($ts instanceof DateTimeInterface) {
             return $ts->format('H:i');
         }
 
-        // Stringa completa: "2025-11-28 12:30:00"
         if (is_string($ts) && strlen($ts) >= 19) {
-            return substr($ts, 11, 5);
+            return substr($ts, 11, 5); // "HH:MM" da "YYYY-MM-DD HH:MM:SS"
         }
 
-        // Solo orario: "14:30:00" o "14:30"
         if (is_string($ts) && preg_match('/^(\d{2}:\d{2})/', $ts, $matches)) {
             return $matches[1];
         }
@@ -174,9 +181,8 @@ trait HasWorkQueries
     }
 
     // =====================================================================
-    // 5. DEBUG & REPORT (opzionali ma utili)
+    // 5. DEBUG & REPORT – Facoltativi ma utili durante sviluppo
     // =====================================================================
-
     public function debugInfo(): array
     {
         return [
@@ -191,6 +197,7 @@ trait HasWorkQueries
         ];
     }
 
+    /** Somma totale importi dei lavori condivisibili */
     public function totalEarnings(): float
     {
         return (float) $this->sharableWorks()->sum('amount');

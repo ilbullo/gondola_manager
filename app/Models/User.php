@@ -2,33 +2,39 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use App\Enums\{UserRole, LicenseType};
+
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
+    // ===================================================================
+    // Attributi assegnabili in massa
+    // ===================================================================
     /**
-     * The attributes that are mass assignable.
+     * Attributi che possono essere assegnati tramite create() o fill()
      *
      * @var list<string>
      */
     protected $fillable = [
-        'name',
-        'email',
-        'password',
-        'role',
-        'type',
-        'license_number',
-        'last_login_at'
+        'name',           // Nome dell'utente
+        'email',          // Email di login
+        'password',       // Password (verrà hashata)
+        'role',           // Ruolo utente (Admin, Bancale, User)
+        'type',           // Tipo di licenza (enum LicenseType)
+        'license_number', // Numero licenza dell'utente
+        'last_login_at'   // Ultimo login
     ];
 
+    // ===================================================================
+    // Attributi nascosti nella serializzazione
+    // ===================================================================
     /**
-     * The attributes that should be hidden for serialization.
+     * Attributi nascosti quando l'utente viene serializzato in array o JSON
      *
      * @var list<string>
      */
@@ -37,25 +43,32 @@ class User extends Authenticatable
         'remember_token',
     ];
 
+    // ===================================================================
+    // Cast automatico degli attributi
+    // ===================================================================
     /**
-     * Get the attributes that should be cast.
+     * Definisce come devono essere convertiti gli attributi
      *
-     * @return array<string, string>
+     * @return array<string,string>
      */
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-            'role' => UserRole::class,
-            'type' => LicenseType::class,
-            'last_login_at' => 'datetime'
-
+            'email_verified_at' => 'datetime', // Cast automatico in Carbon
+            'password' => 'hashed',            // Hash automatico della password
+            'role' => UserRole::class,         // Enum del ruolo
+            'type' => LicenseType::class,      // Enum tipo licenza
+            'last_login_at' => 'datetime'      // Ultimo login come Carbon
         ];
     }
 
-     /**
-     * Un utente può avere molti lavori di tipo AgencyWork.
+    // ===================================================================
+    // Relazioni
+    // ===================================================================
+
+    /**
+     * Relazione con lavori di tipo AgencyWork
+     * Un utente può avere molti lavori Agency
      */
     public function agencyWorks()
     {
@@ -63,7 +76,8 @@ class User extends Authenticatable
     }
 
     /**
-     * Un utente può avere molti lavori assegnati (WorkAssignment).
+     * Relazione con lavori assegnati (WorkAssignment)
+     * Un utente può avere molte assegnazioni
      */
     public function workAssignments()
     {
@@ -71,26 +85,38 @@ class User extends Authenticatable
     }
 
     /**
-     * Un utente può esser stato al lavoro molte volte (LicenseTable)
+     * Relazione con la tabella licenze (LicenseTable)
+     * Un utente può avere una licenza per il giorno corrente
      */
-
     public function atWork()
     {
         return $this->hasOne(LicenseTable::class, 'user_id');
     }
 
-    // Metodi per verificare il ruolo
-    public function isAdmin()
+    // ===================================================================
+    // Metodi di utilità per i ruoli
+    // ===================================================================
+
+    /**
+     * Verifica se l'utente è Admin
+     */
+    public function isAdmin(): bool
     {
         return $this->role === UserRole::ADMIN;
     }
 
-    public function isBancale()
+    /**
+     * Verifica se l'utente è Bancale
+     */
+    public function isBancale(): bool
     {
         return $this->role === UserRole::BANCALE;
     }
 
-    public function isUser()
+    /**
+     * Verifica se l'utente è User generico
+     */
+    public function isUser(): bool
     {
         return $this->role === UserRole::USER;
     }

@@ -8,18 +8,37 @@ use Illuminate\Support\Facades\DB;
 
 class LicenseManager extends Component
 {
-    /** @var array<int, array{id: int, user_id: int, name: string, surname: string, license: string|null}> */
+    /**
+     * Utenti disponibili (non ancora assegnati alla tabella di oggi).
+     *
+     * Ogni elemento contiene:
+     * - id
+     * - user_id
+     * - name
+     * - surname
+     * - license
+     *
+     * @var array<int, array{id: int, user_id: int, name: string, surname: string, license: string|null}>
+     */
     public array $availableUsers = [];
 
-    /** @var array<int, array{id: int, user_id: int, order: int, user: array{id: int, name: string, surname: string, license: string|null}}> */
+    /**
+     * Utenti selezionati (presenti nella license_table con la data odierna).
+     *
+     * @var array<int, array{id: int, user_id: int, order: int, user: array{id: int, name: string, surname: string, license: string|null}}>
+     */
     public array $selectedUsers = [];
 
+    /** Messaggi di errore mostrati all’utente */
     public string $errorMessage = '';
 
     // ===================================================================
     // Lifecycle
     // ===================================================================
 
+    /**
+     * Inizializza il componente caricando gli utenti disponibili e selezionati.
+     */
     public function mount(): void
     {
         $this->refreshData();
@@ -29,123 +48,124 @@ class LicenseManager extends Component
     // Public Actions
     // ===================================================================
 
- public function selectUser(int $userId): void
-{
-    $this->dispatch('toggleLoading', true);
-
-    $user = User::findOrFail($userId);
-
-    LicenseTable::create([
-        'user_id' => $user->id,
-        'date'    => today(),
-        'order'   => $this->getNextOrder(),
-    ]);
-
-    // RICARICA TUTTO: availableUsers + selectedUsers
-    $this->refreshData();
-
-    $this->dispatch('toggleLoading', false);
-}
-
-public function removeUser(int $licenseTableId): void
-{
-    $this->dispatch('toggleLoading', true);
-
-    LicenseTable::findOrFail($licenseTableId)->delete();
-
-    $this->refreshData(); // ← fa riapparire la licenza a sinistra
-
-    $this->dispatch('toggleLoading', false);
-}
-
-    /** Riceve l'array da Alpine (Livewire sortable) */
-    /** VECCHIO METODO FUNZIONANTE */
-
-    /*public function updateOrder(array $orderedIds): void
+    /**
+     * Assegna un utente alla tabella licenze del giorno.
+     *
+     * - Recupera l’utente
+     * - Calcola il prossimo ordine
+     * - Crea la riga nella license_table
+     * - Aggiorna i dati del componente
+     */
+    public function selectUser(int $userId): void
     {
         $this->dispatch('toggleLoading', true);
 
-        DB::transaction(function () use ($orderedIds) {
-            foreach ($orderedIds as $index => $item) {
-                LicenseTable::where('id', $item['value'])
-                    ->update(['order' => $index + 1]);
+        $user = User::findOrFail($userId);
+
+        LicenseTable::create([
+            'user_id' => $user->id,
+            'date'    => today(),
+            'order'   => $this->getNextOrder(),
+        ]);
+
+        // Aggiorna entrambe le liste (disponibili + selezionati)
+        $this->refreshData();
+
+        $this->dispatch('toggleLoading', false);
+    }
+
+    /**
+     * Rimuove un utente dalla tabella licenze del giorno.
+     */
+    public function removeUser(int $licenseTableId): void
+    {
+        $this->dispatch('toggleLoading', true);
+
+        LicenseTable::findOrFail($licenseTableId)->delete();
+
+        // L’utente torna tra i disponibili
+        $this->refreshData();
+
+        $this->dispatch('toggleLoading', false);
+    }
+
+    /**
+     * Aggiorna l’ordine degli utenti assegnati.
+     *
+     * Metodo ottimizzato:
+     * 1. Spostamento temporaneo degli ordini per evitare collisioni UNIQUE (date, order)
+     * 2. Aggiornamento massivo tramite SQL CASE → una sola query
+     * 3. Ricarica lista selezionati
+     */
+    public function updateOrder(array $orderedIds): void
+    {
+        // Evita elaborazioni inutili
+        if (empty($orderedIds)) {
+            return;
+        }
+
+        $this->dispatch('toggleLoading', true);
+
+        // Costruisce la mappatura id → nuovo_ordine
+        $orderMapping = [];
+        foreach ($orderedIds as $index => $item) {
+            if (!empty($item['value'])) {
+                $orderMapping[$item['value']] = $index + 1;
             }
+        }
+
+        if (empty($orderMapping)) {
+            $this->dispatch('toggleLoading', false);
+            return;
+        }
+
+        DB::transaction(function () use ($orderMapping) {
+            $ids = array_keys($orderMapping);
+
+            // -----------------------------------------------------------
+            // 1) Safe Zone: sposta temporaneamente tutti gli ordini in alto
+            // -----------------------------------------------------------
+            LicenseTable::whereIn('id', $ids)
+                ->update(['order' => DB::raw('`order` + 100000')]);
+
+            // -----------------------------------------------------------
+            // 2) Aggiornamento massivo tramite CASE
+            // -----------------------------------------------------------
+            $cases = [];
+            $params = [];
+
+            foreach ($orderMapping as $id => $order) {
+                $cases[] = "WHEN ? THEN ?";
+                $params[] = $id;
+                $params[] = $order;
+            }
+
+            // Parametri per WHERE IN
+            $params = array_merge($params, $ids);
+
+            $casesSql = implode(' ', $cases);
+            $placeholders = implode(',', array_fill(0, count($ids), '?'));
+
+            // Aggiornamento in un’unica query
+            $query = "UPDATE license_table
+                      SET `order` = CASE id $casesSql END,
+                          updated_at = NOW()
+                      WHERE id IN ($placeholders)";
+
+            DB::update($query, $params);
         });
 
         $this->loadSelectedUsers();
         $this->dispatch('toggleLoading', false);
-
         session()->flash('success', 'Ordine aggiornato con successo!');
-    }*/
-
-
-public function updateOrder(array $orderedIds): void
-{
-    // 1. Validazione rapida
-    if (empty($orderedIds)) {
-        return;
     }
 
-    $this->dispatch('toggleLoading', true);
-
-    // Mappiamo l'input per avere coppie [id => nuovo_ordine]
-    // Questo serve per pulire i dati e preparare le query
-    $orderMapping = [];
-    foreach ($orderedIds as $index => $item) {
-        if (!empty($item['value'])) {
-            $orderMapping[$item['value']] = $index + 1;
-        }
-    }
-
-    if (empty($orderMapping)) {
-        $this->dispatch('toggleLoading', false);
-        return;
-    }
-
-    DB::transaction(function () use ($orderMapping) {
-        $ids = array_keys($orderMapping);
-
-        // 2. SPOSTAMENTO MASSIVO (1 Query)
-        // Spostiamo tutti gli ID coinvolti in una "Safe Zone" (es. ordine + 100.000).
-        // Questo libera ISTANTANEAMENTE gli slot 1, 2, 3... prevenendo l'errore
-        // "Duplicate entry" sulla chiave unica (date, order) quando andremo a riassegnarli.
-        LicenseTable::whereIn('id', $ids)
-            ->update(['order' => DB::raw('`order` + 100000')]);
-
-        // 3. AGGIORNAMENTO MASSIVO (1 Query)
-        // Usiamo SQL puro con CASE/WHEN per aggiornare tutte le righe in una sola chiamata.
-        // È molto più performante (e atomico) rispetto a fare N query in un ciclo.
-
-        $cases = [];
-        $params = [];
-
-        foreach ($orderMapping as $id => $order) {
-            $cases[] = "WHEN ? THEN ?";
-            $params[] = $id;
-            $params[] = $order;
-        }
-
-        // Aggiungiamo gli ID alla fine dei parametri per la clausola WHERE IN
-        $params = array_merge($params, $ids);
-
-        // Costruzione della query
-        $casesSql = implode(' ', $cases);
-        $placeholders = implode(',', array_fill(0, count($ids), '?'));
-
-        // Nota: aggiorniamo anche updated_at manualmente poiché è una query raw
-        $query = "UPDATE license_table
-                  SET `order` = CASE id $casesSql END,
-                      updated_at = NOW()
-                  WHERE id IN ($placeholders)";
-
-        DB::update($query, $params);
-    });
-
-    $this->loadSelectedUsers();
-    $this->dispatch('toggleLoading', false);
-    session()->flash('success', 'Ordine aggiornato con successo!');
-}
-
+    /**
+     * Conferma la selezione attuale delle licenze:
+     * - verifica che ci siano utenti selezionati
+     * - verifica che non superino il limite massimo
+     * - invia evento al TableManager
+     */
     public function confirm(): void
     {
         $this->dispatch('toggleLoading', true);
@@ -156,18 +176,16 @@ public function updateOrder(array $orderedIds): void
             return;
         }
 
-        //controllo che non ce ne siano di più di quelli consentiti
-        if(count($this->selectedUsers) > config('constants.max_users_in_table')) {
+        if (count($this->selectedUsers) > config('constants.max_users_in_table')) {
             $this->errorMessage = 'Hai selezionato più licenze di quelle consentite.';
             $this->dispatch('toggleLoading', false);
-
             return;
         }
 
         $this->errorMessage = '';
 
         session()->flash('success', 'Selezione confermata con successo!');
-        $this->dispatch('confirmLicenses'); // Va al TableManager
+        $this->dispatch('confirmLicenses');
 
         $this->dispatch('toggleLoading', false);
     }
@@ -176,49 +194,60 @@ public function updateOrder(array $orderedIds): void
     // Private Helpers
     // ===================================================================
 
+    /**
+     * Ricarica entrambe le liste:
+     * - availableUsers
+     * - selectedUsers
+     */
     private function refreshData(): void
     {
         $this->loadAvailableUsers();
         $this->loadSelectedUsers();
     }
 
+    /**
+     * Carica gli utenti non ancora assegnati alla tabella odierna.
+     * Ottimizzato per evitare query inutili.
+     */
     private function loadAvailableUsers(): void
     {
-
-        // 1. Ottieni gli ID degli utenti già assegnati
+        // ID utenti già assegnati per la data di oggi
         $assignedUserIds = LicenseTable::whereDate('date', today())
-        ->pluck('user_id');
+            ->pluck('user_id');
 
-        // 2. Query ottimizzata
+        // Recupera gli utenti non assegnati
         $this->availableUsers = User::whereNotIn('id', $assignedUserIds)
             ->orderBy('license_number')
             ->get()
             ->map(fn($user) => [
-                'id'                => $user->id,
-                'name'              => $user->name,
-                'surname'           => $user->surname ?? '',
-                'license_number'    => $user->license_number,
-                'full_name'         => trim("{$user->name} {$user->surname}"),
+                'id'             => $user->id,
+                'name'           => $user->name,
+                'surname'        => $user->surname ?? '',
+                'license_number' => $user->license_number,
+                'full_name'      => trim("{$user->name} {$user->surname}"),
             ])
             ->toArray();
     }
 
+    /**
+     * Carica gli utenti attualmente nella license_table ordinati per order.
+     */
     private function loadSelectedUsers(): void
     {
         $this->selectedUsers = LicenseTable::whereDate('date', today())
             ->with('user')
             ->orderBy('order')
             ->get()
-            ->filter(fn($lt) => $lt->user !== null)
+            ->filter(fn($lt) => $lt->user !== null) // sicurezza extra
             ->map(fn($lt) => [
                 'id'       => $lt->id,
                 'user_id'  => $lt->user_id,
                 'order'    => $lt->order,
                 'user'     => [
-                    'id'       => $lt->user->id,
-                    'name'     => $lt->user->name,
-                    'surname'  => $lt->user->surname ?? '',
-                    'license'  => $lt->user->license_number,
+                    'id'        => $lt->user->id,
+                    'name'      => $lt->user->name,
+                    'surname'   => $lt->user->surname ?? '',
+                    'license'   => $lt->user->license_number,
                     'full_name' => trim("{$lt->user->name} " . ($lt->user->surname ?? '')),
                 ],
             ])
@@ -226,6 +255,9 @@ public function updateOrder(array $orderedIds): void
             ->toArray();
     }
 
+    /**
+     * Restituisce il prossimo valore disponibile per `order`.
+     */
     private function getNextOrder(): int
     {
         return LicenseTable::whereDate('date', today())->max('order') + 1 ?? 1;
@@ -235,6 +267,9 @@ public function updateOrder(array $orderedIds): void
     // Render
     // ===================================================================
 
+    /**
+     * Renderizza la view associata al componente.
+     */
     public function render()
     {
         return view('livewire.table-manager.license-manager');

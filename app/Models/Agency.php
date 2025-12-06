@@ -7,35 +7,42 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-
 class Agency extends Model
 {
-    use HasFactory,SoftDeletes;
+    use HasFactory, SoftDeletes;
 
+    // Nome della tabella nel database
     protected $table = 'agencies';
 
+    // Attributi assegnabili in massa
     protected $fillable = [
-        'name',
-        'code',
+        'name',  // Nome dell'agenzia
+        'code',  // Codice identificativo dell'agenzia
     ];
 
+    // ===================================================================
+    // Boot del modello e Global Scopes
+    // ===================================================================
     /**
-     * Il "booting" del modello.
-     *
-     * @return void
+     * Eseguito all'avvio del modello.
+     * Qui si aggiunge un Global Scope per ordinare sempre le agenzie per nome.
      */
     protected static function boot()
     {
         parent::boot();
 
-        // Aggiunge un Global Scope per ordinare sempre per 'name' in modo ascendente
+        // Ordina automaticamente per nome in modo ascendente
         static::addGlobalScope('order', function (Builder $builder) {
             $builder->orderBy('name', 'asc');
         });
     }
 
+    // ===================================================================
+    // Relazioni
+    // ===================================================================
+
     /**
-     * Un'agenzia può avere molti lavori assegnati.
+     * Un'agenzia può avere molti lavori assegnati (WorkAssignment).
      */
     public function workAssignments()
     {
@@ -43,16 +50,19 @@ class Agency extends Model
     }
 
     /**
-     * Un'agenzia può avere molti agency works.
+     * Un'agenzia può avere molti lavori di tipo AgencyWork.
      */
     public function agencyWorks()
     {
         return $this->hasMany(AgencyWork::class);
     }
 
+    // ===================================================================
+    // Accessors
+    // ===================================================================
 
     /**
-     * Accessor per visualizzare nome e codice insieme (facoltativo).
+     * Restituisce nome e codice insieme in formato leggibile.
      */
     public function getDisplayNameAttribute(): string
     {

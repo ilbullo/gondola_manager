@@ -9,22 +9,30 @@ class AgencyWork extends Model
 {
     use HasFactory;
 
+    // Nome della tabella nel database
     protected $table = 'agency_works';
 
+    // Attributi assegnabili in massa
     protected $fillable = [
-        'date',
-        'user_id',
-        'agency_id',
-        'voucher',
-        'amount'
+        'date',       // Data del lavoro
+        'user_id',    // Riferimento all'utente che ha svolto il lavoro
+        'agency_id',  // Riferimento all'agenzia associata
+        'voucher',    // Codice voucher se presente
+        'amount'      // Importo del lavoro
     ];
 
+    // Cast automatici degli attributi
     protected $casts = [
-        'date' => 'date',
+        'date' => 'date', // Assicura che "date" sia un Carbon
     ];
+
+    // ===================================================================
+    // Relazioni
+    // ===================================================================
 
     /**
-     * Ogni lavoro appartiene a un utente.
+     * Relazione con l'utente.
+     * Ogni lavoro appartiene a un utente specifico.
      */
     public function user()
     {
@@ -32,7 +40,8 @@ class AgencyWork extends Model
     }
 
     /**
-     * Ogni lavoro appartiene a un'agenzia.
+     * Relazione con l'agenzia.
+     * Ogni lavoro appartiene a un'agenzia specifica.
      */
     public function agency()
     {

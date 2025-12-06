@@ -10,23 +10,26 @@ class WorkAssignment extends Model
 {
     use HasFactory;
 
+    // Nome della tabella nel database
     protected $table = 'work_assignments';
 
+    // Attributi assegnabili in massa
     protected $fillable = [
-        'license_table_id',
-        'agency_id',
-        'slot', //la colonna corrispondente al n-esimo lavoro (es. 1,2,3,4,5...ecc)
-        'value',
-        'amount',
-        'voucher',
-        'timestamp',
-        'slots_occupied',
-        'excluded',
-        'shared_from_first'
+        'license_table_id',   // Riferimento alla tabella licenze
+        'agency_id',          // Riferimento all'agenzia (se presente)
+        'slot',               // Numero progressivo del lavoro (1,2,3,...)
+        'value',              // Tipo di lavoro (A,X,N,P)
+        'amount',             // Importo del lavoro (float)
+        'voucher',            // Codice voucher associato
+        'timestamp',          // Data e ora di creazione del lavoro
+        'slots_occupied',     // Numero di slot occupati da questo lavoro
+        'excluded',           // Flag se escluso (solo lavori A)
+        'shared_from_first'   // Flag se condiviso dal primo (solo lavori A)
     ];
 
+    // Cast automatici degli attributi
     protected $casts = [
-        'timestamp'         => 'datetime',
+        'timestamp'         => 'datetime', // Carbon
         'slots_occupied'    => 'integer',
         'slot'              => 'integer',
         'excluded'          => 'boolean',
@@ -34,49 +37,60 @@ class WorkAssignment extends Model
         'amount'            => 'float',
     ];
 
+    // ===================================================================
+    // Booted: logica di salvataggio globale
+    // ===================================================================
     /**
-     * Solo i lavori di tipo "A" possono essere shared_from_first
+     * Impone regole di validazione aggiuntive al momento del saving:
+     * - solo lavori tipo 'A' possono avere shared_from_first o excluded true
+     * - non si possono superare i 25 lavori per license_table_id
      */
     protected static function booted(): void
     {
         static::saving(function ($work) {
+            // Controllo shared_from_first e excluded solo per lavori A
             if (($work->shared_from_first && $work->value !== WorkType::AGENCY->value) ||
-               ($work->excluded && $work->value !== WorkType::AGENCY->value))
+                ($work->excluded && $work->value !== WorkType::AGENCY->value))
             {
                 throw new \Exception(
-                    "Il campo shared_from_first o excluded può essere true solo per lavori di tipo 'A' (agenzia). " .
-                    "Valore attuale: '{$work->value}'"
+                    "Il campo shared_from_first o excluded può essere true solo per lavori di tipo 'A'. Valore attuale: '{$work->value}'"
                 );
             }
 
-            if (! $work->exists) { // solo per nuovi record
-            $count = self::where('license_table_id', $work->license_table_id)->count();
-            if ($count >=config('constants.matrix.total_slots')) {
-                throw new \Exception("Non puoi aggiungere più di 25 lavori per questa license_table_id.");
+            // Limite slot totali per nuova license_table
+            if (! $work->exists) {
+                $count = self::where('license_table_id', $work->license_table_id)->count();
+                if ($count >= config('constants.matrix.total_slots')) {
+                    throw new \Exception("Non puoi aggiungere più di 25 lavori per questa license_table_id.");
+                }
             }
-        }
         });
     }
 
+    // ===================================================================
+    // Mutators
+    // ===================================================================
+    /**
+     * Imposta il valore solo se è un valore valido dell'enum WorkType
+     * - Blocca array e oggetti
+     * - Se non valido, viene impostato a null
+     */
     public function setValueAttribute($value)
-{
-    // 1. Blocca array e oggetti
-    if (is_array($value) || is_object($value)) {
-        $this->attributes['value'] = null;
-        return;
+    {
+        if (is_array($value) || is_object($value)) {
+            $this->attributes['value'] = null;
+            return;
+        }
+
+        $valid = array_column(WorkType::cases(), 'value');
+        $this->attributes['value'] = in_array($value, $valid, true) ? $value : null;
     }
 
-    // 2. Lista valori validi dell’enum
-    $valid = array_column(WorkType::cases(), 'value');
-
-    // 3. Se il valore è nell’enum → ok, altrimenti null
-    $this->attributes['value'] = in_array($value, $valid, true)
-        ? $value
-        : null;
-}
-
+    // ===================================================================
+    // Relazioni
+    // ===================================================================
     /**
-     * Relazione con l'utente.
+     * Relazione con la license_table
      */
     public function licenseTable()
     {
@@ -84,15 +98,18 @@ class WorkAssignment extends Model
     }
 
     /**
-     * Relazione con l'agenzia (opzionale).
+     * Relazione opzionale con l'agenzia
      */
     public function agency()
     {
         return $this->belongsTo(Agency::class);
     }
 
+    // ===================================================================
+    // Accessors
+    // ===================================================================
     /**
-     * Accessor per ottenere il nome effettivo dell'agenzia.
+     * Nome dell'agenzia (o null se non presente)
      */
     public function getAgencyNameAttribute(): ?string
     {
@@ -100,27 +117,33 @@ class WorkAssignment extends Model
     }
 
     /**
-     * Accessor per ottenere il nomcodee effettivo dell'agenzia.
+     * Codice dell'agenzia (o null se non presente)
      */
     public function getAgencyCodeAttribute(): ?string
     {
         return $this->agency?->code;
     }
 
-    public function isAgency() {
+    // ===================================================================
+    // Helper methods per tipi di lavoro
+    // ===================================================================
+    public function isAgency(): bool
+    {
         return $this->value === WorkType::AGENCY->value;
     }
 
-    public function isCash() {
+    public function isCash(): bool
+    {
         return $this->value === WorkType::CASH->value;
     }
 
-    public function isNolo() {
+    public function isNolo(): bool
+    {
         return $this->value === WorkType::NOLO->value;
     }
 
-    public function isPerdiVolta() {
+    public function isPerdiVolta(): bool
+    {
         return $this->value === WorkType::PERDI_VOLTA->value;
     }
-
 }

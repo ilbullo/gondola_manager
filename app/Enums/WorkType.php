@@ -2,32 +2,64 @@
 
 namespace App\Enums;
 
+/**
+ * Enum WorkType
+ * 
+ * Rappresenta i diversi tipi di lavoro gestiti dall'applicazione.
+ * 
+ * Valori possibili:
+ * - CASH: lavoro pagato in contanti
+ * - AGENCY: lavoro tramite agenzia
+ * - NOLO: lavoro a noleggio
+ * - PERDI_VOLTA: lavoro a “perdi volta”
+ * - EXCLUDED: lavoro escluso
+ * - FIXED: lavoro fisso
+ */
 enum WorkType: string
 {
+    // Lavoro pagato in contanti
     case CASH = 'X'; 
+
+    // Lavoro tramite agenzia
     case AGENCY = 'A';    
+
+    // Lavoro a noleggio
     case NOLO = 'N';
+
+    // Lavoro a “perdi volta”
     case PERDI_VOLTA = 'P';
+
+    // Lavoro escluso
     case EXCLUDED = 'E';
+
+    // Lavoro fisso
     case FIXED    = 'F';
 
     /**
-     * Restituisce la label leggibile per l'utente.
+     * Restituisce l'etichetta leggibile per l'utente.
+     *
+     * Utile per UI, tabelle, dropdown o report.
+     *
+     * @return string Etichetta del tipo di lavoro
      */
     public function label(): string
     {
         return match ($this) {
-            self::CASH => 'Contanti',
-            self::AGENCY => 'Agenzia',
-            self::NOLO => 'Nolo',
+            self::CASH        => 'Contanti',
+            self::AGENCY      => 'Agenzia',
+            self::NOLO        => 'Nolo',
             self::PERDI_VOLTA => 'Perdi Volta',
-            self::EXCLUDED => 'Escluso',
-            self::FIXED => 'Fisso'
+            self::EXCLUDED    => 'Escluso',
+            self::FIXED       => 'Fisso',
         };
     }
 
     /**
-     * Restituisce le classi Tailwind CSS per lo sfondo.
+     * Restituisce le classi Tailwind CSS da applicare per il colore del badge o label.
+     *
+     * Permette di distinguere visivamente i diversi tipi di lavoro nell'interfaccia.
+     *
+     * @return string Classi CSS (Tailwind)
      */
     public function colourClass(): string
     {

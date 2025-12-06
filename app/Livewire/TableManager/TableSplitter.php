@@ -226,7 +226,7 @@ class TableSplitter extends Component
                 'occupied'       => collect($license['worksMap'])->filter()->count(),
                 'cash_total'     => collect($license['worksMap'])->where('value', 'X')->sum('amount') ?? 0,
             ];
-        })->sortBy('license_number')->values();
+        })->sortBy('order')->values();
 
         // Calcoli riepilogativi usati nel footer del PDF
         $totalN       = $matrixData->sum('n_count');

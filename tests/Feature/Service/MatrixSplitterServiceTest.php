@@ -41,7 +41,8 @@ class MatrixSplitterServiceTest extends TestCase
     private function createToAssignWorks(int $howMany, array $payload = []): void
     {
         $licenseId = $payload['license_id'] ?? LicenseTable::factory()->create([
-            'date' => today(), // SEMPRE oggi!
+            'date' => today(), // SEMPRE oggi!,
+            'order' => rand(1,1000)
         ])->id;
 
         $time = $payload['time'] ?? '12:00:00';

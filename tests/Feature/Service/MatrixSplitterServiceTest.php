@@ -145,7 +145,7 @@ class MatrixSplitterServiceTest extends TestCase
 
         // === Qualche lavoro "libero" che il servizio dovrà distribuire ===
         $this->createToAssignWorks(3, ['time' => '09:00:00']);  // mattina
-        $this->createToAssignWorks(4, ['time' => '16:00:00']);  // pomeriggio
+        $this->createToAssignWorks(3, ['time' => '16:00:00']);  // pomeriggio
 
         // Genera la matrice
         $matrix = $this->createMatrix()->matrix->toArray();

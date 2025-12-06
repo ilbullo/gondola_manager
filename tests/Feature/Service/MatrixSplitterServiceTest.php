@@ -50,6 +50,7 @@ class MatrixSplitterServiceTest extends TestCase
         $attributes = [
             'license_table_id' => $licenseId,
             'timestamp'        => today()->setTimeFromTimeString($time),
+            'slots_occupied'   => 1
         ];
 
         // Aggiungi campi opzionali solo se presenti

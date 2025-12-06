@@ -25,7 +25,7 @@
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div class="flex items-center gap-4">
                     <label class="text-sm font-medium text-gray-700">Costo Bancale (€):</label>
-                    <input type="number" step="0.01" min="0" wire:model.live.debounce.300ms="bancaleCost"
+                    <input type="number" step="1" min="0" wire:model.live.debounce.300ms="bancaleCost"
                         class="w-28 px-3 py-2 text-sm text-right border rounded-lg focus:ring-2 focus:ring-blue-500">
                 </div>
                 <div class="flex flex-wrap gap-2">

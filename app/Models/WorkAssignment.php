@@ -58,12 +58,20 @@ class WorkAssignment extends Model
             }
 
             // Limite slot totali per nuova license_table
-            if (! $work->exists) {
+            /*if (! $work->exists) {
                 $count = self::where('license_table_id', $work->license_table_id)->count();
                 if ($count >= config('constants.matrix.total_slots')) {
                     throw new \Exception("Non puoi aggiungere più di 25 lavori per questa license_table_id.");
                 }
-            }
+            }*/
+            if (! $work->exists) {
+                $occupiedSlots = self::where('license_table_id', $work->license_table_id)
+                    ->sum('slots_occupied');
+                
+                if ($occupiedSlots + $work->slots_occupied > config('constants.matrix.total_slots')) {
+                    throw new \Exception("Capacità massima raggiunta (25 slot disponibili).");
+                }
+            }    
         });
     }
 

@@ -147,48 +147,86 @@ class TableSplitter extends Component
     }
 
     private function prepareAgencyReport(): array
-    {
-        // Logica report agenzie (invariata)
-        $report = [];
-        foreach ($this->splitTable as $tableRow) {
-            $licenseNumber = $tableRow['license'];
-            foreach ($tableRow['assignments'] as $slot => $assignment) {
-                if (!$assignment instanceof WorkAssignment || $assignment->slot !== $slot || $assignment->value !== 'A') {
-                    continue;
-                }
-                $agencyName = $assignment->agency->name ?? 'N/A';
-                $voucher    = trim($assignment->voucher ?? '') ?: '-';
-                $time       = $assignment->timestamp instanceof \Carbon\Carbon
-                                ? $assignment->timestamp->format('H:i')
-                                : \Carbon\Carbon::parse($assignment->timestamp)->format('H:i');
-                $key = $agencyName . '|' . ($assignment->timestamp instanceof \Carbon\Carbon
-                                ? $assignment->timestamp->format('YmdHi')
-                                : \Carbon\Carbon::parse($assignment->timestamp)->format('YmdHi')) . '|' . $voucher;
-                if (!isset($report[$key])) {
-                    $report[$key] = [
-                        'agency_name'     => $agencyName,
-                        'time'            => $time,
-                        'voucher'         => $voucher,
-                        'license_numbers' => [],
-                    ];
-                }
-                $report[$key]['license_numbers'][] = $licenseNumber;
+{
+    $report = [];
+
+    foreach ($this->splitTable as $tableRow) {
+        $licenseNumber = $tableRow['license'];
+
+        foreach ($tableRow['assignments'] as $slot => $assignment) {
+            if (
+                !$assignment instanceof WorkAssignment ||
+                $assignment->slot !== $slot ||
+                $assignment->value !== 'A'
+            ) {
+                continue;
             }
+
+            $agencyName = $assignment->agency->name ?? 'N/A';
+
+            // Normalizzazione voucher
+            $voucher = trim($assignment->voucher ?? '') ?: '-';
+
+            // Formattazione orario
+            $time = $assignment->timestamp instanceof \Carbon\Carbon
+                ? $assignment->timestamp->format('H:i')
+                : \Carbon\Carbon::parse($assignment->timestamp)->format('H:i');
+
+            // Timestamp intero per chiave di fallback
+            $timestampKey = $assignment->timestamp instanceof \Carbon\Carbon
+                ? $assignment->timestamp->format('YmdHi')
+                : \Carbon\Carbon::parse($assignment->timestamp)->format('YmdHi');
+
+            /*
+            |--------------------------------------------------------------------------
+            | NUOVA LOGICA GRUPPI
+            |--------------------------------------------------------------------------
+            | - Se esiste un voucher → raggruppa per voucher (ignorando orario)
+            | - Se NON esiste un voucher → raggruppa per timestamp come prima
+            |--------------------------------------------------------------------------
+            */
+            if ($voucher !== '-') {
+                $key = $agencyName . '|voucher:' . $voucher;
+            } else {
+                $key = $agencyName . '|time:' . $timestampKey;
+            }
+
+            // Inizializza gruppo
+            if (!isset($report[$key])) {
+                $report[$key] = [
+                    'agency_name'     => $agencyName,
+                    'time'            => $time,
+                    'voucher'         => $voucher,
+                    'license_numbers' => [],
+                ];
+            }
+
+            // Aggiunge la licenza al gruppo
+            $report[$key]['license_numbers'][] = $licenseNumber;
         }
-        return collect($report)
-            ->map(function ($item) {
-                $item['license_numbers'] = collect($item['license_numbers'])
-                    ->unique()
-                    ->sort()
-                    ->implode(', ');
-                return $item;
-            })
-            ->sortBy('time')
-            ->values()
-            ->groupBy('agency_name')
-            ->map(fn(Collection $group) => $group->values())
-            ->toArray();
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Formattazione finale
+    |--------------------------------------------------------------------------
+    */
+    return collect($report)
+        ->map(function ($item) {
+            $item['license_numbers'] = collect($item['license_numbers'])
+                ->unique()
+                ->sort()
+                ->implode(', ');
+            return $item;
+        })
+        // Ordina per orario (ha effetto solo sui gruppi senza voucher)
+        ->sortBy('time')
+        ->values()
+        ->groupBy('agency_name')
+        ->map(fn(Collection $group) => $group->values())
+        ->toArray();
+}
+
 
     public function render()
     {

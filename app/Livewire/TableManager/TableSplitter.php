@@ -281,56 +281,93 @@ class TableSplitter extends Component
      * Prepara una struttura dati raggruppata per Agenzia → Voucher → Orario,
      * con elenco delle licenze coinvolte.
      */
-    private function prepareAgencyReport(): array
-    {
-        $services = [];
+private function prepareAgencyReport(): array
+{
+    $services = [];
 
-        foreach ($this->matrix as $licenseRow) {
-            $licenseNumber = $licenseRow['user']['license_number'] ?? 'N/D';
+    foreach ($this->matrix as $licenseRow) {
+        $licenseNumber = $licenseRow['user']['license_number'] ?? 'N/D';
 
-            foreach ($licenseRow['worksMap'] as $work) {
-                if (empty($work) || ($work['value'] ?? '') !== 'A') continue;
+        foreach ($licenseRow['worksMap'] as $work) {
+            if (empty($work) || ($work['value'] ?? '') !== 'A') continue;
 
-                $agencyName = $work['agency']['name']
-                    ?? $work['agency_name']
-                    ?? $work['agency']
-                    ?? 'Agenzia sconosciuta';
+            $agencyName = $work['agency']['name']
+                ?? $work['agency_name']
+                ?? $work['agency']
+                ?? 'Agenzia sconosciuta';
 
-                $voucher = trim($work['voucher'] ?? '') ?: '–';
-                $time    = \Carbon\Carbon::parse($work['timestamp'] ?? now())->format('H:i');
+            $voucher = trim($work['voucher'] ?? '') ?: '–';
+            $timeObj = \Carbon\Carbon::parse($work['timestamp'] ?? now());
 
-                // Chiave univoca del servizio
-                $key = $agencyName . '|' . $voucher . '|' . $time;
-
-                if (!isset($services[$key])) {
-                    $services[$key] = [
-                        'agency_name' => $agencyName,
-                        'voucher'     => $voucher,
-                        'time'        => $time,
-                        'licenses'    => [],
-                    ];
+            if ($voucher !== '–') {
+                // Gruppo voucher → chiave basata su voucher
+                $key = $agencyName . '|voucher:' . $voucher;
+                $timeStr = $timeObj->format('H:i'); // verrà corretto al min
+            } else {
+                // Gruppi senza voucher → ricerca se esiste già un gruppo entro 5 minuti
+                $foundKey = null;
+                foreach ($services as $k => $group) {
+                    if ($group['voucher'] === '–' && $group['agency_name'] === $agencyName) {
+                        $groupTime = \Carbon\Carbon::parse($group['time']);
+                        if (abs($timeObj->diffInMinutes($groupTime)) <= 5) {
+                            $foundKey = $k;
+                            break;
+                        }
+                    }
                 }
 
-                $services[$key]['licenses'][] = $licenseNumber;
+                if ($foundKey !== null) {
+                    $key = $foundKey;
+                    $timeStr = $services[$key]['time']; // mantieni l'orario originale del gruppo
+                } else {
+                    // nuovo gruppo
+                    $key = $agencyName . '|time:' . $timeObj->format('H:i');
+                    $timeStr = $timeObj->format('H:i');
+                }
             }
+
+            // Inizializzazione gruppo
+            if (!isset($services[$key])) {
+                $services[$key] = [
+                    'agency_name' => $agencyName,
+                    'voucher'     => $voucher,
+                    'time'        => $timeStr,
+                    'licenses'    => [],
+                    'count'       => 0,
+                    'all_times'   => [], // utile solo per voucher
+                ];
+            }
+
+            // Aggiunge licenza (duplicati ammessi)
+            $services[$key]['licenses'][] = $licenseNumber;
+
+            // Memorizza l’orario reale (solo voucher)
+            $services[$key]['all_times'][] = $timeObj->format('H:i');
+
+            // Incrementa conteggio servizi
+            $services[$key]['count']++;
         }
-
-        // Ordina per orario
-        uasort($services, fn ($a, $b) => strtotime($a['time']) <=> strtotime($b['time']));
-
-        // Normalizza la struttura finale
-        return collect($services)->map(function ($item) {
-            $licenses = collect($item['licenses'])->unique()->sort()->values();
-
-            return [
-                'agency_name' => $item['agency_name'],
-                'voucher'     => $item['voucher'],
-                'time'        => $item['time'],
-                'licenses'    => $licenses->implode(' - '),
-                'count'       => $licenses->count(),
-            ];
-        })->values()->toArray();
     }
+
+    // Post-processing finale
+    foreach ($services as &$group) {
+        if ($group['voucher'] !== '–') {
+            // Gruppi voucher → mostra solo l'orario più piccolo
+            $group['time'] = collect($group['all_times'])->min();
+        }
+        unset($group['all_times']); // rimuovo campo tecnico
+    }
+
+    // Ordinamento finale per orario
+    uasort($services, fn($a, $b) => strtotime($a['time']) <=> strtotime($b['time']));
+
+    return array_values($services);
+}
+
+
+
+
+
 
     // ======================================================================
     // Render

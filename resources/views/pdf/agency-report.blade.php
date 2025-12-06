@@ -103,7 +103,7 @@
                     <td class="time">{{ $item['time'] }}</td>
                     <td class="agency">{{ $item['agency_name'] }}</td>
                     <td class="voucher">{{ $item['voucher'] === '–' ? '—' : $item['voucher'] }}</td>
-                    <td class="licenses">{{ $item['licenses'] ?: '—' }}</td>
+                    <td class="licenses">{{ implode(' - ', $item['licenses'] ?: ['—']) }}</td>
                 </tr>
             @empty
                 <tr>

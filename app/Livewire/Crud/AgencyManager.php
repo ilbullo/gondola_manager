@@ -33,11 +33,12 @@ class AgencyManager extends Component
     protected function rules(): array
     {
         return [
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:255|regex:/^[a-zA-Z0-9\s\-]+$/',
             'code' => [
                 'required',
                 'string',
-                'max:10',
+                'max:4',
+                'regex:/^[A-Z0-9]+$/',
                 'unique:agencies,code' . ($this->editingId ? ',' . $this->editingId : ''),
             ],
         ];

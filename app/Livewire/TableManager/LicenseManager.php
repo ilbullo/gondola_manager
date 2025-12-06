@@ -122,6 +122,12 @@ class LicenseManager extends Component
         DB::transaction(function () use ($orderMapping) {
             $ids = array_keys($orderMapping);
 
+            $date = today();
+                DB::table('license_table')
+                    ->where('date', $date)
+                    ->lockForUpdate()
+                    ->get();
+
             // -----------------------------------------------------------
             // 1) Safe Zone: sposta temporaneamente tutti gli ordini in alto
             // -----------------------------------------------------------
@@ -153,6 +159,7 @@ class LicenseManager extends Component
                       WHERE id IN ($placeholders)";
 
             DB::update($query, $params);
+
         });
 
         $this->loadSelectedUsers();

@@ -6,7 +6,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Volt\Volt;
 use Tests\TestCase;
-use App\Enums\UserRole;
+//use App\Enums\UserRole;
 
 class ProfileTest extends TestCase
 {

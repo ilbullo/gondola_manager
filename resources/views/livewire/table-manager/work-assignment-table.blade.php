@@ -56,7 +56,7 @@
 
                                     {{-- Colonna Licenza (Sticky Left) --}}
                                     <th scope="row"
-                                        class="p-3 text-sm font-semibold text-gray-900 sticky left-0 bg-white border-r border-gray-200 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] 
+                                        class="p-3 text-sm font-semibold text-gray-900 sticky left-0 bg-white border-r border-gray-200 z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]
                                                cursor-pointer hover:bg-gray-100 focus-within:bg-gray-100 transition-colors group"
                                         wire:click="openEditLicenseModal({{ $license['id'] }})"
                                         wire:keydown.enter.prevent="$dispatch('openEditLicense', { id: {{ $license['id'] }} })"
@@ -90,18 +90,18 @@
                                             $workData = $license['worksMap'][$slot] ?? null;
                                             $hasWork = isset($workData);
                                             // Colore di sfondo basato sull'enum (preserviamo la tua logica)
-$bgClass =
-    \App\Enums\WorkType::tryFrom(
-        $workData['value'] ?? '',
-    )?->colourClass() ?? '';
+                                            $bgClass =
+                                                \App\Enums\WorkType::tryFrom(
+                                                    $workData['value'] ?? '',
+                                                )?->colourClass() ?? '';
 
-// WCAG Label per screen reader
-$ariaLabel = $hasWork
-    ? "Slot $index: Occupato da {$workData['value']}. Clicca per dettagli."
-    : "Slot $index: Vuoto. Clicca per assegnare.";
+                                            // WCAG Label per screen reader
+                                            $ariaLabel = $hasWork
+                                                ? "Slot $index: Occupato da {$workData['value']}. Clicca per dettagli."
+                                                : "Slot $index: Vuoto. Clicca per assegnare.";
                                         @endphp
 
-                                        <td class="p-1 text-center border-r border-gray-100 cursor-pointer outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 transition-all duration-75 relative {{ $bgClass }}"
+                                        <td class="px-1 py-3 text-center border-r border-gray-100 cursor-pointer outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 transition-all duration-75 relative {{ $bgClass }}"
                                             {{-- Attributi WCAG per rendere la cella interattiva accessibile --}} role="button" tabindex="0"
                                             aria-label="{{ $ariaLabel }}" {{-- Gestione Click (Logica invariata) --}}
                                             wire:click="@if ($hasWork) openInfoBox(@js($workData['id'] ?? null), {{ $index }}) @else assignWork({{ $license['id'] }}, {{ $index }}) @endif"

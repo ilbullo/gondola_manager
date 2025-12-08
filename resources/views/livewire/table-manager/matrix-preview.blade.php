@@ -180,7 +180,7 @@
                                             $bgClass = $type?->colourClass() ?? '';
                                         @endphp
 
-                                        <td class="p-1 text-center border-r border-gray-100 cursor-pointer outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 transition-all {{ $bgClass }}
+                                        <td class="px-1 py-3 text-center border-r border-gray-100 cursor-pointer outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 transition-all {{ $bgClass }}
                                                    {{ $isEmpty ? 'hover:bg-green-50' : 'hover:bg-red-50' }}
                                                    {{ $selectedWork && $isEmpty ? 'ring-2 ring-blue-400 ring-inset' : '' }}"
                                             role="button" tabindex="0"

@@ -53,7 +53,6 @@ class WorkLiveInfoModal extends Component
     public function openModal($workId): void
     {
         $this->work = WorkAssignment::findOrFail($workId);
-
         // Sincronizza i campi del form con l'istanza del modello
         $this->value              = $this->work->value;
         $this->agency_code        = $this->work->agency_code;
@@ -154,11 +153,15 @@ class WorkLiveInfoModal extends Component
             'voucher'      => 'nullable|string|max:255',
             'agency_code'  => 'nullable|string|max:50',
         ]);
-
         // Aggiorna il modello
+
+        //verifico l'agenzia dal
+        if ($this->agency_code) {
+            $id = \App\Models\Agency::select(['id'])->where('code',$this->agency_code)->get()->first()->id;
+        }
         $this->work->update([
             'value'             => $this->value,
-            'agency_code'       => $this->agency_code,
+            'agency_id'         => $id ?? null,
             'voucher'           => $this->voucher,
             'amount'            => $this->amount,
             'excluded'          => $this->excluded,

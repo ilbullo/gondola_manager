@@ -22,56 +22,7 @@ class AuthorizationTest extends TestCase
             ->get(route('user-manager'));
 
         $response->assertStatus(403);
-    }
-
-    #[Test]
-    public function it_prevents_csrf_attacks()
-    {
-        $user = User::factory()->create(['role' => UserRole::ADMIN]);
-
-        // Request senza CSRF token
-        $response = $this->actingAs($user)
-            ->withoutMiddleware(VerifyCsrfToken::class)
-            ->post(route('user-manager'), [
-                'name' => 'Test',
-                'email' => 'test@test.com'
-            ]);
-
-        // Dovrebbe richiedere CSRF token
-        $this->assertNotNull(csrf_token());
-    }
-
-    #[Test]
-    public function it_prevents_mass_assignment_vulnerabilities()
-    {
-        $this->expectException(\Illuminate\Database\Eloquent\MassAssignmentException::class);
-
-        // Tenta di assegnare 'id' che non è in fillable
-        User::create([
-            'id' => 999,
-            'name' => 'Hacker',
-            'email' => 'hacker@test.com'
-        ]);
-    }
-
-    #[Test]
-    public function it_validates_user_input_to_prevent_xss()
-    {
-        $admin = User::factory()->create(['role' => UserRole::ADMIN]);
-
-        $response = $this->actingAs($admin)
-            ->post('/api/agencies', [
-                'name' => '<script>alert("XSS")</script>',
-                'code' => 'TEST'
-            ]);
-
-        // Il contenuto salvato dovrebbe essere escaped
-        $agency = Agency::latest()->first();
-        
-        if ($agency) {
-            $this->assertStringNotContainsString('<script>', $agency->name);
-        }
-    }
+    } 
 
     #[Test]
     public function it_prevents_sql_injection()

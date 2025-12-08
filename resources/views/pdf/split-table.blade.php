@@ -44,13 +44,13 @@
             padding: 4px 1px;
         }
         /* larghezze */
-        .lic  { width: 62px; font-weight: bold; }
-        .cash { width: 78px; font-weight: bold; font-size: 9.8pt; }
-        .np   { width: 36px; font-weight: bold; }
+        .lic  { width: 62px; font-weight: bold;background-color: #f9fafb !important; }
+        .cash { width: 78px; font-weight: bold; font-size: 8.75pt;background-color: #f9fafb !important; }
+        .np   { width: 36px; font-weight: bold;background-color: #f9fafb !important; }
         .slot {
             width: 29px !important;
             height: 32px;
-            font-size: 9.4pt;
+            font-size: 8.75pt;
             font-weight: normal;
         }
         .excluded { text-decoration: underline; text-decoration-thickness: 1.8pt; }
@@ -58,7 +58,7 @@
 
         tfoot td {
             font-weight: bold;
-            font-size: 10pt;
+            font-size: 8.75pt;
             border-top: 2pt solid #000;
         }
         .note {

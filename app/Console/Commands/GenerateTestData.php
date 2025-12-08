@@ -39,54 +39,476 @@ class GenerateTestData extends Command
 
         // Lista utenti da creare [license_number, nome completo]
         $users = [
-            [137,"ROSSO GIORGIO"], [138,"MIANI MARCO"], [139,"MARIUZZO ALESSANDRO"], 
-            [140,"BULLO MARCO"], [141,"TAGLIAPIETRA GIUSEPPE"], [142,"ANDRIUZZI LUCA"], 
-            [143,"MARESCA NICOLA"], [144,"PENGO FRANCESCO"], [145,"NARDIN GIORGIO"], 
-            [146,"ZANCHI MAURO"], [147,"TREVISAN ANDREA"], [148,"FALCER LORENZO"], 
-            [149,"VIANELLO GIANNI"], [150,"CAPOLLA CRISTIANO"], [151,"CASIMIRO SERGIO"], 
-            [152,"RAGAZZI MARCO"], [153,"MAZZUCCATO RICCARDO"], [154,"PEDRALI MARCO"], 
-            [155,"COLLAVINI MATTIA"], [156,"SANTINI ALESSANDRO"], [157,"PAVEGGIO DANIELE"], 
-            [158,"BALLARIN ROBERTO"], [159,"GABRIELI SOPPELSA STEFANO"], [160,"TEDESCHI EROS"], 
-            [161,"PENZO FRANCESCO"], [162,"RUSSO LORENZO"], [163,"FASAN RICCARDO"], 
-            [164,"GALANTE MATTEO"], [165,"TONELLO MASSIMO"], [166,"PERIOTTO DENIS"], 
-            [167,"DIANA VITTORIO"], [168,"ZANCHI EUGENIO"], [169,"ZANNI UMBERTO"], 
-            [170,"MANZONI NICOLA"], [171,"FONGHER ALESSANDRO"], [172,"BATTISTON SIMONE"], 
-            [173,"RIZZO ANDREA"], [174,"CAVAGNIS MARCO"], [175,"CAVAGNIS ALESSANDRO"], 
-            [176,"BOLDRIN STEFANO"], [177,"CARLOTTO MAURIZIO"], [178,"TABACCO GABRIELE"]
+            [
+                'name' => 'ROSSO GIORGIO',
+                'email' => '137@dogana.it',
+                'type' => 'titolare',
+                'license_number' => 137,
+            ],
+            [
+                'name' => 'MIANI MARCO',
+                'email' => '138@dogana.it',
+                'type' => 'titolare',
+                'license_number' => 138,
+            ],
+            [
+                'name' => 'MARIUZZO ALESSANDRO',
+                'email' => '139@dogana.it',
+                'type' => 'titolare',
+                'license_number' => 139,
+            ],
+            [
+                'name' => 'BULLO MARCO',
+                'email' => '140@dogana.it',
+                'type' => 'titolare',
+                'license_number' => 140,
+                'role'  => 'admin'
+            ],
+            [
+                'name' => 'TAGLIAPIETRA GIUSEPPE',
+                'email' => '141@dogana.it',
+                'type' => 'titolare',
+                'license_number' => 141,
+            ],
+            [
+                'name' => 'ANDRIUZZI LUCA',
+                'email' => '142@dogana.it',
+                'type' => 'titolare',
+                'license_number' => 142,
+            ],
+            [
+                'name' => 'MARESCA NICOLA',
+                'email' => '143@dogana.it',
+                'type' => 'titolare',
+                'license_number' => 143,
+                'role'  => 'bancale'
+
+            ],
+            [
+                'name' => 'PENGO FRANCESCO',
+                'email' => '144@dogana.it',
+                'type' => 'titolare',
+                'license_number' => 144,
+            ],
+            [
+                'name' => 'NARDIN GIORGIO',
+                'email' => '145@dogana.it',
+                'type' => 'titolare',
+                'license_number' => 145,
+            ],
+            [
+                'name' => 'ZANCHI MAURO',
+                'email' => '146@dogana.it',
+                'type' => 'titolare',
+                'license_number' => 146,
+            ],
+            [
+                'name' => 'TREVISAN ANDREA',
+                'email' => '147@dogana.it',
+                'type' => 'titolare',
+                'license_number' => 147,
+            ],
+            [
+                'name' => 'FALCER LORENZO',
+                'email' => '148@dogana.it',
+                'type' => 'titolare',
+                'license_number' => 148,
+            ],
+            [
+                'name' => 'VIANELLO GIANNI',
+                'email' => '149@dogana.it',
+                'type' => 'titolare',
+                'license_number' => 149,
+            ],
+            [
+                'name' => 'CAPOLLA CRISTIANO',
+                'email' => '150@dogana.it',
+                'type' => 'titolare',
+                'license_number' => 150,
+            ],
+            [
+                'name' => 'CASIMIRO SERGIO',
+                'email' => '151@dogana.it',
+                'type' => 'titolare',
+                'license_number' => 151,
+                'role'  => 'bancale'
+
+            ],
+            [
+                'name' => 'RAGAZZI MARCO',
+                'email' => '152@dogana.it',
+                'type' => 'titolare',
+                'license_number' => 152,
+            ],
+            [
+                'name' => 'MAZZUCCATO RICCARDO',
+                'email' => '153@dogana.it',
+                'type' => 'titolare',
+                'license_number' => 153,
+            ],
+            [
+                'name' => 'PEDRALI MARCO',
+                'email' => '154@dogana.it',
+                'type' => 'titolare',
+                'license_number' => 154,
+            ],
+            [
+                'name' => 'COLLAVINI MATTIA',
+                'email' => '155@dogana.it',
+                'type' => 'titolare',
+                'license_number' => 155,
+            ],
+            [
+                'name' => 'SANTINI ALESSANDRO',
+                'email' => '156@dogana.it',
+                'type' => 'titolare',
+                'license_number' => 156,
+            ],
+            [
+                'name' => 'PAVEGGIO DANIELE',
+                'email' => '157@dogana.it',
+                'type' => 'titolare',
+                'license_number' => 157,
+            ],
+            [
+                'name' => 'BALLARIN ROBERTO',
+                'email' => '158@dogana.it',
+                'type' => 'titolare',
+                'license_number' => 158,
+            ],
+            [
+                'name' => 'GABRIELI SOPPELSA STEFANO',
+                'email' => '159@dogana.it',
+                'type' => 'titolare',
+                'license_number' => 159,
+            ],
+            [
+                'name' => 'TEDESCHI EROS',
+                'email' => '160@dogana.it',
+                'type' => 'titolare',
+                'license_number' => 160,
+            ],
+            [
+                'name' => 'PENZO FRANCESCO',
+                'email' => '161@dogana.it',
+                'type' => 'titolare',
+                'license_number' => 161,
+            ],
+            [
+                'name' => 'RUSSO LORENZO',
+                'email' => '162@dogana.it',
+                'type' => 'titolare',
+                'license_number' => 162,
+                'role'  => 'bancale'
+
+            ],
+            [
+                'name' => 'FASAN RICCARDO',
+                'email' => '163@dogana.it',
+                'type' => 'titolare',
+                'license_number' => 163,
+            ],
+            [
+                'name' => 'GALANTE MATTEO',
+                'email' => '164@dogana.it',
+                'type' => 'titolare',
+                'license_number' => 164,
+            ],
+            [
+                'name' => 'TONELLO MASSIMO',
+                'email' => '165@dogana.it',
+                'type' => 'titolare',
+                'license_number' => 165,
+            ],
+            [
+                'name' => 'PERIOTTO DENIS',
+                'email' => '166@dogana.it',
+                'type' => 'titolare',
+                'license_number' => 166,
+                'role'  => 'bancale'
+            ],
+            [
+                'name' => 'DIANA VITTORIO',
+                'email' => '167@dogana.it',
+                'type' => 'titolare',
+                'license_number' => 167,
+            ],
+            [
+                'name' => 'ZANCHI EUGENIO',
+                'email' => '168@dogana.it',
+                'type' => 'titolare',
+                'license_number' => 168,
+            ],
+            [
+                'name' => 'ZANNI UMBERTO',
+                'email' => '169@dogana.it',
+                'type' => 'titolare',
+                'license_number' => 169,
+            ],
+            [
+                'name' => 'MANZONI NICOLA',
+                'email' => '170@dogana.it',
+                'type' => 'titolare',
+                'license_number' => 170,
+            ],
+            [
+                'name' => 'FONGHER ALESSANDRO',
+                'email' => '171@dogana.it',
+                'type' => 'titolare',
+                'license_number' => 171,
+            ],
+            [
+                'name' => 'BATTISTON SIMONE',
+                'email' => '172@dogana.it',
+                'type' => 'titolare',
+                'license_number' => 172,
+                'role'  => 'bancale'
+            ],
+            [
+                'name' => 'RIZZO ANDREA',
+                'email' => '173@dogana.it',
+                'type' => 'titolare',
+                'license_number' => 173,
+            ],
+            [
+                'name' => 'CAVAGNIS MARCO',
+                'email' => '174@dogana.it',
+                'type' => 'titolare',
+                'license_number' => 174,
+            ],
+            [
+                'name' => 'CAVAGNIS ALESSANDRO',
+                'email' => '175@dogana.it',
+                'type' => 'titolare',
+                'license_number' => 175,
+                'role'  => 'bancale'
+            ],
+            [
+                'name' => 'BOLDRIN STEFANO',
+                'email' => '176@dogana.it',
+                'type' => 'titolare',
+                'license_number' => 176,
+            ],
+            [
+                'name' => 'CARLOTTO MAURIZIO',
+                'email' => '177@dogana.it',
+                'type' => 'titolare',
+                'license_number' => 177,
+            ],
+            [
+                'name' => 'TABACCO GABRIELE',
+                'email' => '178@dogana.it',
+                'type' => 'titolare',
+                'license_number' => 178,
+            ],
+            [
+                'name' => 'ROSSO GIACOMO',
+                'email' => '516@dogana.it',
+                'type' => 'sostituto',
+                'license_number' => 516,
+            ],
+            [
+                'name' => 'FABRIS ALVISE',
+                'email' => '970@dogana.it',
+                'type' => 'sostituto',
+                'license_number' => 970,
+            ],
+            [
+                'name' => 'ZILIO GIANMARCO',
+                'email' => '952@dogana.it',
+                'type' => 'sostituto',
+                'license_number' => 952,
+            ],
+            [
+                'name' => 'MARESCA GIACOMO',
+                'email' => '596@dogana.it',
+                'type' => 'sostituto',
+                'license_number' => 596,
+            ],
+            [
+                'name' => 'RIZZO GABRIEL',
+                'email' => '517@dogana.it',
+                'type' => 'sostituto',
+                'license_number' => 517,
+            ],
+            [
+                'name' => 'CAPOLLA LEONARDO',
+                'email' => '563@dogana.it',
+                'type' => 'sostituto',
+                'license_number' => 563,
+            ],
+            [
+                'name' => 'SANTINI SAMUEL',
+                'email' => '979@dogana.it',
+                'type' => 'sostituto',
+                'license_number' => 979,
+            ],
+            [
+                'name' => 'LAZZARI IVAN',
+                'email' => '986@dogana.it',
+                'type' => 'sostituto',
+                'license_number' => 986,
+            ],
+            [
+                'name' => 'RUMONATO ENRICO',
+                'email' => '494@dogana.it',
+                'type' => 'sostituto',
+                'license_number' => 494,
+            ],
+            [
+                'name' => 'TESAN MICHAEL',
+                'email' => '502@dogana.it',
+                'type' => 'sostituto',
+                'license_number' => 502,
+            ],
+            [
+                'name' => 'PIZZO MATTEO',
+                'email' => '504@dogana.it',
+                'type' => 'sostituto',
+                'license_number' => 504,
+            ],
+            [
+                'name' => 'GREIFENBERG ENRICO',
+                'email' => '507@dogana.it',
+                'type' => 'sostituto',
+                'license_number' => 507,
+            ],
+            [
+                'name' => 'MERLO RICCARDO',
+                'email' => '541@dogana.it',
+                'type' => 'sostituto',
+                'license_number' => 541,
+            ],
+            [
+                'name' => 'BON NICOLA',
+                'email' => '542@dogana.it',
+                'type' => 'sostituto',
+                'license_number' => 542,
+            ],
+            [
+                'name' => 'FALCER ALESSANDRO',
+                'email' => '543@dogana.it',
+                'type' => 'sostituto',
+                'license_number' => 543,
+            ],
+            [
+                'name' => 'BUSETTO MARCO',
+                'email' => '567@dogana.it',
+                'type' => 'sostituto',
+                'license_number' => 567,
+            ],
+            [
+                'name' => 'DABALA ADRIANO',
+                'email' => '591@dogana.it',
+                'type' => 'sostituto',
+                'license_number' => 591,
+            ],
+            [
+                'name' => 'PERIOTTO ROSSANO',
+                'email' => '611@dogana.it',
+                'type' => 'sostituto',
+                'license_number' => 611,
+            ],
+            [
+                'name' => 'BENEDETTI RICCARDO',
+                'email' => '697@dogana.it',
+                'type' => 'sostituto',
+                'license_number' => 697,
+            ],
+            [
+                'name' => 'SENO DORIANO',
+                'email' => '700@dogana.it',
+                'type' => 'sostituto',
+                'license_number' => 700,
+            ],
+            [
+                'name' => 'TAGLIAPIETRA ANDREA',
+                'email' => '710@dogana.it',
+                'type' => 'sostituto',
+                'license_number' => 710,
+            ],
+            [
+                'name' => 'MIRRA FABIO',
+                'email' => '726@dogana.it',
+                'type' => 'sostituto',
+                'license_number' => 726,
+            ],
+            [
+                'name' => 'MEMO LUCA',
+                'email' => '792@dogana.it',
+                'type' => 'sostituto',
+                'license_number' => 792,
+            ],
+            [
+                'name' => 'PERIOTTO KANGI',
+                'email' => '910@dogana.it',
+                'type' => 'sostituto',
+                'license_number' => 910,
+            ],
+            [
+                'name' => 'CARLOTTO GIACOMO',
+                'email' => '945@dogana.it',
+                'type' => 'sostituto',
+                'license_number' => 945,
+            ],
+            [
+                'name' => 'LUCIC MATTEO',
+                'email' => '955@dogana.it',
+                'type' => 'sostituto',
+                'license_number' => 955,
+            ],
+            [
+                'name' => 'TAGLIAPIETRA ALARICO',
+                'email' => '957@dogana.it',
+                'type' => 'sostituto',
+                'license_number' => 957,
+            ],
+            [
+                'name' => 'PENZO MATTIA',
+                'email' => '980@dogana.it',
+                'type' => 'sostituto',
+                'license_number' => 980,
+            ],
+            [
+                'name' => 'BIANCHI ALESSANDRO',
+                'email' => '718@dogana.it',
+                'type' => 'sostituto',
+                'license_number' => 718,
+            ],
+            [
+                'name' => 'BEPI',
+                'email' => '513@dogana.it',
+                'type' => 'sostituto',
+                'license_number' => 513,
+            ],
         ];
 
         // Lista agenzie [nome => codice]
         $agencies = [
-            'ALBATRAVEL' => 'ALBA', "ITC" => "ITC", "GONDOLIERI TRAVEL" => "GT", 
-            "VENEZIA SERVICE" => "VENS", "BASSANI" => "BASS", "BUCINTORO" => "BUCI", 
-            "CONTIKI" => "CONT", "GLOBUS" => "GLOB", "COSMOS" => "COSM", 
-            "TRUMPY" => "TRUM", "CLEMENTSON" => "CLEM", "INSIGHT" => "INSI", 
+            'ALBATRAVEL' => 'ALBA',
+            "ITC" => "ITC",
+            "GONDOLIERI TRAVEL" => "GT",
+            "VENEZIA SERVICE" => "VENS",
+            "BASSANI" => "BASS",
+            "BUCINTORO" => "BUCI",
+            "CONTIKI" => "CONT",
+            "GLOBUS" => "GLOB",
+            "COSMOS" => "COSM",
+            "TRUMPY" => "TRUM",
+            "CLEMENTSON" => "CLEM",
+            "INSIGHT" => "INSI",
             "TURIVE" => "TUVE"
         ];
 
         $this->line('Creazione utenti e agenzie in corso...');
 
         // Creazione utenti
-        foreach($users as $user){
-            // Determina il ruolo
-            if (in_array($user[0], [143, 172, 166, 162])) {
-                $role = \App\Enums\UserRole::BANCALE->value;
-            } elseif ($user[0] == 140) {
-                $role = \App\Enums\UserRole::ADMIN->value;
-            } else {
-                $role = \App\Enums\UserRole::USER->value;
-            }
-
-            \App\Models\User::factory()->create([
-                'license_number' => $user[0],
-                'name'           => $user[1],
-                'email'          => $user[0]. '@dogana.it',
-                'role'           => $role
-            ]);
+        foreach ($users as $user) {
+            \App\Models\User::factory()->create($user);
         }
 
         // Creazione agenzie
-        foreach($agencies as $name => $code) {
+        foreach ($agencies as $name => $code) {
             \App\Models\Agency::factory()->create([
                 'name' => $name,
                 'code' => $code
@@ -153,8 +575,8 @@ class GenerateTestData extends Command
             $maxPossible = self::WORKERS - $start_from + 1;
             $boats = random_int(1, $maxPossible);
             $agency = \App\Models\Agency::inRandomOrder()->first();
-            $start_from_first = random_int(1,5);
-            $excluded = random_int(1,5);
+            $start_from_first = random_int(1, 5);
+            $excluded = random_int(1, 5);
 
             \App\Models\WorkAssignment::query()
                 ->where('slot', $i)
@@ -173,7 +595,7 @@ class GenerateTestData extends Command
         // Sostituzione casuale di alcuni lavori X con P o N
         $this->line("Creazione dei lavori P e N in corso...");
         $cashWorks = \App\Models\WorkAssignment::where('value', "X")->get();
-        foreach($cashWorks as $work) {
+        foreach ($cashWorks as $work) {
             $selector = random_int(1, 15);
             if ($selector >= 1 && $selector < 3) {
                 $work->value = "N";

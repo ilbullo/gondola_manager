@@ -111,8 +111,6 @@
                                 <span class="{{ $isExcluded ? 'excluded' : '' }} {{ $isShared ? 'shared' : '' }}">
                                     {{ $isAgency ? ($work['agency_code'] ?? 'AG') : strtoupper($work['value']) }}
                                 </span>
-                            @else
-                                –
                             @endif
                         </td>
                     @endfor
@@ -131,9 +129,9 @@
     </table>
 
     <div class="note">
-        <strong>Legenda:</strong> 
-        Normale = lavoro normale • 
-        <strong>Grassetto</strong> = ufficio • 
+        <strong>Legenda:</strong>
+        Normale = lavoro normale •
+        <strong>Grassetto</strong> = ufficio •
         <u>Sottolineato</u> = lavoro fisso alla licenza
     </div>
     <footer>

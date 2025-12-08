@@ -5,63 +5,69 @@
     <meta charset="UTF-8">
     <title>Tabella Assegnazione - {{ $date }}</title>
     <style>
-        :root {
-        --total-slots: {{ config('constants.matrix.total_slots') }};
-        }
+        /* Aggiunto il margin e size da split-table.blade.php per coerenza in PDF */
+        @page { margin: 7mm 5mm; size: A4 landscape; }
+
         body {
-            font-family: DejaVu Sans, Helvetica, Arial, sans-serif;
-            margin: 15mm;
-            font-size: 9pt;
-            color: #1f2937;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 8.4pt;
+            line-height: 1.25;
+            margin: 0;
+            color: #000;
         }
         h1 {
             text-align: center;
-            margin-bottom: 5mm;
-            font-size: 16pt;
+            font-size: 14pt;
             font-weight: bold;
+            margin: 0 0 4px 0;
+            border-bottom: 1.5pt solid #000;
         }
         .info {
             text-align: center;
-            margin-bottom: 12mm;
-            color: #4b5563;
-            font-size: 10pt;
+            font-size: 9pt;
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+        /* La classe slot è stata omessa, ma i valori di font e height sono stati mantenuti qui */
+        .slot {
+            width: 29px !important;
+            height: 32px;
+            font-size: 9.4pt; /* font-size da slot in split-table */
+            font-weight: normal;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 10mm;
-            table-layout: fixed; /* ← FORZA COLONNE DI LARGHEZZA UGUALE */
+            table-layout: fixed;
+            border: 0.5pt solid #000;           /* bordino sottilissimo esterno */
         }
         th, td {
-            border: 1px solid #888;
-            padding: 5px 2px;
+            border: 0.5pt solid #000;           /* bordi interni leggerissimi */
             text-align: center;
             vertical-align: middle;
-            height: 32px;
-            font-size: 8.5pt;
+            padding: 3px 1px;
+            font-size: 8.6pt;
         }
         th {
-            background-color: #f3f4f6;
             font-weight: bold;
-            font-size: 8pt;
-            color: #374151;
+            border-bottom: 2pt solid #000;
+            padding: 4px 1px;
         }
-        /* Colonna Licenza fissa a sinistra */
+        /* Colonna Licenza: mantenuto lo stile di work-assignment-table.blade.php */
         .license-col {
             width: 90px;
             text-align: left !important;
             padding-left: 10px;
             font-weight: bold;
             background-color: #f9fafb !important;
-            position: sticky;
-            left: 0;
-            z-index: 10;
+            /* Rimosse position: sticky e z-index: 10, non utili per la stampa PDF */
         }
-        /* Tutte le 25 colonne slot hanno larghezza identica */
+        /* Tutte le 25 colonne slot: la larghezza si adatterà */
         .slot-col {
-            width: calc(100% - 90px) / var(--total-slots); /* Distribuisce uniformemente lo spazio restante */
+            width: 29px !important; /* Larghezza fissata a 29px per tutti gli slot, come in split-table */
             font-size: 8pt;
         }
+
         .voucher {
             font-size: 7pt;
             color: #6b7280;
@@ -89,13 +95,19 @@
         .empty {
             color: #bbb;
         }
+        /* Non serve tfoot o note, ma aggiungo footer per coerenza */
+        footer {
+            text-align:center;
+            margin-top: 8px; /* Aggiunto un piccolo margine per separare */
+            font-size: 8.4pt; /* Allineato al body font size */
+        }
     </style>
 </head>
 <body>
     <h1>Tabella Assegnazione Lavori</h1>
     <div class="info">
-        Data: <strong>{{ $date }}</strong> • 
-        Generato da: <strong>{{ $generatedBy }}</strong> • 
+        Data: <strong>{{ $date }}</strong> •
+        Generato da: <strong>{{ $generatedBy }}</strong> •
         {{ $generatedAt }}
     </div>
 
@@ -114,20 +126,20 @@
                     <td class="license-col">{{ $row['license_number'] }}</td>
                     @for($slot = 0; $slot <= 24; $slot++)
                         @php $work = $row['worksMap'][$slot] ?? null @endphp
-                        <td class="slot-col">
+                        <td class="slot">
                             @if($work)
                                 @if($work['value'] === 'A')
-                                    <strong>{{ $work['agency_code'] ?? 'A' }}</strong>
+                                    {{ $work['agency_code'] ?? 'A' }}
                                     @if($work['voucher'] ?? false)
                                         <span class="voucher">({{ Str::limit($work['voucher'], 4, '') }})</span>
                                     @endif
                                 @elseif($work['value'] === 'X')
-                                    <strong>X</strong>
+                                    X
                                     @if($work['voucher'] ?? false)
                                         <span class="voucher">({{ Str::limit($work['voucher'], 4, '') }})</span>
                                     @endif
                                 @else
-                                    <strong>{{ $work['value'] }}</strong>
+                                    {{ $work['value'] }}
                                 @endif
 
                                 @if($work['excluded'] ?? false)
@@ -137,7 +149,7 @@
                                     <span class="badge R">R</span>
                                 @endif
                             @else
-                                <span class="empty">–</span>
+                                <span class="empty">&nbsp;</span>
                             @endif
                         </td>
                     @endfor
@@ -145,5 +157,8 @@
             @endforeach
         </tbody>
     </table>
+    <footer>
+       Generato alle {{ $generatedAt }} da {{ $generatedBy }}
+    </footer>
 </body>
 </html>

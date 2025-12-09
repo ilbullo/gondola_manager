@@ -1,6 +1,6 @@
 <header class="bg-white shadow-lg border-b border-gray-200 sticky top-0 z-50">
     <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center h-16">
+        <div class="flex justify-between items-center h-14">
 
             <!-- Logo / Titolo -->
             <div class="flex items-center">

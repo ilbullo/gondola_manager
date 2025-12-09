@@ -1,7 +1,7 @@
 {{-- resources/views/livewire/components/sidebar.blade.php --}}
 <div
     id="sidebar"
-    class="fixed inset-y-0 left-0 w-72 bg-white shadow-2xl border-r border-gray-200 transform -translate-x-full lg:translate-x-0 lg:static transition-transform duration-300 ease-in-out z-40 overflow-y-auto"
+    class="fixed inset-y-0 left-0 w-64 bg-white shadow-2xl border-r border-gray-200 transform -translate-x-full lg:translate-x-0 lg:static transition-transform duration-300 ease-in-out z-40 overflow-y-auto"
     x-data="{ actionsOpen: @entangle('showActions') }"
     aria-label="Barra laterale di configurazione"
 >

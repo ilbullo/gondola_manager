@@ -194,7 +194,9 @@
                                                     <span class="font-bold text-sm">
                                                         {{ $work['value'] === 'A' ? $work['agency_code'] ?? 'A' : strtoupper($work['value']) }}
                                                     </span>
-
+                                                    @if($work['value']==="X")
+                                                    <span>€ {{ number_format($work['amount'],0) }}</span>
+                                                    @endif
                                                     {{-- Ora --}}
                                                     <!-- <span class="text-[10px] text-gray-600">
                                                         {{--  --}}

@@ -27,8 +27,8 @@
                         type="button"
                         wire:click="setWorkType('{{ $btn['value'] }}')"
                         aria-pressed="{{ $workType === $btn['value'] ? 'true' : 'false' }}"
-                        class="h-11 px-4 text-sm font-bold rounded-xl shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-300 transition-all {{ $btn['classes'] }}
-                               {{ $workType === $btn['value'] ? 'ring-4 ring-blue-400 ring-offset-1 scale-105 shadow-md' : 'hover:shadow-md' }}"
+                        class="h-11 px-4 text-sm font-bold rounded-xl shadow-sm focus:outline-none focus:ring-4 transition-all {{ $btn['classes'] }}
+                               {{ $workType === $btn['value'] ? 'ring-4 scale-105 shadow-md ' . $btn['ring'] : 'hover:shadow-md' }}"
                     >
                         {{ $btn['label'] }}
                     </button>
@@ -164,7 +164,7 @@
                         <button
                             type="button"
                             wire:click="{{ $action['wire'] ?? '' }}()"
-                            class="h-11 text-sm font-bold rounded-xl shadow-sm focus:outline-none focus:ring-4 focus:ring-purple-300 transition {{ $action['classes'] }}"
+                            class="h-11 text-sm font-bold rounded-xl shadow-sm focus:outline-none focus:ring-4 transition {{ $action['classes'] }} {{ $action['ring'] }}"
                         >
                             {{ $action['label'] }}
                         </button>

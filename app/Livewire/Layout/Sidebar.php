@@ -67,11 +67,11 @@ class Sidebar extends Component
      */
     public array $config = [
         'work_types' => [
-            ['id' => 'quickNoloButton',       'label' => 'NOLO (N)',       'value' => 'N',     'classes' => 'text-gray-900 bg-yellow-400 hover:bg-yellow-500 focus:ring-yellow-300'],
-            ['id' => 'quickContantiButton',   'label' => 'CONTANTI (X)',   'value' => 'X',     'classes' => 'text-white bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-300'],
-            ['id' => 'selectAgencyButton',    'label' => 'AGENZIA',        'value' => 'A',     'classes' => 'text-white bg-sky-600 hover:bg-sky-700 focus:ring-sky-300'],
-            ['id' => 'quickPerdiVoltaButton', 'label' => 'PERDI VOLTA (P)', 'value' => 'P',     'classes' => 'text-white bg-red-600 hover:bg-red-700 focus:ring-red-300'],
-            ['id' => 'clearSelectionButton',  'label' => 'ANNULLA',        'value' => 'clear', 'classes' => 'text-white bg-pink-600 hover:bg-pink-700 focus:ring-pink-300'],
+            ['id' => 'quickNoloButton',       'label' => 'NOLO (N)',       'value' => 'N',     'classes' => 'text-gray-900 bg-yellow-400 hover:bg-yellow-500 focus:ring-orange-400','ring' => 'ring-orange-400 ring-offset-1'],
+            ['id' => 'quickContantiButton',   'label' => 'CONTANTI (X)',   'value' => 'X',     'classes' => 'text-white bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-300','ring' => 'ring-emerald-300 ring-offset-1'],
+            ['id' => 'selectAgencyButton',    'label' => 'AGENZIA',        'value' => 'A',     'classes' => 'text-white bg-sky-600 hover:bg-sky-700 focus:ring-sky-300','ring' => 'ring-sky-300 ring-offset-1'],
+            ['id' => 'quickPerdiVoltaButton', 'label' => 'PERDI VOLTA (P)', 'value' => 'P',     'classes' => 'text-white bg-red-600 hover:bg-red-700 focus:ring-red-300','ring' => 'ring-red-300 ring-offset-1'],
+            ['id' => 'clearSelectionButton',  'label' => 'ANNULLA',        'value' => 'clear', 'classes' => 'text-white bg-pink-600 hover:bg-pink-700 focus:ring-pink-300','ring' => 'ring-pink-300 ring-offset-1'],
         ],
         'sections' => [
             'agency_input' => ['enabled' => true, 'label' => 'AGENZIA',        'placeholder' => 'Es: Agenzia Ufficiale'],
@@ -81,11 +81,11 @@ class Sidebar extends Component
                 ['value' => 2, 'label' => '2 Caselle'],
             ]],
             'actions'      => [
-                ['id' => 'redistributeButton', 'label' => 'RIPARTISCI',            'classes' => 'text-white bg-emerald-600 hover:bg-emerald-700', 'wire' => 'redistributeWorks'],
-                ['id' => 'undoButton',         'label' => 'ANNULLA RIPARTIZIONE',  'classes' => 'text-white bg-orange-500 hover:bg-orange-600',   'wire' => 'backToOriginal', 'hidden' => true],
-                ['id' => 'updateButton',       'label' => 'MODIFICA TABELLA',      'classes' => 'text-white bg-indigo-600 hover:bg-indigo-700',   'wire' => 'editTable'],
-                ['id' => 'printButton',        'label' => 'STAMPA TABELLA',        'classes' => 'text-white bg-blue-600 hover:bg-blue-700',        'wire' => 'printWorks'],
-                ['id' => 'resetButton',        'label' => 'RESET TABELLA',         'classes' => 'text-white bg-red-600 hover:bg-red-700',          'wire' => 'resetTable'],
+                ['id' => 'redistributeButton', 'label' => 'RIPARTISCI',            'classes' => 'text-white bg-emerald-600 hover:bg-emerald-700', 'wire' => 'redistributeWorks','ring' => 'ring-emerald-300 ring-offset-1'],
+                ['id' => 'undoButton',         'label' => 'ANNULLA RIPARTIZIONE',  'classes' => 'text-white bg-orange-500 hover:bg-orange-600',   'wire' => 'backToOriginal', 'hidden' => true,'ring' => 'ring-orange-300 ring-offset-1'],
+                ['id' => 'updateButton',       'label' => 'MODIFICA TABELLA',      'classes' => 'text-white bg-indigo-600 hover:bg-indigo-700',   'wire' => 'editTable','ring' => 'ring-indigo-300 ring-offset-1'],
+                ['id' => 'printButton',        'label' => 'STAMPA TABELLA',        'classes' => 'text-white bg-blue-600 hover:bg-blue-700',        'wire' => 'printWorks','ring' => 'ring-blue-300 ring-offset-1'],
+                ['id' => 'resetButton',        'label' => 'RESET TABELLA',         'classes' => 'text-white bg-red-600 hover:bg-red-700',          'wire' => 'resetTable','ring' => 'ring-red-300 ring-offset-1'],
             ],
         ],
     ];

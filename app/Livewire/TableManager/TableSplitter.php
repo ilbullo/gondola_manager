@@ -15,6 +15,9 @@ class TableSplitter extends Component
      */
     public float $bancaleCost = 0.0;
 
+
+    public bool $showBancaleModal = true;   // Modale visibile all'avvio
+
     /**
      * Matrice principale delle licenze con gli slot assegnati.
      * Popolata dalla MatrixSplitterService.
@@ -42,9 +45,35 @@ class TableSplitter extends Component
      */
     public function mount(): void
     {
-        $this->loadMatrix();
+        $this->showBancaleModal = true;
+        //$this->loadMatrix();
     }
 
+    public function confirmBancaleCost(): void
+    {
+        $cost = (float) str_replace(',', '.', $this->bancaleCost);
+
+        if ($cost < 0) {
+            $this->addError('BancaleCost', 'Il costo non può essere negativo.');
+            return;
+        }
+
+        $this->bancaleCost = $cost;
+        $this->showBancaleModal = false;
+
+        // Ora carichiamo la matrice
+        $this->loadMatrix();
+
+        $this->dispatch('notify-success', [
+            'message' => "Costo bancale impostato a €{$cost}"
+        ]);
+    }
+
+    public function closeBancaleModal(): void
+    {
+        $this->showBancaleModal = false;
+        $this->loadMatrix(); // Opzionale: se vuoi chiudere senza inserire
+    }
     /**
      * Prepara la matrice completa leggendo la tabella delle licenze,
      * trasformandola tramite il MatrixSplitterService.

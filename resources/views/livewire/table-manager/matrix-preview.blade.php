@@ -1,5 +1,101 @@
 {{-- resources/views/livewire/table-manager/table-splitter.blade.php --}}
 <div class="h-screen flex flex-col bg-gray-50">
+   
+    {{-- MODALE COSTO BANCALE --}}
+    @if ($showBancaleModal)
+        <div>
+            <div x-data="{ open: @entangle('showBancaleModal') }" 
+                x-show="open" 
+                x-transition.opacity
+                @keydown.escape.window="$wire.closeBancaleModal()"
+                class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+                role="dialog" 
+                aria-modal="true" 
+                aria-labelledby="bancale-modal-title"
+                x-trap.noscroll.inert="open"
+                x-init="$nextTick(() => document.getElementById('bancale-input')?.focus())"
+                x-cloak>
+
+                {{-- Backdrop che chiude al click --}}
+                <div @click="$wire.closeBancaleModal()" class="absolute inset-0" aria-hidden="true"></div>
+
+                <div x-show="open"
+                    x-transition:enter="transition ease-out duration-200"
+                    x-transition:enter-start="opacity-0 scale-95"
+                    x-transition:enter-end="opacity-100 scale-100"
+                    x-transition:leave="transition ease-in duration-150"
+                    x-transition:leave-end="opacity-0 scale-95"
+                    @click.stop
+                    class="relative w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+
+                    {{-- Header blu come nel work-details-modal --}}
+                    <div class="bg-blue-600 px-6 py-4 flex justify-between items-center">
+                        <h2 id="bancale-modal-title" class="text-xl font-bold text-white">
+                            Costo Bancale Giornaliero
+                        </h2>
+                        <button @click="$wire.closeBancaleModal()"
+                            class="text-white/80 hover:text-white transition focus:outline-none focus:ring-2 focus:ring-white/50 rounded p-1"
+                            aria-label="Chiudi modale">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    {{-- Corpo modale --}}
+                    <div class="flex-1 flex flex-col p-6 space-y-6 overflow-y-auto">
+                        <div class="text-center">
+                            <div class="w-20 h-20 mx-auto mb-4 bg-amber-100 rounded-full flex items-center justify-center">
+                                <svg class="w-10 h-10 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z M6 12h12" />
+                                </svg>
+                            </div>
+                            <p class="text-gray-600 leading-relaxed">
+                                Inserisci il costo del bancale che verrà <strong>sottratto automaticamente</strong><br>
+                                dal totale contanti nella stampa PDF.
+                            </p>
+                        </div>
+
+                        <div>
+                            <label for="bancale-input" class="block text-sm font-medium text-gray-700 mb-2">
+                                Importo (€)
+                            </label>
+                            <div class="relative mt-1 rounded-md shadow-sm">
+                                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                    <span class="text-gray-500 text-lg">€</span>
+                                </div>
+                                <input 
+                                    type="number" 
+                                    id="bancale-input"
+                                    wire:model.live="bancaleCost" 
+                                    step="0.01" 
+                                    min="0"
+                                    class="block w-full pl-12 pr-4 py-4 text-3xl font-bold text-center text-blue-600 bg-blue-50 border-2 border-blue-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all"
+                                    placeholder="0.00"
+                                    required
+                                    @keydown.enter="$wire.confirmBancaleCost()"
+                                />
+                            </div>
+                            @error('bancaleCost')
+                                <p class="mt-2 text-sm text-red-600 text-center">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        {{-- Pulsanti in fondo, stile identico --}}
+                        <div class="grid grid-cols-1 gap-3 pt-4 border-t border-gray-100">
+                            <button 
+                                type="button"
+                                wire:click="confirmBancaleCost"
+                                class="w-full px-6 py-3 text-lg font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all">
+                                Conferma e Carica Tabella
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
 
     {{-- Loading overlay --}}
     <div id="loading-modal" wire:loading.class.remove="flex"
@@ -18,7 +114,7 @@
         </div>
     </div>
 
-    <main class="flex-1 flex flex-col p-4 gap-4">
+    <main class="{{ $showBancaleModal ? 'blur-sm pointer-events-none' : '' }} flex-1 flex flex-col p-4 gap-4">
 
         {{-- Header azioni --}}
         <header class="bg-white rounded-2xl shadow-md border border-gray-200 p-4">

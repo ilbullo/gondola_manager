@@ -150,6 +150,11 @@ class WorkDetailsModal extends Component
         }
     }
 
+    public function updatedSlotsOccupied($value) {
+        
+        $this->excluded = $value > 1 ? true : false;
+    }
+
     /**
      * Garantisce coerenza: se il lavoro è condiviso, non può essere escluso.
      *

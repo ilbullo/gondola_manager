@@ -24,10 +24,12 @@ export default {
     'bg-red-500',
     'bg-green-500',
     'bg-blue-500',
+    'bg-yellow-500',
     
     // Pattern: ad esempio tutti i bg-* e text-*
-    { pattern: /^bg-(red|green|blue|yellow|gray|purple|pink|indigo|teal)-\d{3}$/ },
-    { pattern: /^text-(red|green|blue|yellow|gray|purple|pink|indigo|teal)-\d{3}$/ },
+    { pattern: /^bg-(amber|red|green|blue|yellow|orange|gray|purple|pink|indigo|emerald|teal)-\d{3}$/ },
+    { pattern: /^text-(amber|red|green|blue|yellow|orange|gray|purple|pink|indigo|emerald|teal)-\d{3}$/ },
+    { pattern: /^ring-(amber|red|green|blue|yellow|orange|gray|purple|pink|indigo|emerald|teal)-\d{3}$/ },
     
     // Classi che cambiano in base a condizioni dinamiche
     'hidden',

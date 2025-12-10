@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 // app/Traits/HasWorkQueries.php
 
@@ -18,6 +19,9 @@ trait HasWorkQueries
 
     /** @var Collection */
     public $matrix;              // Matrice preparata per l'assegnazione dei lavori
+    
+    /** @var Collection */
+    private ?Collection $cachedAllWorks = null; // Cache per performance
 
     // =====================================================================
     // 1. METODI BASE – Restituiscono tutte le collezioni di lavori filtrati
@@ -26,11 +30,11 @@ trait HasWorkQueries
     /** Restituisce tutti i lavori ordinati per timestamp */
     public function allWorks(): Collection
     {
-        return collect($this->licenseTable ?? [])
+        return $this->cachedAllWorks ??= collect($this->licenseTable)
             ->flatMap(fn ($license) => $license['worksMap'] ?? [])
-            ->filter()           // rimuove valori null o vuoti
+            ->filter()
             ->sortBy('timestamp')
-            ->values();          // ri-indicizza la Collection
+            ->values();
     }
 
     /** Lavori condivisibili e non esclusi */
@@ -79,6 +83,12 @@ trait HasWorkQueries
         return $this->unsharableWorks()->where('value','A');
     }
 
+    /** Lavori in contanti non condicisibili (fissi) */
+    public function fixedCashWorks(): Collection 
+    {
+        return $this->unsharableWorks()->where('value', 'X');
+    }
+
     /** Lavori mattutini di agenzia ancora pendenti */
     public function pendingMorningAgencyWorks(): Collection
     {
@@ -108,17 +118,18 @@ trait HasWorkQueries
     // =====================================================================
     public function prepareMatrix(): void
     {
+        $totalSlots = config('constants.matrix.total_slots', 25);
         // Riga vuota template
         $emptyRow = [
             'id'                => null,
             'license_table_id'  => null,
             'user'              => null,
             'turn'              => DayType::FULL->value,
-            'real_slots_today'  => config('constants.matrix.total_slots'),
+            'real_slots_today'  => $totalSlots,
             'only_cash_works'   => false,
             'wallet'            => 0,
             'slots_occupied'    => 0,
-            'worksMap'          => array_fill(0, config('constants.matrix.total_slots'), null),
+            'worksMap'          => array_fill(0, $totalSlots, null),
         ];
 
         // Crea la matrice base con tante righe quante licenze
@@ -136,7 +147,7 @@ trait HasWorkQueries
                 'only_cash_works'       => $license['only_cash_works'],
                 'slots_occupied'        => $license['slots_occupied'],
                 'wallet'                => $license['wallet'],
-                'real_slots_today'      => $license['real_slots_today'] ?? config('constants.matrix.total_slots'),
+                'real_slots_today'      => $license['real_slots_today'] ?? $totalSlots,
             ]);
         }
 
@@ -149,13 +160,13 @@ trait HasWorkQueries
     // =====================================================================
     private function isMorning($work): bool
     {
-        $time = $this->extractTime($work);
+        $time = $this->extractTime($work) ?? '09:01';
         return $time !== null && $time <= config('constants.matrix.morning_end');
     }
 
     private function isAfternoon($work): bool
     {
-        $time = $this->extractTime($work);
+        $time = $this->extractTime($work) ?? '14:00';
         return $time !== null && $time >= config('constants.matrix.afternoon_start');
     }
 

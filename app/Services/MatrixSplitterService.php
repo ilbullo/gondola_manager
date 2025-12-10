@@ -1,7 +1,8 @@
 <?php
+declare(strict_types=1);
 
 namespace App\Services;
-
+use Illuminate\Support\Collection;
 use App\Traits\{HasWorkQueries, MatrixDistribution};
 
 class MatrixSplitterService
@@ -22,10 +23,10 @@ class MatrixSplitterService
     // ===================================================================
     // Costruttore
     // ===================================================================
-    public function __construct($licenseTable)
+    public function __construct(array|Collection $licenseTable)
     {
         // Converte la Collection in array se necessario
-        $this->licenseTable = $licenseTable instanceof \Illuminate\Support\Collection
+        $this->licenseTable = $licenseTable instanceof Collection
             ? $licenseTable->toArray()
             : $licenseTable;
 
@@ -50,16 +51,17 @@ class MatrixSplitterService
         // Distribuzione lavori condivisibili (sharable) che occupano il primo slot
         $this->distribute($this->sharableFirstWorks()->values(), true);
 
-        // Distribuzione lavori in contanti
-        $this->distribute($this->pendingCashWorks()); 
+         // Distribuzione dei lavori "fissi" cash (non spostabili)
+        $this->distributeFixed($this->fixedCashWorks()->values());
 
         // Distribuzione lavori N/P (nolo/perdivolta) fissi
         $this->distributeFixed($this->pendingNPWorks());
+        
+        // Distribuzione lavori in contanti
+        $this->distribute($this->pendingCashWorks()); 
 
-        // Debug: mostra i lavori non assegnati e informazioni della matrice
-        // dump($this->unassignedWorks);
-        // dump($this->debugInfo());
-        // dump($this->allWorks());
+        // Ordinamento visivo finale – rende la matrice bellissima per l'utente
+        $this->sortMatrixRows();
     }
 
 }

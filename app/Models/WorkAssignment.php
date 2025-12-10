@@ -45,35 +45,55 @@ class WorkAssignment extends Model
      * - solo lavori tipo 'A' possono avere shared_from_first o excluded true
      * - non si possono superare i 25 lavori per license_table_id
      */
-    protected static function booted(): void
-    {
-        static::saving(function ($work) {
-            // Controllo shared_from_first e excluded solo per lavori A
-            if (($work->shared_from_first && $work->value !== WorkType::AGENCY->value) ||
-                ($work->excluded && $work->value !== WorkType::AGENCY->value))
-            {
+protected static function booted(): void
+{
+    static::saving(function ($work) {
+        $value = $work->value;
+
+        // -----------------------------------------------------------------
+        // REGOLE RIGIDE DI VALIDAZIONE CAMPI BOOLEANI
+        // -----------------------------------------------------------------
+
+        // 1. shared_from_first può essere TRUE **SOLO** per lavori di tipo A
+        if ($work->shared_from_first && $value !== WorkType::AGENCY->value) {
+            throw new \Exception(
+                "Il campo 'shared_from_first' può essere abilitato solo per lavori di tipo 'A'. " .
+                "Valore attuale del lavoro: '{$value}'."
+            );
+        }
+
+        // 2. excluded può essere TRUE solo per:
+        //    - lavori di tipo A (agenzia esclusa)
+        //    - lavori di tipo X (cash escluso manualmente)
+        if ($work->excluded) {
+            if (!in_array($value, [WorkType::AGENCY->value, WorkType::CASH->value])) {
                 throw new \Exception(
-                    "Il campo shared_from_first o excluded può essere true solo per lavori di tipo 'A'. Valore attuale: '{$work->value}'"
+                    "Il campo 'excluded' può essere abilitato solo per lavori di tipo 'A' o 'X'. " .
+                    "Valore attuale del lavoro: '{$value}'."
                 );
             }
+        }
 
-            // Limite slot totali per nuova license_table
-            /*if (! $work->exists) {
-                $count = self::where('license_table_id', $work->license_table_id)->count();
-                if ($count >= config('constants.matrix.total_slots')) {
-                    throw new \Exception("Non puoi aggiungere più di 25 lavori per questa license_table_id.");
-                }
-            }*/
-            if (! $work->exists) {
-                $occupiedSlots = self::where('license_table_id', $work->license_table_id)
-                    ->sum('slots_occupied');
-                
-                if ($occupiedSlots + $work->slots_occupied > config('constants.matrix.total_slots')) {
-                    throw new \Exception("Capacità massima raggiunta (25 slot disponibili).");
-                }
-            }    
-        });
-    }
+        // -----------------------------------------------------------------
+        // CONTROLLO CAPACITÀ SLOT (solo su creazione)
+        // -----------------------------------------------------------------
+        if (! $work->exists) {
+            $totalSlots = config('constants.matrix.total_slots', 25);
+
+            $usedSlots = self::where('license_table_id', $work->license_table_id)
+                ->sum('slots_occupied');
+
+            $newSlots = $work->slots_occupied ?? 1; // default 1 se non specificato
+
+            if (($usedSlots + $newSlots) > $totalSlots) {
+                throw new \Exception(
+                    "Impossibile salvare il lavoro: superata la capacità massima di {$totalSlots} slot per questa licenza. " .
+                    "Slot già usati: {$usedSlots}, richiesti: {$newSlots}."
+                );
+            }
+        }
+    });
+}
 
     // ===================================================================
     // Mutators

@@ -1,30 +1,21 @@
 {{-- resources/views/livewire/table-manager/table-splitter.blade.php --}}
 <div class="h-screen flex flex-col bg-gray-50">
-   
+
     {{-- MODALE COSTO BANCALE --}}
     @if ($showBancaleModal)
         <div>
-            <div x-data="{ open: @entangle('showBancaleModal') }" 
-                x-show="open" 
-                x-transition.opacity
+            <div x-data="{ open: @entangle('showBancaleModal') }" x-show="open" x-transition.opacity
                 @keydown.escape.window="$wire.closeBancaleModal()"
                 class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-                role="dialog" 
-                aria-modal="true" 
-                aria-labelledby="bancale-modal-title"
-                x-trap.noscroll.inert="open"
-                x-init="$nextTick(() => document.getElementById('bancale-input')?.focus())"
-                x-cloak>
+                role="dialog" aria-modal="true" aria-labelledby="bancale-modal-title" x-trap.noscroll.inert="open"
+                x-init="$nextTick(() => document.getElementById('bancale-input')?.focus())" x-cloak>
 
                 {{-- Backdrop che chiude al click --}}
                 <div @click="$wire.closeBancaleModal()" class="absolute inset-0" aria-hidden="true"></div>
 
-                <div x-show="open"
-                    x-transition:enter="transition ease-out duration-200"
-                    x-transition:enter-start="opacity-0 scale-95"
-                    x-transition:enter-end="opacity-100 scale-100"
-                    x-transition:leave="transition ease-in duration-150"
-                    x-transition:leave-end="opacity-0 scale-95"
+                <div x-show="open" x-transition:enter="transition ease-out duration-200"
+                    x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+                    x-transition:leave="transition ease-in duration-150" x-transition:leave-end="opacity-0 scale-95"
                     @click.stop
                     class="relative w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
 
@@ -37,7 +28,8 @@
                             class="text-white/80 hover:text-white transition focus:outline-none focus:ring-2 focus:ring-white/50 rounded p-1"
                             aria-label="Chiudi modale">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12" />
                             </svg>
                         </button>
                     </div>
@@ -45,8 +37,10 @@
                     {{-- Corpo modale --}}
                     <div class="flex-1 flex flex-col p-6 space-y-6 overflow-y-auto">
                         <div class="text-center">
-                            <div class="w-20 h-20 mx-auto mb-4 bg-amber-100 rounded-full flex items-center justify-center">
-                                <svg class="w-10 h-10 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div
+                                class="w-20 h-20 mx-auto mb-4 bg-amber-100 rounded-full flex items-center justify-center">
+                                <svg class="w-10 h-10 text-amber-600" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z M6 12h12" />
                                 </svg>
@@ -65,17 +59,10 @@
                                 <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                                     <span class="text-gray-500 text-lg">€</span>
                                 </div>
-                                <input 
-                                    type="number" 
-                                    id="bancale-input"
-                                    wire:model.live="bancaleCost" 
-                                    step="0.01" 
+                                <input type="number" id="bancale-input" wire:model.live="bancaleCost" step="0.01"
                                     min="0"
                                     class="block w-full pl-12 pr-4 py-4 text-3xl font-bold text-center text-blue-600 bg-blue-50 border-2 border-blue-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all"
-                                    placeholder="0.00"
-                                    required
-                                    @keydown.enter="$wire.confirmBancaleCost()"
-                                />
+                                    placeholder="0.00" required @keydown.enter="$wire.confirmBancaleCost()" />
                             </div>
                             @error('bancaleCost')
                                 <p class="mt-2 text-sm text-red-600 text-center">{{ $message }}</p>
@@ -84,9 +71,7 @@
 
                         {{-- Pulsanti in fondo, stile identico --}}
                         <div class="grid grid-cols-1 gap-3 pt-4 border-t border-gray-100">
-                            <button 
-                                type="button"
-                                wire:click="confirmBancaleCost"
+                            <button type="button" wire:click="confirmBancaleCost"
                                 class="w-full px-6 py-3 text-lg font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all">
                                 Conferma e Carica Tabella
                             </button>
@@ -143,40 +128,40 @@
 
         {{-- Tabella matrice --}}
         <div class="flex-1 bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden flex flex-col">
-                            @if ($unassignedWorks)
-                    <div class="bg-amber-50 border border-amber-400 rounded-xl p-3">
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="text-sm font-bold text-amber-900">
-                                Lavori da assegnare ({{ count($unassignedWorks) }})
+            @if ($unassignedWorks)
+                <div class="bg-amber-50 border border-amber-400 rounded-xl p-3">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-bold text-amber-900">
+                            Lavori da assegnare ({{ count($unassignedWorks) }})
+                        </span>
+                        @if ($selectedWork)
+                            <span class="text-xs font-medium text-blue-700">
+                                → Selezionato: <strong>{{ strtoupper($selectedWork['value']) }}</strong>
+                                <button wire:click="deselectWork"
+                                    class="ml-1 underline text-blue-600">deseleziona</button>
                             </span>
-                            @if ($selectedWork)
-                                <span class="text-xs font-medium text-blue-700">
-                                    → Selezionato: <strong>{{ strtoupper($selectedWork['value']) }}</strong>
-                                    <button wire:click="deselectWork"
-                                        class="ml-1 underline text-blue-600">deseleziona</button>
-                                </span>
-                            @endif
-                        </div>
-                        <div class="grid grid-cols-8 sm:grid-cols-10 lg:grid-cols-12 gap-2">
-                            @foreach ($unassignedWorks as $index => $work)
-                                @php $type = \App\Enums\WorkType::tryFrom($work['value']); @endphp
-                                <button wire:click="selectUnassignedWork({{ $index }})"
-                                    wire:key="unassigned-{{ $index }}"
-                                    class="p-2 rounded-lg border text-center text-xs font-medium transition-all hover:scale-105 focus:ring-2 focus:ring-blue-400
+                        @endif
+                    </div>
+                    <div class="grid grid-cols-8 sm:grid-cols-10 lg:grid-cols-12 gap-2">
+                        @foreach ($unassignedWorks as $index => $work)
+                            @php $type = \App\Enums\WorkType::tryFrom($work['value']); @endphp
+                            <button wire:click="selectUnassignedWork({{ $index }})"
+                                wire:key="unassigned-{{ $index }}"
+                                class="p-2 rounded-lg border text-center text-xs font-medium transition-all hover:scale-105 focus:ring-2 focus:ring-blue-400
                                                {{ $selectedWork && data_get($selectedWork, 'id') == data_get($work, 'id')
                                                    ? 'bg-blue-600 text-white border-blue-800 ring-2 ring-blue-400 shadow-md'
                                                    : $type?->colourClass() ?? 'bg-gray-100 border-gray-300' }}">
-                                    <div class="font-bold text-sm">
-                                        {{ $work['value'] === 'A' ? $work['agency_code'] ?? 'A' : strtoupper($work['value']) }}
-                                    </div>
-                                    <div class="text-[10px] opacity-80">
-                                        {{ \Carbon\Carbon::parse($work['timestamp'])->format('H:i') }}
-                                    </div>
-                                </button>
-                            @endforeach
-                        </div>
+                                <div class="font-bold text-sm">
+                                    {{ $work['value'] === 'A' ? $work['agency_code'] ?? 'A' : strtoupper($work['value']) }}
+                                </div>
+                                <div class="text-[10px] opacity-80">
+                                    {{ \Carbon\Carbon::parse($work['timestamp'])->format('H:i') }}
+                                </div>
+                            </button>
+                        @endforeach
                     </div>
-                @endif
+                </div>
+            @endif
             <div class="flex-1 overflow-auto">
                 <div class="min-w-[1450px]">
                     <table class="w-full border-collapse text-xs">
@@ -219,7 +204,7 @@
                                     $occupied = collect($works)->filter()->count();
                                     $capacity = $license['slots_occupied'] ?? config('constants.matrix.total_slots');
                                     $cashTotal = collect($works)->where('value', 'X')->sum('amount') ?? 0;
-                                    $walletBalance = $license['wallet'] - ($nCount * 90);
+                                    $walletBalance = $license['wallet'] - $nCount * 90;
                                     $cashNet = $cashTotal - $bancaleCost - $walletBalance;
 
                                 @endphp
@@ -227,22 +212,22 @@
 
                                     {{-- Licenza --}}
                                     <td class="text-center py-3">
-    <div class="space-y-1">
-        <div class="text-lg font-bold">
-            {{ $license['user']['license_number'] ?? '—' }}
-             <x-day-badge day="{{ $license['turn'] }}" />
-            <x-no-agency-badge noAgency="{{ $license['only_cash_works'] }}" />
-        </div>
-        <button
-            wire:click="$dispatch('open-license-receipt', {
+                                        <div class="space-y-1">
+                                            <div class="text-lg font-bold">
+                                                {{ $license['user']['license_number'] ?? '—' }}
+                                                <x-day-badge day="{{ $license['turn'] }}" />
+                                                <x-no-agency-badge noAgency="{{ $license['only_cash_works'] }}" />
+                                            </div>
+                                            <button
+                                                wire:click="$dispatch('open-license-receipt', {
                 license: {{ \Illuminate\Support\Js::from($license) }},
                 bancaleCost: {{ $bancaleCost }},
             })"
-            class="text-[11px] px-2 py-0.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded">
-            Scontrino
-        </button>
-    </div>
-</td>
+                                                class="text-[11px] px-2 py-0.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded">
+                                                Scontrino
+                                            </button>
+                                        </div>
+                                    </td>
 
                                     {{-- N --}}
                                     <td class="px-4 py-3 text-center font-bold text-yellow-700 bg-yellow-50">
@@ -290,7 +275,7 @@
                                                     <span class="font-bold text-sm">
                                                         {{ $work['value'] === 'A' ? $work['agency_code'] ?? 'A' : strtoupper($work['value']) }}
                                                     </span>
-                                    
+
                                                     {{-- Ora --}}
                                                     <!-- <span class="text-[10px] text-gray-600">
                                                         {{--  --}}

@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Livewire\Attributes\On;
 use Livewire\Component;
+use Livewire\Attributes\Base;
 
 class TableSplitter extends Component
 {
@@ -243,17 +244,21 @@ class TableSplitter extends Component
      * Stampa PDF della tabella di ripartizione lavori.
      * I dati vengono messi in sessione e letti dal controller PDF.
      */
+
     public function printSplitTable(): void
     {
         $matrixData = collect($this->matrix)->map(function ($license) {
+            $nCount = collect($license['worksMap'])->where('value', 'N')->count();
+            $pCount = collect($license['worksMap'])->where('value', 'P')->count();
+            $wallet = $license['wallet'] - $nCount * 90;
             return [
                 'license_number' => $license['user']['license_number'] ?? '—',
                 'worksMap'       => $license['worksMap'],
                 'slots'          => $license['slots'] ?? config('constants.matrix.total_slots'),
-                'n_count'        => collect($license['worksMap'])->where('value', 'N')->count(),
-                'p_count'        => collect($license['worksMap'])->where('value', 'P')->count(),
+                'n_count'        => $nCount,
+                'p_count'        => $pCount,
                 'occupied'       => collect($license['worksMap'])->filter()->count(),
-                'cash_total'     => collect($license['worksMap'])->where('value', 'X')->sum('amount') ?? 0,
+                'cash_total'     => collect($license['worksMap'])->where('value', 'X')->sum('amount') - $wallet ?? 0,
             ];
         })->sortBy('order')->values();
 

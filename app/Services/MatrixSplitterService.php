@@ -61,7 +61,7 @@ class MatrixSplitterService
         $this->distribute($this->pendingCashWorks()); 
 
         // Ordinamento visivo finale – rende la matrice bellissima per l'utente
-        $this->sortMatrixRows();
+        //$this->sortMatrixRows();
     }
 
 }

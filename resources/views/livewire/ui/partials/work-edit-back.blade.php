@@ -63,7 +63,7 @@
                    class="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
         </div>
         
-        @if($work->isAgency())
+        @if($work->isAgency() || $work->isCash())
             <div class="pt-2 space-y-3">
                 <div class="flex items-start">
                     <div class="flex h-5 items-center">

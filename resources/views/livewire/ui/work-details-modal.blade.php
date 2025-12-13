@@ -82,8 +82,7 @@
                                         <p class="text-gray-500 text-xs">Resta assegnata alla licenza anche dopo la ripartizione</p>
                                     </div>
                                 </div>
-                            @endif 
-                            @if($value === "A")   
+                             
                                 {{-- Ripartisci dal primo --}}
                                 <div class="flex items-start">
                                     <div class="flex h-5 items-center">

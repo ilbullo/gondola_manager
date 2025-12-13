@@ -55,17 +55,17 @@ protected static function booted(): void
         // -----------------------------------------------------------------
 
         // 1. shared_from_first può essere TRUE **SOLO** per lavori di tipo A
-        if ($work->shared_from_first && $value !== WorkType::AGENCY->value) {
-            throw new \Exception(
-                "Il campo 'shared_from_first' può essere abilitato solo per lavori di tipo 'A'. " .
-                "Valore attuale del lavoro: '{$value}'."
-            );
-        }
+        // if ($work->shared_from_first && $value !== WorkType::AGENCY->value) {
+        //     throw new \Exception(
+        //         "Il campo 'shared_from_first' può essere abilitato solo per lavori di tipo 'A'. " .
+        //         "Valore attuale del lavoro: '{$value}'."
+        //     );
+        // }
 
-        // 2. excluded può essere TRUE solo per:
+        // 2. excluded e shared_from_first possono essere TRUE solo per:
         //    - lavori di tipo A (agenzia esclusa)
         //    - lavori di tipo X (cash escluso manualmente)
-        if ($work->excluded) {
+        if ($work->excluded || $work->shared_from_first) {
             if (!in_array($value, [WorkType::AGENCY->value, WorkType::CASH->value])) {
                 throw new \Exception(
                     "Il campo 'excluded' può essere abilitato solo per lavori di tipo 'A' o 'X'. " .

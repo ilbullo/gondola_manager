@@ -12,7 +12,7 @@ use DateTimeInterface;
 
 trait MatrixDistribution
 {
-    
+
     // =====================================================================
     // 1. GET / SAVE MATRICE
     // =====================================================================
@@ -64,7 +64,7 @@ trait MatrixDistribution
                  (($work['excluded'] ?? false) === true && $work['value'] !== 'A')))
             ->count();
     }*/
-     
+
     /**
      * Riordina ogni riga della matrice con l'ordine visivo richiesto:
      * 1. A fissi (excluded == true)
@@ -177,7 +177,7 @@ trait MatrixDistribution
         if (!$matrixItem) return 0;
 
         $totalSlots = $matrixItem['slots_occupied'] ?? 0;
-        
+
         // Conta solo gli slot fisicamente occupati (indipendentemente dal tipo)
         $occupied = collect($matrixItem['worksMap'])
             ->filter(fn($work) => !is_null($work))
@@ -235,6 +235,7 @@ trait MatrixDistribution
     {
         $maxSlotsIndex = config('constants.matrix.total_slots') - 1;
         $matrix = $this->getMatrix();
+        $worksToAssign = $worksToAssign->groupBy('id');
         $startingIndex = $fromFirst
             ? collect($this->matrix->first()['worksMap'] ?? [])->search(null, true)
             : 0;
@@ -244,18 +245,23 @@ trait MatrixDistribution
                 if (!is_null($work)) continue;
 
                 if ($this->getCapacityLeft($key) > 0 && !$worksToAssign->isEmpty()) {
-                    $nextWork = $worksToAssign->first();
-                    if ($this->isAllowedToBeAdded($key, $nextWork)) {
-                        $matrix[$key]['worksMap'][$slotIndex] = $nextWork;
-                        $this->saveMatrix($matrix);
-                        $worksToAssign->shift();
+                    /* modifica nuova per multi slots!! */
+                    $nextWork = $worksToAssign->first()->toArray();
+                    foreach($nextWork as $multiSlotWork) {
+                        if ($this->isAllowedToBeAdded($key, $multiSlotWork)) {
+                            $matrix[$key]['worksMap'][$slotIndex] = $multiSlotWork;
+                            $this->saveMatrix($matrix);
+                        }
+                        else {break 2;}
                     }
+                    $worksToAssign->shift();
+                    /** ---fine modifica --- */
                     if ($worksToAssign->isEmpty()) break 2;
                 }
             }
         }
 
-        foreach ($worksToAssign as $work) {
+        foreach ($worksToAssign->toArray() as $work) {
             $this->addToUnassigned($work);
         }
     }

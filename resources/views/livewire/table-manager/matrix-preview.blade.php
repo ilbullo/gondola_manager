@@ -253,15 +253,41 @@
                                         {{ number_format($cashNet, 0) }} €
                                     </td>
 
-                                    {{-- Slot 1-25 --}}
+                                    {{-- Slot 1-25 - INIZIO MODIFICA PER COLSPAN E MULTI-SLOT --}}
+                                    @php
+                                        $skipSlots = 0; // Variabile per saltare le celle
+                                    @endphp
+
                                     @foreach ($works as $slotIndex => $work)
+
+                                        {{-- 1. Se stiamo saltando, decrementa il contatore e continua il ciclo --}}
+                                        @if ($skipSlots > 0)
+                                            @php
+                                                $skipSlots--;
+                                                continue;
+                                            @endphp
+                                        @endif
+
                                         @php
                                             $isEmpty = is_null($work);
                                             $type = $work ? \App\Enums\WorkType::tryFrom($work['value']) : null;
                                             $bgClass = $type?->colourClass() ?? '';
+
+                                            // 2. Determina quanti slot occupa il lavoro. Predefinito: 1.
+                                            // Assicurati che $work['slots_occupied'] sia popolato correttamente nel trait
+                                            $workSlots = $work['slots_occupied'] ?? 1;
+
+                                            // 3. Se il lavoro occupa più di 1 slot, imposta il contatore per saltare i successivi
+                                            if ($workSlots > 1) {
+                                                $skipSlots = $workSlots - 1;
+                                            }
+
+                                            // 4. Calcolo della colonna span (colspan)
+                                            $colspan = $workSlots > 1 ? "colspan={$workSlots}" : '';
                                         @endphp
 
-                                        <td class="px-1 py-3 text-center border-r border-gray-100 cursor-pointer outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 transition-all {{ $bgClass }}
+                                        <td {!! $colspan !!} {{-- Aggiunto l'attributo colspan --}}
+                                            class="px-1 py-3 text-center border-r border-gray-100 cursor-pointer outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 transition-all {{ $bgClass }}
                                                    {{ $isEmpty ? 'hover:bg-green-50' : 'hover:bg-red-50' }}
                                                    {{ $selectedWork && $isEmpty ? 'ring-2 ring-blue-400 ring-inset' : '' }}"
                                             role="button" tabindex="0"
@@ -277,10 +303,6 @@
                                                     </span>
 
                                                     {{-- Ora --}}
-                                                    <!-- <span class="text-[10px] text-gray-600">
-                                                        {{--  --}}
-                                                    </span>-->
-
                                                     {{-- Badge F (excluded) --}}
                                                     @if ($work['excluded'] ?? false)
                                                         <span
@@ -317,6 +339,7 @@
                                             @endif
                                         </td>
                                     @endforeach
+                                    {{-- FINE MODIFICA PER COLSPAN E MULTI-SLOT --}}
                                 </tr>
                             @endforeach
                         </tbody>
@@ -324,27 +347,18 @@
                 </div>
             </div>
 
-            {{-- Footer --}}
+            {{-- Footer (Il pezzo che mancava) --}}
             <footer class="bg-gray-50 border-t border-gray-200 p-4 space-y-4">
                 <div class="text-xs text-gray-600 grid grid-cols-5 gap-4">
                     <div><span class="inline-block w-4 h-4 rounded bg-green-100 mr-2"></span>Contanti (X)</div>
-                    <div><span class="inline-block w-4 h-4 rounded bg-indigo-100 mr-2"></span>Agenzie (A)</div>
-                    <div><span class="inline-block w-4 h-4 rounded bg-yellow-100 mr-2"></span>Nolo (N)</div>
-                    <div><span class="inline-block w-4 h-4 rounded bg-red-100 mr-2"></span>Perdi Volta (P)</div>
-                    <div class="flex items-center gap-2">
-                        <span
-                            class="inline-block px-1.5 py-0.5 text-[9px] font-bold rounded-full bg-red-100 text-red-700">F</span>
-                        <span>Escluso</span>
-                        <span
-                            class="inline-block px-1.5 py-0.5 ml-2 text-[9px] font-bold rounded-full bg-emerald-100 text-emerald-700">R</span>
-                        <span>Ripetuto</span>
-                    </div>
+                    <div><span class="inline-block w-4 h-4 rounded bg-blue-100 mr-2"></span>Agenzia (A)</div>
+                    <div><span class="inline-block w-4 h-4 rounded bg-yellow-50 mr-2"></span>Notifiche (N)</div>
+                    <div><span class="inline-block w-4 h-4 rounded bg-red-50 mr-2"></span>Pre-assegnati (P)</div>
+                    <div><span class="inline-block w-4 h-4 rounded bg-gray-100 mr-2"></span>Altro/Non mappato</div>
                 </div>
-
             </footer>
         </div>
     </main>
-
     <livewire:ui.license-receipt-modal />
 
     <script>
@@ -362,3 +376,4 @@
         });
     </script>
 </div>
+

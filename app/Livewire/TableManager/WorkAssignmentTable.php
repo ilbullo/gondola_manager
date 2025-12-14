@@ -11,10 +11,10 @@ use Livewire\Component;
 
 class WorkAssignmentTable extends Component
 {
-    /** 
+    /**
      * Elenco delle licenze con i relativi lavori assegnati.
      * Viene popolato tramite refreshTable().
-     * 
+     *
      * @var array<int, mixed>
      */
     public array $licenses = [];
@@ -22,7 +22,7 @@ class WorkAssignmentTable extends Component
     /**
      * Lavoro selezionato dalla sidebar (es. contanti, nolo, agenzia, ecc.).
      * Contiene tutti i dati utili per una futura assegnazione.
-     * 
+     *
      * @var array|null
      */
     public ?array $selectedWork = null;
@@ -156,7 +156,7 @@ class WorkAssignmentTable extends Component
             }
 
             // I lavori multi-slot diventano automaticamente esclusi
-            $excluded = $slotsOccupied > 1 ? true : ($this->selectedWork['excluded'] ?? false);
+            //$excluded = $slotsOccupied > 1 ? true : ($this->selectedWork['excluded'] ?? false);
 
             // Creazione record
             WorkAssignment::create([
@@ -167,7 +167,7 @@ class WorkAssignmentTable extends Component
                 'amount'            => $this->selectedWork['amount'] ?? 90,
                 'voucher'           => $this->selectedWork['voucher'] ?? null,
                 'slots_occupied'    => $slotsOccupied,
-                'excluded'          => $excluded,
+                'excluded'          => $this->selectedWork['excluded'] ?? false,
                 'shared_from_first' => $this->selectedWork['sharedFromFirst'] ?? false,
                 'timestamp'         => now(),
             ]);

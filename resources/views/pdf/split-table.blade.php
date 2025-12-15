@@ -99,7 +99,7 @@
                     <td class="np">{{ $row['n_count'] }}</td>
                     <td class="np">{{ $row['p_count'] }}</td>
 
-                    @for($slot = 0; $slot < config('constants.matrix.total_slots'); $slot++)
+                    @for($slot = 1; $slot <= config('constants.matrix.total_slots'); $slot++)
                         @php
                             $work = $row['worksMap'][$slot] ?? null;
                             $isAgency   = $work && $work['value'] === 'A';

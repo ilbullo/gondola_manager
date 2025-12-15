@@ -8,7 +8,7 @@ use Illuminate\Support\Collection;
 
 /**
  * LicenseResource
- * 
+ *
  * Risorsa JSON per una licenza, prepara i dati per l'API.
  * Mappa tutti i lavori (works) associati alla licenza sui rispettivi slot.
  * Gestisce sovrapposizioni di slot e fornisce informazioni complete sul “wallet” della licenza.
@@ -24,13 +24,16 @@ class LicenseResource extends JsonResource
     public function toArray($request): array
     {
         try {
+            $initialSlotsUsed = 0; // <-- NUOVO: Contatore per la capacità target
             // Inizializza la mappa dei 25 slot (numero totale definito in config/constants.php)
             $worksMap = array_fill(1, config('constants.matrix.total_slots'), null);
 
             // Cicla tutti i lavori associati alla licenza
             foreach ($this->works as $work) {
                 $start = $work->slot;
-                $end   = $start + ($work->slots_occupied ?? 1) - 1; // Calcola l'ultimo slot occupato dal lavoro
+                $slots = $work->slots_occupied ?? 1;
+                $end   = $start + $slots - 1;
+                $initialSlotsUsed += $slots; // <-- Aggiorna la capacità target
 
                 for ($i = $start; $i <= $end; $i++) {
                     // Protezione da slot fuori range (dati corrotti)
@@ -80,6 +83,7 @@ class LicenseResource extends JsonResource
                 ] : null,
                 'turn'             => $this->turn,
                 'only_cash_works'  => $this->only_cash_works,
+                'target_capacity'  => $initialSlotsUsed,
                 //'capacity'       => $this->works_count,
                 'slots_occupied'   => Collection::make($worksMap)->whereNotNull()->count(),
                 //'slots_occupied' => array_sum(array_column($worksMap, 'slots_occupied')),

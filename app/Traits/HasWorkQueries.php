@@ -19,7 +19,7 @@ trait HasWorkQueries
 
     /** @var Collection */
     public $matrix;              // Matrice preparata per l'assegnazione dei lavori
-    
+
     /** @var Collection */
     private ?Collection $cachedAllWorks = null; // Cache per performance
 
@@ -30,11 +30,23 @@ trait HasWorkQueries
     /** Restituisce tutti i lavori ordinati per timestamp */
     public function allWorks(): Collection
     {
-        return $this->cachedAllWorks ??= collect($this->licenseTable)
+        if ($this->cachedAllWorks !== null) {
+            return $this->cachedAllWorks;
+        }
+
+        // 1. Raccogli tutti i lavori da worksMap di ogni licenza (questi sono i duplicati per slot)
+        $works = collect($this->licenseTable)
             ->flatMap(fn ($license) => $license['worksMap'] ?? [])
-            ->filter()
-            ->sortBy('timestamp')
-            ->values();
+            ->filter();
+
+        // 2. Raggruppa per ID del lavoro e prendi solo il primo elemento (deduplica)
+        $this->cachedAllWorks = $works
+            ->groupBy('id') // Raggruppa i duplicati con lo stesso ID
+            ->map(fn (Collection $group) => $group->first()) // Prendi solo il primo lavoro del gruppo (contiene slots_occupied corretto)
+            ->sortBy('timestamp') // Ordina come richiesto
+            ->values(); // Reset degli indici
+
+        return $this->cachedAllWorks;
     }
 
     /** Lavori condivisibili e non esclusi */
@@ -84,7 +96,7 @@ trait HasWorkQueries
     }
 
     /** Lavori in contanti non condicisibili (fissi) */
-    public function fixedCashWorks(): Collection 
+    public function fixedCashWorks(): Collection
     {
         return $this->unsharableWorks()->where('value', 'X');
     }
@@ -145,6 +157,7 @@ trait HasWorkQueries
                 'user'                  => $license['user'] ?? null,
                 'turn'                  => $license['turn'] ?? DayType::FULL->value,
                 'only_cash_works'       => $license['only_cash_works'],
+                'target_capacity'       => $license['target_capacity'],
                 'slots_occupied'        => $license['slots_occupied'],
                 'wallet'                => $license['wallet'],
                 'real_slots_today'      => $license['real_slots_today'] ?? $totalSlots,

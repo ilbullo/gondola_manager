@@ -48,17 +48,17 @@ class MatrixSplitterService
         // Distribuzione lavori di agenzia pomeriggio ancora pendenti
         $this->distribute($this->pendingAfternoonAgencyWorks()->values());
 
-        // Distribuzione lavori condivisibili (sharable) che occupano il primo slot
-        $this->distribute($this->sharableFirstWorks()->values(), true);
-
          // Distribuzione dei lavori "fissi" cash (non spostabili)
         $this->distributeFixed($this->fixedCashWorks()->values());
 
         // Distribuzione lavori N/P (nolo/perdivolta) fissi
         $this->distributeFixed($this->pendingNPWorks());
-        
+
+        // Distribuzione lavori condivisibili (sharable) che occupano il primo slot
+        $this->distribute($this->sharableFirstWorks()->values(), true);
+
         // Distribuzione lavori in contanti
-        $this->distribute($this->pendingCashWorks()); 
+        $this->distribute($this->pendingCashWorks());
 
         // Ordinamento visivo finale – rende la matrice bellissima per l'utente
         //$this->sortMatrixRows();

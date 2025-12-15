@@ -28,7 +28,8 @@ trait HasWorkQueries
     // =====================================================================
 
     /** Restituisce tutti i lavori ordinati per timestamp */
-    public function allWorks(): Collection
+   /*VERSIONE PRECEDENTE FUNZIONANTE
+   public function allWorks(): Collection
     {
         if ($this->cachedAllWorks !== null) {
             return $this->cachedAllWorks;
@@ -45,6 +46,30 @@ trait HasWorkQueries
             ->map(fn (Collection $group) => $group->first()) // Prendi solo il primo lavoro del gruppo (contiene slots_occupied corretto)
             ->sortBy('timestamp') // Ordina come richiesto
             ->values(); // Reset degli indici
+
+        return $this->cachedAllWorks;
+    }*/
+
+    public function allWorks(): Collection
+    {
+        if ($this->cachedAllWorks !== null) {
+            return $this->cachedAllWorks;
+        }
+
+        $this->cachedAllWorks = collect($this->licenseTable)
+            ->flatMap(fn ($license) => $license['worksMap'] ?? [])
+            ->filter()
+            // Deduplicazione: prendi il lavoro con più slots_occupied per ID
+            ->groupBy('id')
+            ->map(fn (Collection $group) => $group->sortByDesc('slots_occupied')->first())
+            // Ordinamento: prima slots_occupied crescente, poi timestamp crescente
+            ->sortByDesc([
+                fn($w) => $w['slots_occupied'],
+                fn($w) => $w['timestamp'] instanceof \Carbon\Carbon
+                            ? $w['timestamp']->timestamp
+                            : strtotime($w->timestamp),
+            ])
+            ->values(); // reset degli indici
 
         return $this->cachedAllWorks;
     }

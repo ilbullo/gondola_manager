@@ -39,6 +39,9 @@ class MatrixSplitterService
 
         $this->prepareMatrix();  // Crea la matrice vuota basata sulle licenze
 
+        // Distribuzione lavori condivisibili (sharable) che occupano il primo slot
+        $this->distribute($this->sharableFirstWorks()->values(), true);
+
         // Distribuzione dei lavori "fissi" di agenzia (non spostabili)
         $this->distributeFixed($this->fixedAgencyWorks()->values());
 
@@ -53,9 +56,6 @@ class MatrixSplitterService
 
         // Distribuzione lavori N/P (nolo/perdivolta) fissi
         $this->distributeFixed($this->pendingNPWorks());
-
-        // Distribuzione lavori condivisibili (sharable) che occupano il primo slot
-        $this->distribute($this->sharableFirstWorks()->values(), true);
 
         // Distribuzione lavori in contanti
         $this->distribute($this->pendingCashWorks());

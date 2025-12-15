@@ -140,8 +140,8 @@ class TableSplitter extends Component
     }
 
     /**
-     * Conferma la rimozione del lavoro:  
-     * - libera lo slot  
+     * Conferma la rimozione del lavoro:
+     * - libera lo slot
      * - rimette il lavoro nei "non assegnati"
      */
     #[On('confirmed-remove')]
@@ -323,7 +323,7 @@ private function prepareAgencyReport(): array
         $licenseNumber = $licenseRow['user']['license_number'] ?? 'N/D';
 
         foreach ($licenseRow['worksMap'] as $work) {
-            if (empty($work) || ($work['value'] ?? '') !== 'A') continue;
+            if (empty($work) || ($work['value'] ?? '') !== 'A' || $work['shared_from_first']) continue;
 
             $agencyName = $work['agency']['name']
                 ?? $work['agency_name']

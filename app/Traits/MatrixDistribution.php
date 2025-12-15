@@ -295,14 +295,17 @@ public function distribute(Collection $worksToAssign, bool $useFirstSlotOnly = f
             $attempts++;
 
             foreach ($matrix as $index => &$license) {
-                // ... (check turno omessi) ...
 
                 $nextWork = $worksToAssign->first();
-                $slotsNeeded = $nextWork['slots_occupied'] ?? 1; // <--- NUOVO: Ottiene gli slot richiesti
+                $slotsNeeded = $nextWork['slots_occupied'] ?? 1; // <--- Ottiene gli slot richiesti
 
                 // Cerca il blocco di slot liberi (USA LA NUOVA FUNZIONE)
                 $startSlot = $this->findConsecutiveFreeSlots($license['worksMap'], $slotsNeeded);
-
+                
+                if (!$this->isAllowedToBeAdded($index, $nextWork)) {
+                    continue;
+                }
+                
                 // Controllo della capacità e disponibilità del blocco (Modificato)
                 if ($startSlot !== false && $this->getCapacityLeft($index) >= $slotsNeeded) {
 

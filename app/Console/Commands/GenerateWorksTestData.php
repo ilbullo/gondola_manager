@@ -36,7 +36,7 @@ class GenerateWorksTestData extends Command
         LicenseTable::truncate();
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
-        $licenses = \App\Models\User::inRandomOrder()->take(5)->get();
+        $licenses = \App\Models\User::inRandomOrder()->take(15)->get();
         foreach($licenses as $key => $license) {
             LicenseTable::factory()->create([
                 'user_id'      => $license->id,

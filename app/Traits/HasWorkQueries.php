@@ -28,7 +28,7 @@ trait HasWorkQueries
     // =====================================================================
 
     /** Restituisce tutti i lavori ordinati per timestamp */
-   /*VERSIONE PRECEDENTE FUNZIONANTE
+   /*VERSIONE PRECEDENTE FUNZIONANTE **/
    public function allWorks(): Collection
     {
         if ($this->cachedAllWorks !== null) {
@@ -44,13 +44,20 @@ trait HasWorkQueries
         $this->cachedAllWorks = $works
             ->groupBy('id') // Raggruppa i duplicati con lo stesso ID
             ->map(fn (Collection $group) => $group->first()) // Prendi solo il primo lavoro del gruppo (contiene slots_occupied corretto)
-            ->sortBy('timestamp') // Ordina come richiesto
+            //->sortByDesc('slots_occupied') // Ordina come richiesto
+            //->sortBy('timestamp')
+            ->sortBy([
+                // Primo criterio: slots_occupied decrescente (più slot in alto)
+                ['slots_occupied', 'desc'],
+                // Secondo criterio: timestamp crescente (più presto in alto)
+                ['timestamp', 'asc'],
+            ])
             ->values(); // Reset degli indici
-
+        
         return $this->cachedAllWorks;
-    }*/
-
-    public function allWorks(): Collection
+    }
+/*
+   public function allWorks(): Collection
     {
         if ($this->cachedAllWorks !== null) {
             return $this->cachedAllWorks;
@@ -59,20 +66,31 @@ trait HasWorkQueries
         $this->cachedAllWorks = collect($this->licenseTable)
             ->flatMap(fn ($license) => $license['worksMap'] ?? [])
             ->filter()
-            // Deduplicazione: prendi il lavoro con più slots_occupied per ID
-            ->groupBy('id')
-            ->map(fn (Collection $group) => $group->sortByDesc('slots_occupied')->first())
-            // Ordinamento: prima slots_occupied crescente, poi timestamp crescente
-            ->sortByDesc([
-                fn($w) => $w['slots_occupied'],
-                fn($w) => $w['timestamp'] instanceof \Carbon\Carbon
-                            ? $w['timestamp']->timestamp
-                            : strtotime($w->timestamp),
-            ])
-            ->values(); // reset degli indici
+            // Deduplicazione: prendi il lavoro completo (quello non continuation)
+            ->filter(fn ($work) => !($work['is_continuation'] ?? false))
+            // Ordinamento: prima slots_occupied DESC, poi timestamp ASC
+            ->sort(function ($a, $b) {
+                $slotsA = $a['slots_occupied'] ?? 1;
+                $slotsB = $b['slots_occupied'] ?? 1;
+
+                if ($slotsA !== $slotsB) {
+                    return $slotsB <=> $slotsA; // DESC su slots_occupied
+                }
+
+                $timeA = $a['timestamp'] instanceof \Carbon\Carbon
+                    ? $a['timestamp']->timestamp
+                    : strtotime($a['timestamp'] ?? 'now');
+
+                $timeB = $b['timestamp'] instanceof \Carbon\Carbon
+                    ? $b['timestamp']->timestamp
+                    : strtotime($b['timestamp'] ?? 'now');
+
+                return $timeA <=> $timeB; // ASC su timestamp
+            })
+            ->values();
 
         return $this->cachedAllWorks;
-    }
+    }*/
 
     /** Lavori condivisibili e non esclusi */
     public function sharableWorks(): Collection

@@ -221,7 +221,7 @@ class MatrixSplitterServiceTest extends TestCase
     }
 
     #[Test]
-    public function only_agency_works_can_have_shared_from_first(): void
+    public function agency_works_and_cash_works_can_have_shared_from_first(): void
     {
         // === LAVORO "A" → deve permettere shared_from_first = true ===
         $agencyWork = WorkAssignment::factory()->create([
@@ -232,15 +232,24 @@ class MatrixSplitterServiceTest extends TestCase
 
         $this->assertTrue($agencyWork->shared_from_first);
 
-        // === LAVORO "X" (cash) → NON deve permettere shared_from_first = true ===
-        $this->expectException(\Exception::class);
-        $this->expectExceptionMessageMatches("/shared_from_first/"); // qualsiasi frammento significativo
-
-        WorkAssignment::factory()->create([
+        $cashWork = WorkAssignment::factory()->create([
             'value'             => WorkType::CASH->value, // 'X'
             'shared_from_first' => true,
             'timestamp'         => now(),
         ]);
+
+        $this->assertTrue($cashWork->shared_from_first);
+
+        // === LAVORO "X" (cash) deve permettere shared_from_first = true ===
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessageMatches('/A|X/');
+        
+        WorkAssignment::factory()->create([
+            'value'             => 'N', // Nolo/Perdivolta
+            'shared_from_first' => true,
+            'timestamp'         => now(),
+        ]);
+
     }
 
 }

@@ -116,6 +116,20 @@ trait HasWorkQueries
             ->where('shared_from_first', true);
     }
 
+    /** Lavori condivisibili ma obbligatoriamente nel primo slot tipo A -> Agency */
+    public function sharableFirstAgencyWorks() : Collection
+    {
+        return $this->sharableFirstWorks()
+                    ->where('value', 'A');
+    }
+
+    /** Lavori condivisibili ma obbligatoriamente nel primo slot tipo X -> Cash */
+    public function sharableFirstCashWorks() : Collection
+    {
+        return $this->sharableFirstWorks()
+                    ->where('value', 'X');
+    }
+
     /** Lavori della mattina (sharable) */
     public function morningWorks(): Collection
     {

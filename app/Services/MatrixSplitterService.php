@@ -42,6 +42,9 @@ class MatrixSplitterService
         // Distribuzione dei lavori "fissi" di agenzia (non spostabili)
         $this->distributeFixed($this->fixedAgencyWorks()->values());
 
+        //Distribuzione del lavori shared from first di tipo agenzia 
+        $this->distribute($this->sharableFirstAgencyWorks()->values(), true);
+
         // Distribuzione lavori di agenzia mattina ancora pendenti
         $this->distribute($this->pendingMorningAgencyWorks()->values());
 
@@ -51,8 +54,11 @@ class MatrixSplitterService
          // Distribuzione dei lavori "fissi" cash (non spostabili)
         $this->distributeFixed($this->fixedCashWorks()->values());
 
+        //Distribuzione dei lavori shared from first di tipo cash
+        $this->distribute($this->sharableFirstCashWorks()->values(), true);
+        
         // Distribuzione lavori condivisibili (sharable) che occupano il primo slot
-        $this->distribute($this->sharableFirstWorks()->values(), true);
+        //$this->distribute($this->sharableFirstWorks()->values(), true);
 
         // Distribuzione lavori N/P (nolo/perdivolta) fissi
         $this->distributeFixed($this->pendingNPWorks());

@@ -286,156 +286,173 @@ trait MatrixDistribution
      * @param Collection $worksToAssign
      * @param bool $fromFirst Se true parte dallo slot iniziale
      */
-public function distribute(Collection $worksToAssign, bool $useFirstSlotOnly = false): void
-{
-    $matrix = $this->getMatrix();
-    $attempts = 0;
-    $maxAttempts = count($matrix) * 3; // Sicurezza anti-loop
-
-    if ($useFirstSlotOnly) {
-        // ===================================================================
-        // LOGICA VERTICALE PER shared_from_first
-        // ===================================================================
-        // 1. Determina la colonna fissa: primo slot libero nella PRIMA licenza
-        $firstLicense = $matrix[0]['worksMap'] ?? null;
-        if (!$firstLicense) {
-            foreach ($worksToAssign as $work) {
-                $this->addToUnassigned($work);
-            }
+    public function distribute(Collection $worksToAssign, bool $useFirstSlotOnly = false): void
+    {
+        if ($worksToAssign->isEmpty()) {
             return;
         }
 
-        $fixedSlot = null;
+        $matrix = $this->getMatrix();
         $totalSlots = config('constants.matrix.total_slots', 25);
-        for ($slot = 1; $slot <= $totalSlots; $slot++) {
-            if (!isset($firstLicense[$slot]) || $firstLicense[$slot] === null) {
-                $fixedSlot = $slot;
-                break;
-            }
-        }
 
-        // Se non c'è slot libero nella prima licenza → tutti unassigned
-        if ($fixedSlot === null) {
+        if ($useFirstSlotOnly) {
+            // ===================================================================
+            // LOGICA VERTICALE PER shared_from_first - Riempie colonna per colonna
+            // ===================================================================
+            $firstLicense = $matrix[0]['worksMap'] ?? null;
+            if (!$firstLicense) {
+                foreach ($worksToAssign as $work) {
+                    $this->addToUnassigned($work);
+                }
+                return;
+            }
+
+            $totalSlots = config('constants.matrix.total_slots', 25);
+            $currentFixedSlot = null;
+
+            // Trova il primo slot libero nella prima licenza
+            for ($slot = 1; $slot <= $totalSlots; $slot++) {
+                if (!isset($firstLicense[$slot]) || $firstLicense[$slot] === null) {
+                    $currentFixedSlot = $slot;
+                    break;
+                }
+            }
+
+            if ($currentFixedSlot === null) {
+                foreach ($worksToAssign as $work) {
+                    $this->addToUnassigned($work);
+                }
+                return;
+            }
+
+            // Assegna i lavori colonna per colonna
+            while (!$worksToAssign->isEmpty() && $currentFixedSlot <= $totalSlots) {
+                // Per ogni colonna, scorre le licenze e assegna se possibile
+                foreach ($matrix as $index => &$license) {
+                    if ($worksToAssign->isEmpty()) {
+                        break 2;
+                    }
+
+                    $nextWork = $worksToAssign->first();
+                    $slotsNeeded = $nextWork['slots_occupied'] ?? 1;
+
+                    // Controlla spazio consecutivo a partire da $currentFixedSlot
+                    $canFit = true;
+                    for ($i = 0; $i < $slotsNeeded; $i++) {
+                        $checkSlot = $currentFixedSlot + $i;
+                        if ($checkSlot > $totalSlots || !is_null($license['worksMap'][$checkSlot] ?? null)) {
+                            $canFit = false;
+                            break;
+                        }
+                    }
+
+                    if (!$canFit) {
+                        continue;
+                    }
+
+                    if (!$this->isAllowedToBeAdded($index, $nextWork)) {
+                        continue;
+                    }
+
+                    if ($this->getCapacityLeft($index) < $slotsNeeded) {
+                        continue;
+                    }
+
+                    // Assegna in blocco
+                    for ($i = 0; $i < $slotsNeeded; $i++) {
+                        $targetSlot = $currentFixedSlot + $i;
+                        $license['worksMap'][$targetSlot] = $nextWork;
+                    }
+
+                    $this->saveMatrix($matrix);
+                    $worksToAssign->shift();
+                }
+
+                // Passa alla colonna successiva se ci sono ancora lavori
+                $currentFixedSlot++;
+            }
+
+            // Lavori rimanenti → unassigned
             foreach ($worksToAssign as $work) {
                 $this->addToUnassigned($work);
             }
+
             return;
         }
 
-        // 2. Assegna tutti i lavori nella stessa colonna $fixedSlot
-        foreach ($worksToAssign as $work) {
-            $assigned = false;
-            $slotsNeeded = $work['slots_occupied'] ?? 1;
+        // ===================================================================
+        // LOGICA NORMALE: colonna per colonna (slot 1 → 25)
+        // ===================================================================
+        $attempts = 0;
+        $maxAttempts = $totalSlots * count($matrix); // Sicurezza
 
-            foreach ($matrix as $index => &$license) {
-                // Controlla se c'è spazio consecutivo a partire da $fixedSlot
-                $canFit = true;
-                for ($i = 0; $i < $slotsNeeded; $i++) {
-                    $checkSlot = $fixedSlot + $i;
-                    if ($checkSlot > $totalSlots || !is_null($license['worksMap'][$checkSlot] ?? null)) {
-                        $canFit = false;
-                        break;
+        while (!$worksToAssign->isEmpty() && $attempts < $maxAttempts) {
+            $attempts++;
+
+            $assignedInThisRound = false;
+
+            // Scorro le colonne (slot 1 a 25)
+            for ($currentSlot = 1; $currentSlot <= $totalSlots; $currentSlot++) {
+                if ($worksToAssign->isEmpty()) {
+                    break 2;
+                }
+
+                $nextWork = $worksToAssign->first();
+                $slotsNeeded = $nextWork['slots_occupied'] ?? 1;
+
+                // Scorro tutte le licenze per questa colonna
+                foreach ($matrix as $index => &$license) {
+                    if ($worksToAssign->isEmpty()) {
+                        break 2;
                     }
-                }
 
-                if (!$canFit) {
-                    continue;
-                }
+                    // Controlla se c'è spazio consecutivo a partire da $currentSlot
+                    $canFit = true;
+                    for ($i = 0; $i < $slotsNeeded; $i++) {
+                        $checkSlot = $currentSlot + $i;
+                        if ($checkSlot > $totalSlots || !is_null($license['worksMap'][$checkSlot] ?? null)) {
+                            $canFit = false;
+                            break;
+                        }
+                    }
 
-                if (!$this->isAllowedToBeAdded($index, $work)) {
-                    continue;
-                }
+                    if (!$canFit) {
+                        continue;
+                    }
 
-                if ($this->getCapacityLeft($index) < $slotsNeeded) {
-                    continue;
-                }
+                    if (!$this->isAllowedToBeAdded($index, $nextWork)) {
+                        continue;
+                    }
 
-                // Assegnazione atomica nella colonna fissa
-                for ($i = 0; $i < $slotsNeeded; $i++) {
-                    $targetSlot = $fixedSlot + $i;
-                    $license['worksMap'][$targetSlot] = $work;
-                }
+                    if ($this->getCapacityLeft($index) < $slotsNeeded) {
+                        continue;
+                    }
 
-                $license['slots_occupied'] = ($license['slots_occupied'] ?? 0) + $slotsNeeded;
-                $assigned = true;
-                break; // Lavoro assegnato, passa al prossimo
+                    // Assegna il lavoro a partire da $currentSlot
+                    for ($i = 0; $i < $slotsNeeded; $i++) {
+                        $targetSlot = $currentSlot + $i;
+                        $license['worksMap'][$targetSlot] = $nextWork;
+                    }
+
+                    $this->saveMatrix($matrix);
+                    $worksToAssign->shift();
+                    $assignedInThisRound = true;
+
+                    // Dopo aver assegnato, esci dal ciclo delle colonne per passare al prossimo lavoro
+                    break 2;
+                }
             }
 
-            if (!$assigned) {
-                $this->addToUnassigned($work);
-            }
-        }
-
-        $this->saveMatrix($matrix);
-        return;
-    }
-
-    // ===================================================================
-    // LOGICA NORMALE (più vuota prima)
-    // ===================================================================
-
-    while (!$worksToAssign->isEmpty() && $attempts < $maxAttempts) {
-        $attempts++;
-
-        // === ORDINAMENTO DELLE LICENZE ===
-        // Prima per numero di slot occupati (crescente: più vuote prima)
-        // In caso di parità, mantiene l'ordine originale degli indici (più basso prima)
-        $sortedIndexes = collect($matrix)->mapWithKeys(function ($license, $index) {
-            $occupied = $license['slots_occupied'] ?? 0;
-            return [$index => $occupied];
-        })
-        ->sort()        // ordina per valore (slot occupati)
-        ->sortKeys()    // <-- stabile: in caso di parità, mantiene l'ordine degli indici
-        ->keys();       // prendi gli indici ordinati
-
-        $assignedInThisRound = false;
-
-        foreach ($sortedIndexes as $index) {
-            if ($worksToAssign->isEmpty()) {
-                break 2;
-            }
-
-            $license = &$matrix[$index]; // riferimento
-
-            $nextWork = $worksToAssign->first();
-            $slotsNeeded = $nextWork['slots_occupied'] ?? 1;
-
-            // Trova il primo blocco di slot liberi consecutivi
-            $startSlot = $this->findConsecutiveFreeSlots($license['worksMap'], $slotsNeeded);
-
-            // Controlli di compatibilità
-            if (!$this->isAllowedToBeAdded($index, $nextWork)) {
-                continue;
-            }
-
-            if ($startSlot !== false && $this->getCapacityLeft($index) >= $slotsNeeded) {
-
-                // Assegnazione atomica
-                for ($i = 0; $i < $slotsNeeded; $i++) {
-                    $targetSlot = $startSlot + $i;
-                    $license['worksMap'][$targetSlot] = $nextWork;
-                }
-
-                // Aggiorna conteggio locale
-                $license['slots_occupied'] = ($license['slots_occupied'] ?? 0) + $slotsNeeded;
-
-                $this->saveMatrix($matrix);
-                $worksToAssign->shift();
-                $assignedInThisRound = true;
+            if (!$assignedInThisRound) {
+                break; // Nessun progresso → esci
             }
         }
 
-        // Se non abbiamo assegnato nulla in un giro → esci
-        if (!$assignedInThisRound) {
-            break;
+        // Lavori rimanenti → unassigned
+        foreach ($worksToAssign as $work) {
+            $this->addToUnassigned($work);
         }
     }
-
-    // Lavori rimanenti → unassigned
-    foreach ($worksToAssign as $work) {
-        $this->addToUnassigned($work);
-    }
-}
 
     /**
      * Distribuisce lavori fissi alle licenze rispettando la capacità.

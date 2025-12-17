@@ -2,7 +2,7 @@
 <div class="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
 
     <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900">{{ __('Gestione Agenzie') }}</h1>
+        <h1 class="text-3xl font-bold text-gray-900">Gestione Agenzie</h1>
         <p class="mt-2 text-gray-600">Aggiungi, modifica o elimina le agenzie del sistema.</p>
     </div>
 
@@ -79,7 +79,7 @@
                         </div>
 
                         <div>
-                            <label for="create-code" class="block text-sm font-medium text-gray-700">Codice (max 10
+                            <label for="create-code" class="block text-sm font-medium text-gray-700">Codice (esattamente 4
                                 caratteri)</label>
                             <input type="text" id="create-code" wire:model="code" maxlength="10"
                                 class="mt-1 block w-full border-gray-300 rounded-lg shadow-sm uppercase tracking-wider font-mono"
@@ -137,7 +137,7 @@
                         </div>
 
                         <div>
-                            <label for="edit-code" class="block text-sm font-medium text-gray-700">Codice (max 10
+                            <label for="edit-code" class="block text-sm font-medium text-gray-700">Codice (esattamente 4
                                 caratteri)</label>
                             <input type="text" id="edit-code" wire:model="code" maxlength="10"
                                 class="mt-1 block w-full border-gray-300 rounded-lg shadow-sm uppercase tracking-wider font-mono"

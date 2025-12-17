@@ -19,7 +19,7 @@ class MatrixSplitterService
     public $licenseTable = [];      // Array o Collection di licenze
     public $matrix;                 // La matrice in cui vengono assegnati i lavori
     public $unassignedWorks;        // Collezione di lavori non ancora assegnati
-
+    
     // ===================================================================
     // Costruttore
     // ===================================================================
@@ -67,8 +67,37 @@ class MatrixSplitterService
         $this->distribute($this->pendingCashWorks());
 
         // Distribuzione lavori unassigned rimanenti
-       // $this->distribute($this->unassignedWorks->values());
-       // $this->unassignedWorks = collect(); // Tutti i lavori sono stati assegnati
+        // Aggiunta di informazioni sui lavori di tipo NOLO
+        $this->unassignedWorks = $this->unassignedWorks->map(function ($work) {
+            if($work['value'] === \App\Enums\WorkType::NOLO->value) {
+                $work['unassigned'] = true;
+                $work['prev_license_number'] = \App\Models\LicenseTable::find($work['license_table_id'])->user->license_number ?? 'N/A';
+            }
+            return $work; 
+        });
+
+        // Ordinamento speciale: tutti i lavori di tipo 'A' (agenzia) alla fine
+        $this->unassignedWorks = $this->unassignedWorks
+            ->sortBy(function ($work) {
+                return $work['value'] === 'A' ? 100 : 0;   // tutti gli A vanno alla fine
+            })
+            ->values();
+        
+        // === TENTATIVO DI ASSEGNAZIONE SICURO ===
+        if ($this->unassignedWorks->isNotEmpty()) {
+            // Passa una COPIA della collection
+            $worksToTry = $this->unassignedWorks->values(); // o clone, o ->values()
+
+            // Prova a distribuirli
+            $this->distribute($worksToTry);
+
+            // Ora $worksToTry contiene SOLO i lavori NON assegnati
+            // (quelli assegnati sono stati rimossi con shift())
+
+            // Aggiorna la proprietà con i soli non assegnati
+            $this->unassignedWorks = $worksToTry;
+        }
+        
         // Ordinamento visivo finale – rende la matrice bellissima per l'utente
         //$this->sortMatrixRows();
     }

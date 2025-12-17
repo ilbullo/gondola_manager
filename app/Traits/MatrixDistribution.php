@@ -500,4 +500,5 @@ public function distributeFixed(Collection $worksToAssign): void
         // Ripristina indici numerici (importante per round-robin)
         $this->matrix = $this->matrix->values();
     }
+
 }

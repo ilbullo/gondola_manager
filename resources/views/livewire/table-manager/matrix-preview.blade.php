@@ -1,6 +1,5 @@
 {{-- resources/views/livewire/table-manager/table-splitter.blade.php --}}
 <div class="h-screen flex flex-col bg-gray-50">
-
     {{-- MODALE COSTO BANCALE --}}
     @if ($showBancaleModal)
         <div>
@@ -295,7 +294,11 @@
                 <span class="font-bold text-sm">
                     {{ $work['value'] === 'A' ? $work['agency_code'] ?? 'A' : strtoupper($work['value']) }}
                 </span>
-
+                @if($work['unassigned'] ?? false)
+                    <span class="text-[10px] text-gray-500">
+                        (da: {{ $work['prev_license_number'] ?? 'N/A' }})
+                    </span>
+                @endif
                 {{-- Ora (commentato nell'originale) --}}
                 {{-- Badge F (excluded) --}}
                 @if ($work['excluded'] ?? false)

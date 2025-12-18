@@ -60,8 +60,8 @@ class MatrixSplitterService
         // Distribuzione lavori condivisibili (sharable) che occupano il primo slot
         //$this->distribute($this->sharableFirstWorks()->values(), true);
 
-        // Distribuzione lavori N/P (nolo/perdivolta) fissi
-        $this->distributeFixed($this->pendingNPWorks());
+        // Distribuzione lavori N (nolo) fissi
+        $this->distributeFixed($this->pendingNWorks());
 
         // Distribuzione lavori in contanti
         $this->distribute($this->pendingCashWorks());
@@ -85,6 +85,7 @@ class MatrixSplitterService
         
         // === TENTATIVO DI ASSEGNAZIONE SICURO ===
         if ($this->unassignedWorks->isNotEmpty()) {
+
             // Passa una COPIA della collection
             $worksToTry = $this->unassignedWorks->values(); // o clone, o ->values()
 
@@ -95,9 +96,53 @@ class MatrixSplitterService
             // (quelli assegnati sono stati rimossi con shift())
 
             // Aggiorna la proprietà con i soli non assegnati
-            $this->unassignedWorks = $worksToTry;
+            $this->unassignedWorks = $worksToTry->filter(fn ($work) => ($work['value'] ?? '') !== 'P')->values();
         }
+
+        //assegno alle rispettive licenze i lavori di tipo P
+        //$this->distributeFixed($this->pendingPWorks());
         
+        // ======= AGGIUNTA DEI LAVORI DI TIPO P =============
+        foreach ($this->pendingPWorks() as $pWork) {
+            $licenseId = $pWork['license_table_id'];
+
+            // Trova l'indice della licenza nella matrice
+            $licenseIndex = $this->matrix->search(function ($row) use ($licenseId) {
+                return $row['license_table_id'] == $licenseId;
+            });
+
+            if ($licenseIndex === false) {
+                $this->addToUnassigned($pWork);  // Se licenza non trovata, mandalo in unassigned
+                continue;
+            }
+
+            $license = $this->matrix[$licenseIndex];
+            $slotsNeeded = $pWork['slots_occupied'] ?? 1;
+
+            // Trova spazio consecutivo libero
+            $startSlot = $this->findConsecutiveFreeSlots($license['worksMap'], $slotsNeeded);
+
+            // Se non c'è spazio consecutivo, forza in fondo
+            if ($startSlot === false) {
+                $occupiedCount = collect($license['worksMap'])->filter()->count();
+                $startSlot = $occupiedCount + 1;
+            }
+
+            // Assegna il P
+            for ($i = 0; $i < $slotsNeeded; $i++) {
+                $license['worksMap'][$startSlot + $i] = $pWork;
+            }
+
+            // Aggiorna slots_occupied
+            $license['slots_occupied'] = collect($license['worksMap'])->filter()->count();
+
+            $this->matrix[$licenseIndex] = $license;
+        }
+
+        // Salva la matrice aggiornata
+        $this->saveMatrix($this->matrix->all());
+
+
         // Ordinamento visivo finale – rende la matrice bellissima per l'utente
         //$this->sortMatrixRows();
     }

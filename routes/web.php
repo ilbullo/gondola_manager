@@ -38,14 +38,3 @@ Route::group(
 require __DIR__.'/auth.php';
 
 
-
-//test route for errors 
-
-Route::get('/errors/401', fn() => abort(401));
-Route::get('/errors/402', fn() => abort(402));
-Route::get('/errors/403', fn() => abort(403));
-Route::get('/errors/404', fn() => abort(404));
-Route::get('/errors/419', fn() => abort(419));
-Route::get('/errors/429', fn() => abort(429));
-Route::get('/errors/500', fn() => abort(500));
-Route::get('/errors/503', fn() => abort(503));

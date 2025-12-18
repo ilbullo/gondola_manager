@@ -219,9 +219,10 @@ trait MatrixDistribution
         if (!$license) {
             return 0;
         }
-
+        
         // 2. Determina la capacità MASSIMA (il denominatore corretto)
-        $targetCapacity = $license['target_capacity'] ?? 0;
+        $numberOfPWorks = $this->pendingPWorks()->where('license_table_id',$license['license_table_id'])->count();
+        $targetCapacity = $license['target_capacity'] - $numberOfPWorks ?? 0;
 
         // Se stiamo usando il limite target, usiamo quello.
         if ($useTargetLimit) {

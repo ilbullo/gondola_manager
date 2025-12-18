@@ -176,10 +176,16 @@ trait HasWorkQueries
         return $this->sharableWorks()->where('value', 'X');
     }
 
-    /** Lavori di tipo N o P ancora pendenti */
-    public function pendingNPWorks(): Collection
+    /** Lavori di tipo N ancora pendenti */
+    public function pendingNWorks(): Collection
     {
-        return $this->sharableWorks()->whereIn('value', ['P', 'N']);
+        return $this->sharableWorks()->where('value', 'N');
+    }
+
+    /* Lavori di tipo P ancora pendenti */
+    public function pendingPWorks(): Collection
+    {
+        return $this->sharableWorks()->where('value', 'P');
     }
 
     // =====================================================================
@@ -273,7 +279,7 @@ trait HasWorkQueries
             'morning_agencies' => $this->pendingMorningAgencyWorks()->count(),
             'afternoon_agencies' => $this->pendingAfternoonAgencyWorks()->count(),
             'extra_works' => $this->pendingCashWorks()->count(),
-            'n_or_p_works' => $this->pendingNPWorks()->count(),
+            'n_or_p_works' => $this->pendingNWorks()->count() + $this->pendingPWorks()->count(),
             'sample_morning_A' => $this->pendingMorningAgencyWorks()->take(2)->toArray(),
         ];
     }

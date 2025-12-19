@@ -34,6 +34,7 @@ Route::group(
 
     });
 
+    Route::view('test','test')->name('test');
 
 require __DIR__.'/auth.php';
 

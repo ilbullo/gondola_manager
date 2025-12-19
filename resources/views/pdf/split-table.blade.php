@@ -99,18 +99,25 @@
                     <td class="np">{{ $row['n_count'] }}</td>
                     <td class="np">{{ $row['p_count'] }}</td>
 
-                    @for($slot = 0; $slot < config('constants.matrix.total_slots'); $slot++)
+                    @for($slot = 1; $slot <= config('constants.matrix.total_slots'); $slot++)
                         @php
                             $work = $row['worksMap'][$slot] ?? null;
                             $isAgency   = $work && $work['value'] === 'A';
                             $isExcluded = $work && ($work['excluded'] ?? false);
                             $isShared   = $work && ($work['shared_from_first'] ?? false);
+                            $prevLicenseNumber = $work['prev_license_number'] ?? null;
                         @endphp
                         <td class="slot">
                             @if($work)
                                 <span class="{{ $isExcluded ? 'excluded' : '' }} {{ $isShared ? 'shared' : '' }}">
                                     {{ $isAgency ? ($work['agency_code'] ?? 'AG') : strtoupper($work['value']) }}
                                 </span>
+                                @if($prevLicenseNumber)
+                                    <br>
+                                    <span style="font-size: 7.5pt; color: #555;">
+                                        (da: {{ $prevLicenseNumber }})
+                                    </span>
+                                @endif
                             @endif
                         </td>
                     @endfor

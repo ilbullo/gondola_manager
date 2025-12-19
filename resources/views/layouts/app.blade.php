@@ -20,6 +20,7 @@
     <link rel="manifest" href="/img/favicon/site.webmanifest" />
     <!-- Styles -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @stack('custom_css')
 </head>
 
 <body class="bg-gradient-to-br from-blue-50 to-purple-50 min-h-screen font-sans text-gray-900 flex flex-col antialiased">
@@ -32,7 +33,8 @@
     @stack('modals')
     @livewireScripts
     <!-- Optional: Remove if sortable functionality is not needed -->
-    <script src="https://cdn.jsdelivr.net/gh/livewire/sortable@v1.x.x/dist/livewire-sortable.js"></script>
+    <script src="https://unpkg.com/@wotz/livewire-sortablejs@1.0.0/dist/livewire-sortable.js"></script>
+    <!--<script src="https://cdn.jsdelivr.net/gh/livewire/sortable@v1.x.x/dist/livewire-sortable.js"></script>-->
 </body>
 
 </html>

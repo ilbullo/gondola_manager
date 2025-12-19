@@ -18,7 +18,7 @@
                             Benvenuto, {{ auth()->user()->name }}!
                         </h1>
                         <p class="text-lg text-gray-600">
-                            {{ __("Scegli l'operazione da eseguire oggi") }}
+                            Scegli l'operazione da eseguire oggi
                         </p>
                     </header>
 
@@ -80,7 +80,7 @@
                                     <span
                                         class="inline-block mt-6 text-lg font-bold opacity-90
                                              group-hover:opacity-100 group-focus:opacity-100 transition-opacity">
-                                        Apri Table Manager →
+                                        Vai alla Tabella →
                                     </span>
                                 </div>
                             </a>

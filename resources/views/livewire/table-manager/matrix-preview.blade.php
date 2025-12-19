@@ -1,6 +1,5 @@
 {{-- resources/views/livewire/table-manager/table-splitter.blade.php --}}
 <div class="h-screen flex flex-col bg-gray-50">
-
     {{-- MODALE COSTO BANCALE --}}
     @if ($showBancaleModal)
         <div>
@@ -201,8 +200,18 @@
                                     $works = $license['worksMap'];
                                     $nCount = collect($works)->where('value', 'N')->count();
                                     $pCount = collect($works)->where('value', 'P')->count();
+
+                                    // Numeratore: conteggio attuale degli slot occupati
                                     $occupied = collect($works)->filter()->count();
-                                    $capacity = $license['slots_occupied'] ?? config('constants.matrix.total_slots');
+
+                                    // Denominatore: usa il valore calcolato da LicenseResource.php
+                                    $maxCapacity = $license['target_capacity'] ?? config('constants.matrix.total_slots');
+
+                                    // Se la target_capacity è 0 ma la licenza ha lavori assegnati (ad esempio, condivisi),
+                                    // visualizziamo 0 come capacità target. Per evitare la confusione, possiamo fare un controllo visivo:
+                                    // Se target_capacity è 0, la licenza è considerata "piena" non appena ha un lavoro,
+                                    // ma la visualizzazione dovrebbe essere onesta sul valore calcolato.
+
                                     $cashTotal = collect($works)->where('value', 'X')->sum('amount') ?? 0;
                                     $walletBalance = $license['wallet'] - $nCount * 90;
                                     $cashNet = $cashTotal - $bancaleCost - $walletBalance;
@@ -241,10 +250,15 @@
 
                                     {{-- Capacità --}}
                                     <td
-                                        class="px-4 py-3 text-center font-bold {{ $occupied >= $capacity ? 'text-red-700 bg-red-50' : 'text-gray-800' }}">
-                                        {{ $occupied }} / {{ $capacity }}
-                                        @if ($occupied >= $capacity)
+                                        class="px-4 py-3 text-center font-bold
+                                        {{ $maxCapacity > 0 && $occupied >= $maxCapacity ? 'text-red-700 bg-red-50' : 'text-gray-800' }}">
+
+                                        {{ $occupied }} / {{ $maxCapacity }}
+
+                                        @if ($maxCapacity > 0 && $occupied >= $maxCapacity)
                                             <span class="block text-xs">Piena</span>
+                                        @elseif ($maxCapacity === 0 && $occupied > 0)
+                                            <span class="block text-xs text-red-700">Oltre target</span>
                                         @endif
                                     </td>
 
@@ -254,69 +268,74 @@
                                     </td>
 
                                     {{-- Slot 1-25 --}}
-                                    @foreach ($works as $slotIndex => $work)
-                                        @php
-                                            $isEmpty = is_null($work);
-                                            $type = $work ? \App\Enums\WorkType::tryFrom($work['value']) : null;
-                                            $bgClass = $type?->colourClass() ?? '';
-                                        @endphp
+                                    {{-- Nuovo Codice in matrix-preview.blade.php: Slot 1-25 --}}
+@for ($slotIndex = 1; $slotIndex <= config('constants.matrix.total_slots'); $slotIndex++)
+    @php
+        // Recupera il lavoro usando l'indice corrente del ciclo ($slotIndex)
+        $work = $works[$slotIndex] ?? null;
 
-                                        <td class="px-1 py-3 text-center border-r border-gray-100 cursor-pointer outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 transition-all {{ $bgClass }}
-                                                   {{ $isEmpty ? 'hover:bg-green-50' : 'hover:bg-red-50' }}
-                                                   {{ $selectedWork && $isEmpty ? 'ring-2 ring-blue-400 ring-inset' : '' }}"
-                                            role="button" tabindex="0"
-                                            aria-label="{{ $isEmpty ? 'Slot vuoto' : 'Slot occupato da ' . ($type?->label() ?? $work['value']) }}"
-                                            wire:click="{{ $isEmpty ? 'assignToSlot(' . $licenseKey . ', ' . $slotIndex . ')' : 'removeWork(' . $licenseKey . ', ' . $slotIndex . ')' }}"
-                                            wire:keydown.enter.prevent="{{ $isEmpty ? 'assignToSlot(' . $licenseKey . ', ' . $slotIndex . ')' : 'removeWork(' . $licenseKey . ', ' . $slotIndex . ')' }}">
-                                            @if ($work)
-                                                <div class="flex flex-col justify-center h-14 leading-tight relative">
+        $isEmpty = is_null($work);
+        $type = $work ? \App\Enums\WorkType::tryFrom($work['value']) : null;
+        $bgClass = $type?->colourClass() ?? '';
+    @endphp
 
-                                                    {{-- Valore principale --}}
-                                                    <span class="font-bold text-sm">
-                                                        {{ $work['value'] === 'A' ? $work['agency_code'] ?? 'A' : strtoupper($work['value']) }}
-                                                    </span>
+    <td class="px-1 py-3 text-center border-r border-gray-100 cursor-pointer outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 transition-all {{ $bgClass }}
+               {{ $isEmpty ? 'hover:bg-green-50' : 'hover:bg-red-50' }}
+               {{ $selectedWork && $isEmpty ? 'ring-2 ring-blue-400 ring-inset' : '' }}"
+        role="button" tabindex="0"
+        aria-label="{{ $isEmpty ? 'Slot vuoto' : 'Slot occupato da ' . ($type?->label() ?? $work['value']) }}"
+        {{-- Usa $slotIndex, che ora è sempre l'indice corretto (1, 2, 3...) --}}
+        wire:click="{{ $isEmpty ? 'assignToSlot(' . $licenseKey . ', ' . $slotIndex . ')' : 'removeWork(' . $licenseKey . ', ' . $slotIndex . ')' }}"
+        wire:keydown.enter.prevent="{{ $isEmpty ? 'assignToSlot(' . $licenseKey . ', ' . $slotIndex . ')' : 'removeWork(' . $licenseKey . ', ' . $slotIndex . ')' }}">
+        @if ($work)
+            <div class="flex flex-col justify-center h-14 leading-tight relative">
 
-                                                    {{-- Ora --}}
-                                                    <!-- <span class="text-[10px] text-gray-600">
-                                                        {{--  --}}
-                                                    </span>-->
+                {{-- Valore principale --}}
+                <span class="font-bold text-sm">
+                    {{ $work['value'] === 'A' ? $work['agency_code'] ?? 'A' : strtoupper($work['value']) }}
+                </span>
+                @if($work['unassigned'] ?? false)
+                    <span class="text-[10px] text-gray-500">
+                        (da: {{ $work['prev_license_number'] ?? 'N/A' }})
+                    </span>
+                @endif
+                {{-- Ora (commentato nell'originale) --}}
+                {{-- Badge F (excluded) --}}
+                @if ($work['excluded'] ?? false)
+                    <span
+                        class="absolute top-0 right-0 inline-block px-1.5 py-0.5 mt-1 mr-1 text-[9px] font-bold rounded-full bg-red-100 text-red-700">
+                        F
+                    </span>
+                @endif
 
-                                                    {{-- Badge F (excluded) --}}
-                                                    @if ($work['excluded'] ?? false)
-                                                        <span
-                                                            class="absolute top-0 right-0 inline-block px-1.5 py-0.5 mt-1 mr-1 text-[9px] font-bold rounded-full bg-red-100 text-red-700">
-                                                            F
-                                                        </span>
-                                                    @endif
+                {{-- Badge R (shared_from_first) --}}
+                @if ($work['shared_from_first'] ?? false)
+                    <span
+                        class="absolute top-0 right-0 inline-block px-1.5 py-0.5 mt-1 mr-1 text-[9px] font-bold rounded-full bg-emerald-100 text-emerald-700">
+                        R
+                    </span>
+                @endif
 
-                                                    {{-- Badge R (shared_from_first) --}}
-                                                    @if ($work['shared_from_first'] ?? false)
-                                                        <span
-                                                            class="absolute top-0 right-0 inline-block px-1.5 py-0.5 mt-1 mr-1 text-[9px] font-bold rounded-full bg-emerald-100 text-emerald-700">
-                                                            R
-                                                        </span>
-                                                    @endif
+                {{-- Se entrambi i badge, li spostiamo leggermente per non sovrapporsi --}}
+                @if (($work['excluded'] ?? false) && ($work['shared_from_first'] ?? false))
+                    <style>
+                        td .bg-red-100 {
+                            top: 2px;
+                            right: 14px;
+                        }
 
-                                                    {{-- Se entrambi i badge, li spostiamo leggermente per non sovrapporsi --}}
-                                                    @if (($work['excluded'] ?? false) && ($work['shared_from_first'] ?? false))
-                                                        <style>
-                                                            td .bg-red-100 {
-                                                                top: 2px;
-                                                                right: 14px;
-                                                            }
-
-                                                            td .bg-emerald-100 {
-                                                                top: 2px;
-                                                                right: 2px;
-                                                            }
-                                                        </style>
-                                                    @endif
-                                                </div>
-                                            @else
-                                                <span class="text-gray-300 text-lg leading-none">–</span>
-                                            @endif
-                                        </td>
-                                    @endforeach
+                        td .bg-emerald-100 {
+                            top: 2px;
+                            right: 2px;
+                        }
+                    </style>
+                @endif
+            </div>
+        @else
+            <span class="text-gray-300 text-lg leading-none">–</span>
+        @endif
+    </td>
+@endfor
                                 </tr>
                             @endforeach
                         </tbody>

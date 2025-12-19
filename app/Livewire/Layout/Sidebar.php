@@ -55,6 +55,9 @@ class Sidebar extends Component
     /** Modalità ripartizione attiva? */
     public bool $isRedistributionMode = false;
 
+    /** Stato di apertura della sidebar */
+    public bool $sidebarOpen = true;
+
     // ===================================================================
     // Configurazione UI (può essere sovrascritta dal mount)
     // ===================================================================
@@ -110,6 +113,23 @@ class Sidebar extends Component
     // ===================================================================
     // Azioni UI
     // ===================================================================
+
+    /**
+     * Apre la sidebar.
+     */
+    public function openSidebar(): void
+    {
+        $this->sidebarOpen = true;
+    }
+
+    /**
+     * Chiude la sidebar.
+     */
+    public function closeSidebar(): void
+    {
+        $this->sidebarOpen = false;
+    }
+
 
     /**
      * Mostra o nasconde la sezione delle azioni avanzate.

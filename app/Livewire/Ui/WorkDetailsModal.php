@@ -8,7 +8,7 @@ use Livewire\Attributes\On;
 class WorkDetailsModal extends Component
 {
     // === Stato del modale ===
-    /** 
+    /**
      * Indica se il modale dei dettagli lavoro è attualmente visibile.
      * @var bool
      */
@@ -150,10 +150,10 @@ class WorkDetailsModal extends Component
         }
     }
 
-    public function updatedSlotsOccupied($value) {
-        
+    /*public function updatedSlotsOccupied($value) {
+
         $this->excluded = $value > 1 ? true : false;
-    }
+    }*/
 
     /**
      * Garantisce coerenza: se il lavoro è condiviso, non può essere escluso.

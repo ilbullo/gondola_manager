@@ -169,7 +169,6 @@
                                focus:outline-none focus:ring-4 focus:ring-blue-300"
                         aria-label="Conferma la tabella del giorno">
                     <span wire:loading.remove wire:target="confirm">Conferma Tabella</span>
-                    <span wire:loading wire:target="confirm">Conferma in corso...</span>
                 </button>
             </div>
         </aside>

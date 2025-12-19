@@ -27,11 +27,11 @@ $login = function () {
     <x-auth-session-status class="mb-4" :status="session('status')" />
 
     <form wire:submit="login">
-        <!-- username Address -->
+        <!-- license_number Address -->
         <div>
-            <x-input-label for="username" :value="__('Username')" />
-            <x-text-input wire:model="form.username" id="username" class="block mt-1 w-full" type="username" name="username" required autofocus autocomplete="username" />
-            <x-input-error :messages="$errors->get('form.username')" class="mt-2" />
+            <x-input-label for="license_number" :value="__('license number')" class="capitalize" />
+            <x-text-input wire:model="form.license_number" id="license_number" class="block mt-1 w-full pl-3" type="license_number" name="license_number" required autofocus autocomplete="license_number" />
+            <x-input-error :messages="$errors->get('form.license_number')" class="mt-2" />
         </div>
 
         <!-- Password -->

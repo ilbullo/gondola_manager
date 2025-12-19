@@ -22,7 +22,6 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',           // Nome dell'utente
-        'username',       // Username univoco per login
         'email',          // Email di login
         'password',       // Password (verrà hashata)
         'role',           // Ruolo utente (Admin, Bancale, User)

@@ -12,9 +12,9 @@ use Livewire\Form;
 
 class LoginForm extends Form
 {
-    // 1. Cambiata la validazione: rimosso 'email' e aggiunto 'username'
+    // 1. Cambiata la validazione: rimosso 'email' e aggiunto 'license_number'
     #[Validate('required|string')] 
-    public string $username = '';
+    public string $license_number = '';
     
     #[Validate('required|string')]
     public string $password = '';
@@ -29,12 +29,12 @@ class LoginForm extends Form
     {
         $this->ensureIsNotRateLimited();
 
-        // 2. IMPORTANTE: Cambiato 'email' in 'username' nel tentativo di login
-        if (! Auth::attempt(['username' => $this->username, 'password' => $this->password], $this->remember)) {
+        // 2. IMPORTANTE: Cambiato 'email' in 'license_number' nel tentativo di login
+        if (! Auth::attempt(['license_number' => $this->license_number, 'password' => $this->password], $this->remember)) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
-                'form.username' => trans('auth.failed'), // Messaggio di errore riferito allo username
+                'form.license_number' => trans('auth.failed'), // Messaggio di errore riferito allo license_number
             ]);
         }
 
@@ -55,7 +55,7 @@ class LoginForm extends Form
         $seconds = RateLimiter::availableIn($this->throttleKey());
 
         throw ValidationException::withMessages([
-            'form.username' => trans('auth.throttle', [
+            'form.license_number' => trans('auth.throttle', [
                 'seconds' => $seconds,
                 'minutes' => ceil($seconds / 60),
             ]),
@@ -67,7 +67,7 @@ class LoginForm extends Form
      */
     protected function throttleKey(): string
     {
-        // 3. Cambiato da $this->email a $this->username per il limite dei tentativi
-        return Str::transliterate(Str::lower($this->username).'|'.request()->ip());
+        // 3. Cambiato da $this->email a $this->license_number per il limite dei tentativi
+        return Str::transliterate(Str::lower($this->license_number).'|'.request()->ip());
     }
 }

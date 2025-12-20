@@ -1,6 +1,6 @@
 {{-- resources/views/livewire/modals/confirm-modal.blade.php --}}
 <div>
-  @if($show)
+    @if($show)
     <div
         x-data="{ open: @entangle('show') }"
         x-show="open"
@@ -10,64 +10,51 @@
         x-transition:leave="transition ease-in duration-200"
         x-transition:leave-end="opacity-0"
         @keydown.escape.window="$wire.cancel()"
-        class="fixed inset-0 z-[9999] overflow-y-auto"  <!-- z-[9999] invece di z-50 -->
-        aria-labelledby="confirm-modal-title"
+        class="fixed inset-0 z-[10000] overflow-y-auto"
         role="dialog"
         aria-modal="true"
     >
-        <!-- Backdrop (anche lui più alto) -->
-        <div
-            class="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm transition-opacity z-[9998]"
-            @click="$wire.cancel()"
-        ></div>
+        <div class="fixed inset-0 bg-slate-900/90 backdrop-blur-md transition-opacity" @click="$wire.cancel()"></div>
 
-        <!-- Pannello modale -->
-        <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+        <div class="flex min-h-full items-center justify-center p-4">
             <div
                 x-show="open"
                 x-transition:enter="transition ease-out duration-300 transform"
-                x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
-                x-transition:leave="transition ease-in duration-200 transform"
-                x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                class="relative w-full max-w-md transform overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black ring-opacity-5 z-[9999]"
-                @click.stop
+                x-transition:enter-start="opacity-0 scale-95"
+                x-transition:enter-end="opacity-100 scale-100"
+                class="relative w-full max-w-sm transform overflow-hidden rounded-[2.5rem] bg-white p-8 text-center shadow-2xl border border-slate-200"
             >
-                <div class="bg-white px-6 pb-8 pt-10 sm:px-10">
-                    <!-- Icona di avviso -->
-                    <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-100 mb-6">
-                        <svg class="h-10 w-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                        </svg>
-                    </div>
+                {{-- Icona di Avviso PRO --}}
+                <div class="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-rose-50 mb-6">
+                    <svg class="h-10 w-10 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                </div>
 
-                    <!-- Titolo e messaggio -->
-                    <h3 id="confirm-modal-title" class="text-2xl font-bold text-gray-900 mb-3">
-                        Attenzione
-                    </h3>
-                    <p class="text-gray-600 text-base leading-relaxed">
-                        {{ $message ?? 'Sei sicuro di voler procedere con questa azione?' }}
-                    </p>
+                <h3 class="text-2xl font-black uppercase italic tracking-tight text-slate-900 mb-2">
+                    Attenzione
+                </h3>
+                
+                <p class="text-sm font-bold text-slate-400 uppercase leading-relaxed mb-8">
+                    {{ $message ?? 'Sei sicuro di voler procedere con questa azione?' }}
+                </p>
 
-                    <!-- Pulsanti -->
-                    <div class="mt-8 flex flex-col sm:flex-row gap-3 justify-end">
-                        <button
-                            type="button"
-                            wire:click="cancel"
-                            class="order-2 sm:order-1 w-full sm:w-auto px-6 py-3 text-sm font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300 rounded-xl focus:ring-4 focus:ring-gray-300 transition-all duration-200"
-                        >
-                            Annulla
-                        </button>
+                <div class="space-y-3">
+                    <button
+                        type="button"
+                        wire:click="confirm"
+                        class="w-full py-5 bg-rose-500 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg shadow-rose-200 hover:bg-rose-600 transition-all active:scale-95"
+                    >
+                        Conferma Operazione
+                    </button>
 
-                        <button
-                            type="button"
-                            wire:click="confirm"
-                            class="order-1 sm:order-2 w-full sm:w-auto px-8 py-3 text-sm font-bold text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 rounded-xl shadow-lg hover:shadow-xl focus:ring-4 focus:ring-red-500/50 transition-all duration-200 flex items-center justify-center gap-2"
-                        >
-                            Conferma
-                        </button>
-                    </div>
+                    <button
+                        type="button"
+                        wire:click="cancel"
+                        class="w-full py-4 bg-slate-100 text-slate-400 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-200 transition-all"
+                    >
+                        Annulla
+                    </button>
                 </div>
             </div>
         </div>

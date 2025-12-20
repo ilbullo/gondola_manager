@@ -168,6 +168,75 @@ class LicenseManager extends Component
     }
 
     /**
+     * Sposta un utente selezionato verso l’alto nella lista.
+     * @param int $id ID della license_table
+     * @return void
+     */
+
+    public function moveUp($id)
+    {
+        $this->swapOrder($id, 'up');
+    }
+
+    /**
+     * Sposta un utente selezionato verso il basso nella lista.
+     * @param int $id ID della license_table
+     * @return void
+     */
+
+    public function moveDown($id)
+    {
+        $this->swapOrder($id, 'down');
+    }
+
+    /**
+     * Esegue lo scambio di ordine tra l'utente corrente e il partner.
+     * @param int $id ID della license_table dell'utente corrente
+     * @param string $direction 'up' o 'down' per indicare la direzione dello scambio
+     * @return void
+     */
+
+    private function swapOrder($id, $direction)
+    {
+        DB::transaction(function () use ($id, $direction) {
+            $currentUser = \App\Models\LicenseTable::lockForUpdate()->find($id);
+            if (!$currentUser) return;
+
+            // Cerchiamo il partner per lo scambio
+            $query = \App\Models\LicenseTable::whereDate('date', $currentUser->date);
+            
+            if ($direction === 'up') {
+                $partner = $query->where('order', '<', $currentUser->order)
+                                ->orderBy('order', 'desc')
+                                ->first();
+            } else {
+                $partner = $query->where('order', '>', $currentUser->order)
+                                ->orderBy('order', 'asc')
+                                ->first();
+            }
+
+            if ($partner) {
+                $currentOrder = $currentUser->order;
+                $partnerOrder = $partner->order;
+
+                // PASSAGGIO CHIAVE: Usiamo un ordine temporaneo enorme per evitare il "Duplicate entry"
+                // Spostiamo momentaneamente il partner fuori dai piedi
+                $tempOrder = 99999; 
+                
+                $partner->update(['order' => $tempOrder]);
+                
+                // Ora il posto è libero, spostiamo l'utente corrente
+                $currentUser->update(['order' => $partnerOrder]);
+                
+                // Infine riportiamo il partner al vecchio posto dell'utente corrente
+                $partner->update(['order' => $currentOrder]);
+            }
+        });
+
+        $this->refreshData();
+    }
+
+    /**
      * Conferma la selezione attuale delle licenze:
      * - verifica che ci siano utenti selezionati
      * - verifica che non superino il limite massimo

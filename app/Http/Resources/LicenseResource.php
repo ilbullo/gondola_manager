@@ -79,6 +79,7 @@ class LicenseResource extends JsonResource
                 'license_table_id' => $this->id,
                 'user'             => $this->user ? [
                     'id'            => $this->user->id,
+                    'name'          => $this->user->name, 
                     'license_number'=> $this->user->license_number,
                 ] : null,
                 'turn'             => $this->turn,

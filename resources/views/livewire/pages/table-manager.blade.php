@@ -1,4 +1,4 @@
-<x-app-layout>
+<x-tm>
         @livewire('table-manager.table-manager')
 
         @push('modals')
@@ -9,4 +9,4 @@
 
         @endpush
 
-</x-app-layout>
+</x-tm>

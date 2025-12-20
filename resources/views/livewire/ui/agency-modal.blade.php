@@ -1,22 +1,24 @@
-<div x-data="{ show: @entangle('show') }" x-show="show" class="fixed inset-0 bg-black bg-opacity-50 z-50" role="dialog" aria-modal="true" aria-labelledby="agencyModalTitle">
-    <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg p-4 w-full max-w-md mx-4 sm:mx-auto max-h-[80vh] overflow-y-auto">
-        <div class="flex justify-between items-center mb-4">
-            <h2 id="agencyModalTitle" class="text-lg font-bold text-gray-800">Seleziona Agenzia</h2>
-            <button wire:click="close" class="text-gray-500 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-300 rounded-full" aria-label="Chiudi modale">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-            </button>
+{{-- resources/views/livewire/modals/agency-modal.blade.php --}}
+<div x-data="{ show: @entangle('show') }" x-show="show" x-cloak 
+     class="fixed inset-0 z-[250] flex items-center justify-center bg-slate-900/80 backdrop-blur-md p-4">
+    
+    <div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in">
+        <div class="bg-indigo-600 p-6 text-center text-white">
+            <h3 class="text-2xl font-black uppercase italic">Seleziona Agenzia</h3>
         </div>
-        <div class="grid gap-2 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
-            @forelse ($agencies as $agency)
-                <button wire:click="$dispatch('selectAgency', [{{ $agency['id'] }}])"
-                    class="h-10 px-3 text-sm font-bold text-white bg-sky-600 hover:bg-sky-700 focus:ring-sky-300 shadow-sky-500/40 rounded-md shadow-sm focus:ring-2 focus:outline-none transition-all duration-200">
-                    {{ $agency['name'] }}
+
+        <div class="p-6 grid grid-cols-2 sm:grid-cols-4 gap-3 max-h-[60vh] overflow-y-auto">
+            @foreach ($agencies as $agency)
+                <button wire:click="$dispatch('selectAgency', [{{ $agency['id'] }}])" 
+                    class="h-24 bg-slate-50 border-2 border-slate-200 rounded-2xl flex flex-col items-center justify-center hover:border-indigo-500 hover:bg-indigo-50 transition-all group">
+                    <span class="text-[8px] font-black text-slate-400 group-hover:text-indigo-500 uppercase">{{ $agency['code'] }}</span>
+                    <span class="text-xs font-black text-slate-700 uppercase mt-1">{{ $agency['name'] }}</span>
                 </button>
-            @empty
-                <p class="col-span-full text-sm text-gray-500 text-center">Nessuna agenzia disponibile</p>
-            @endforelse
+            @endforeach
+        </div>
+
+        <div class="p-4 bg-slate-100 border-t border-slate-200">
+            <button wire:click="close" class="w-full py-4 bg-slate-400 text-white rounded-2xl font-black uppercase">Annulla</button>
         </div>
     </div>
 </div>

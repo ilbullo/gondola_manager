@@ -1,226 +1,44 @@
-{{-- resources/views/livewire/layout/sidebar.blade.php --}}
-<div>
-<button
-    wire:click="{{ $sidebarOpen ? 'closeSidebar' : 'openSidebar' }}"
-    class="lg:hidden 
-           fixed bottom-6 left-6 
-           z-50 
-           flex items-center justify-center 
-           w-20 h-20   <!-- Aumentato da 16 a 20 (80px) per ospitare il bordo più spesso -->
-           bg-white 
-           rounded-full 
-           shadow-2xl 
-           border-[8px]   <!-- Bordo super spesso: 8px -->
-           border-transparent 
-           bg-clip-padding
-           bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-500
-           p-0.5
-           hover:scale-110 
-           active:scale-95 
-           focus:outline-none focus:ring-4 focus:ring-indigo-300 
-           transition-all duration-300 
-           tap-highlight-color:transparent"
-    aria-label="Apri menu laterale"
-    type="button"
->
-    <!-- Contenitore interno bianco per l'icona (ridotto per compensare il bordo spesso) -->
-    <span class="flex items-center justify-center w-full h-full bg-white rounded-full">
-        <svg class="w-12 h-12 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5" d="M4 6h16M4 12h16M4 18h16" />
-        </svg>
-    </span>
-</button>
-    {{-- Overlay scuro per chiudere cliccando fuori (solo su mobile) --}}
-    @if ($sidebarOpen)
-        <div wire:click="closeSidebar" class="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden cursor-pointer"></div>
-    @endif
+<header class="bg-slate-900 text-white shadow-2xl z-50 flex flex-wrap items-center px-4 py-3 gap-3 shrink-0">
+    <div class="flex gap-2 border-r border-white/10 pr-4">
+        <button wire:click="editTable()" class="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center hover:bg-rose-500 transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="3"/></svg>
+        </button>
+    </div>
 
-    {{-- Sidebar principale --}}
-    <div id="sidebar"
-        class="fixed inset-y-0 left-0 w-64 bg-white shadow-2xl border-r border-gray-200 
-            transform transition-transform duration-300 ease-in-out z-40 overflow-y-auto
-            
-            <!-- Su mobile: usa il toggle Livewire -->
-            {{ $sidebarOpen ? 'translate-x-0' : '-translate-x-full' }}
-            
-            <!-- Su desktop (lg+): sempre visibile e statica, ignora il toggle -->
-            lg:translate-x-0 lg:static lg:z-auto"
-        aria-label="Barra laterale di configurazione">
-        {{-- Pulsante chiusura su mobile (in alto a destra) --}}
-        <div class="flex justify-end p-4 lg:hidden">
-            <button wire:click="closeSidebar" class="text-gray-600 hover:text-gray-900 focus:outline-none"
-                aria-label="Chiudi sidebar">
-                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
+    <div class="flex gap-1 bg-white/10 p-1 rounded-xl h-[50px]">
+        @foreach(['A', 'X', 'P', 'N'] as $type)
+            <button wire:click="setWorkType('{{ $type }}')" 
+                class="w-10 rounded-lg font-black transition-all {{ $workType == $type ? 'bg-indigo-600 shadow-lg scale-105' : 'text-slate-500' }}">
+                {{ $type }}
             </button>
-        </div>
+        @endforeach
+    </div>
 
-        <div class="p-5 space-y-7">
+    <div class="config-item relative shrink-0">
+        <div class="absolute left-3 top-1 text-[7px] font-black text-slate-500 uppercase">Prezzo</div>
+        <input type="number" wire:model.live="amount" class="w-20 h-full bg-white/10 border border-white/10 rounded-xl pl-3 pt-2 text-xl font-black text-emerald-400 outline-none">
+    </div>
 
-            {{-- Messaggio flash --}}
-            @if (session('success'))
-                <div role="alert" aria-live="polite"
-                    class="flex items-center gap-2 p-3 text-white bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl text-sm font-bold shadow-md">
-                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span>{{ session('success') }}</span>
-                </div>
-            @endif
-
-            {{-- Tipo Lavoro --}}
-            <section aria-labelledby="work-type-title">
-                <h2 id="work-type-title" class="text-base font-extrabold text-gray-900 mb-3">Tipo Lavoro</h2>
-
-                <div class="grid gap-2.5">
-                    @foreach ($config['work_types'] as $btn)
-                        <button type="button" wire:click="setWorkType('{{ $btn['value'] }}')"
-                            aria-pressed="{{ $workType === $btn['value'] ? 'true' : 'false' }}"
-                            class="h-11 px-4 text-sm font-bold rounded-xl shadow-sm focus:outline-none focus:ring-4 transition-all {{ $btn['classes'] }}
-                                {{ $workType === $btn['value'] ? 'ring-4 scale-105 shadow-md ' . $btn['ring'] : 'hover:shadow-md' }}">
-                            {{ $btn['label'] }}
-                        </button>
-                    @endforeach
-                </div>
-            </section>
-
-            {{-- Riepilogo lavoro attivo (solo se selezionato) --}}
-            @if ($workType && $workType !== 'clear')
-                {{-- Note / Voucher --}}
-                @if ($config['sections']['notes']['enabled'] ?? true)
-                    <div class="mt-5 space-y-2">
-                        <label class="block text-sm font-extrabold text-gray-800 border-l-4 border-emerald-600 pl-3">
-                            {{ $config['sections']['notes']['label'] }}
-                        </label>
-                        <input type="text" wire:model.live="voucher"
-                            placeholder="{{ $config['sections']['notes']['placeholder'] }}"
-                            class="w-full h-11 px-4 text-sm font-medium bg-white border-2 border-emerald-300 rounded-lg focus:border-emerald-600 focus:ring-4 focus:ring-emerald-300 focus:outline-none transition-all" />
-                    </div>
-                @endif
-
-                <div
-                    class="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4 text-sm shadow-inner">
-                    <h3 class="font-extrabold text-gray-900 mb-3 text-base flex items-center justify-between">
-                        Lavoro Attivo
-
-                        {{-- Badge F o R – in alto a destra, piccolo ma evidente --}}
-                        @if ($excluded ?? false)
-                            <span
-                                class="inline-block px-2 py-1 text-[10px] font-bold bg-red-100 text-red-700 rounded-full">
-                                F – Fisso alla licenza
-                            </span>
-                        @elseif($sharedFromFirst ?? false)
-                            <span
-                                class="inline-block px-2 py-1 text-[10px] font-bold bg-emerald-100 text-emerald-700 rounded-full">
-                                R – Ripartito dal primo
-                            </span>
-                        @endif
-                    </h3>
-
-                    <dl class="space-y-2">
-                        <div class="flex justify-between">
-                            <dt class="font-bold text-gray-700">Tipo</dt>
-                            <dd class="font-black text-blue-700">{{ $label }}</dd>
-                        </div>
-
-                        @if ($workType === 'A' && $agencyName)
-                            <div class="flex justify-between">
-                                <dt class="font-bold text-gray-700">Agenzia</dt>
-                                <dd class="font-black text-indigo-700">{{ $agencyName }}</dd>
-                            </div>
-                        @endif
-
-                        @if (trim($voucher ?? ''))
-                            <div class="flex justify-between">
-                                <dt class="font-bold text-gray-700">Voucher</dt>
-                                <dd class="font-mono text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded">
-                                    {{ Str::limit($voucher, 15) }}
-                                </dd>
-                            </div>
-                        @endif
-
-                        <div class="flex justify-between pt-2 border-t border-blue-200">
-                            <dt class="font-bold text-gray-700">Importo</dt>
-                            <dd
-                                class="text-base font-black @if ($excluded) text-red-600 @elseif($sharedFromFirst) text-emerald-700 @else text-indigo-700 @endif">
-                                €{{ number_format($amount, 2) }}
-                            </dd>
-                        </div>
-
-                        <div class="flex justify-between">
-                            <dt class="font-bold text-gray-700">Slots</dt>
-                            <dd class="font-black">{{ $slotsOccupied }}</dd>
-                        </div>
-
-                        {{-- Info aggiuntiva chiara se escluso o ripartito --}}
-                        @if ($excluded ?? false)
-                            <div class="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-800">
-                                Questo lavoro è <strong>fisso alla licenza</strong> e <strong>non conta</strong> nella
-                                ripartizione.
-                            </div>
-                        @elseif($sharedFromFirst ?? false)
-                            <div
-                                class="mt-3 p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-xs text-emerald-800">
-                                L'importo viene <strong>ripartito a partire dalla prima licenza</strong> del turno.
-                            </div>
-                        @endif
-                    </dl>
-                </div>
-            @endif
-
-            {{-- Configura Lavoro --}}
-            @if ($workType && $workType !== '')
-                <button type="button" wire:click="openWorkDetailsModal"
-                    class="w-full h-12 text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 rounded-xl shadow-lg focus:ring-4 focus:ring-blue-300 transition flex items-center justify-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    Configura Lavoro
-                </button>
-            @endif
-
-            {{-- Azioni avanzate collassabili --}}
-            <section aria-labelledby="actions-title">
-                <button type="button" wire:click="toggleActions" id="actions-title" aria-controls="actions-panel"
-                    aria-expanded="{{ $showActions ? 'true' : 'false' }}"
-                    class="w-full h-12 px-4 text-sm font-bold text-white bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 rounded-xl shadow-lg focus:ring-4 focus:ring-purple-300 transition flex items-center justify-between">
-                    <span class="flex items-center gap-2 uppercase">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-                        </svg>
-                        Opzioni Tabella
-                    </span>
-                    <svg class="{{ $showActions ? 'rotate-180' : '' }} w-5 h-5 transition-transform" fill="none"
-                        stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7" />
-                    </svg>
-                </button>
-
-                @if ($showActions)
-                    <div id="actions-panel" class="mt-3 grid gap-2.5">
-                        @foreach ($config['sections']['actions'] as $action)
-                            @if (!($action['hidden'] ?? false))
-                                <button type="button" wire:click="{{ $action['wire'] ?? '' }}()"
-                                    class="h-11 text-sm font-bold rounded-xl shadow-sm focus:outline-none focus:ring-4 transition {{ $action['classes'] }} {{ $action['ring'] }}">
-                                    {{ $action['label'] }}
-                                </button>
-                            @endif
-                        @endforeach
-                    </div>
-                @endif
-            </section>
-
-            {{-- Riepilogo Lavori --}}
-            <section aria-labelledby="summary-title" class="border-t border-gray-200 pt-6">
-                <h3 id="summary-title" class="text-base font-extrabold text-gray-900 mb-3">Riepilogo</h3>
-                <livewire:component.work-summary wire:key="sidebar-summary-{{ uniqid() }}" />
-            </section>
-
+    @if($workType === 'A')
+    <div wire:click="$dispatch('openAgencyModal')" class="config-item px-3 bg-indigo-500 rounded-xl gap-3 shadow-lg cursor-pointer hover:bg-indigo-400">
+        <div class="flex flex-col">
+            <span class="text-[7px] font-black text-indigo-200 uppercase">Agenzia</span>
+            <span class="text-[10px] font-black text-white uppercase">{{ $agencyName ?? 'Seleziona...' }}</span>
         </div>
     </div>
-</div>
+    @endif
+
+    <div class="config-item relative shrink-0">
+        <div class="absolute left-3 top-1 text-[7px] font-black text-slate-500 uppercase">Voucher</div>
+        <input type="text" wire:model.live="voucher" class="w-40 h-full bg-white/5 border border-white/10 rounded-xl pl-3 pt-2 text-xs font-black text-white uppercase outline-none">
+    </div>
+
+    <div class="flex gap-1.5 bg-white/5 p-1 rounded-xl border border-white/10">
+        <button wire:click="$set('slotsOccupied', 2)" class="h-10 px-3 rounded-lg text-[8px] font-black uppercase {{ $slotsOccupied == 2 ? 'bg-indigo-600' : 'text-slate-500' }}">Lavoro Fisso</button>
+        <button wire:click="$toggle('sharedFromFirst')" class="h-10 px-3 rounded-lg text-[8px] font-black uppercase {{ $sharedFromFirst ? 'bg-cyan-600' : 'text-slate-500' }}">Condiviso 1°</button>
+    </div>
+
+    <button wire:click="$dispatch('callRedistributeWorks')" class="config-item px-4 ml-auto bg-amber-500 hover:bg-amber-400 rounded-xl shadow-lg">
+        <span class="text-[10px] font-black text-slate-900 uppercase">Ripartizione</span>
+    </button>
+</header>

@@ -73,4 +73,15 @@ enum WorkType: string
             default           => 'bg-gray-100 text-gray-500',
         };
     }
+
+    public function colourButtonsClass(): string
+    {
+        return match ($this) {
+            self::AGENCY      => 'bg-indigo-600',
+            self::NOLO        => 'bg-yellow-400',
+            self::CASH        => 'bg-emerald-500', 
+            self::PERDI_VOLTA => 'bg-rose-600 ',
+            default           => 'bg-gray-100 text-gray-500',
+        };
+    }
 }

@@ -4,9 +4,9 @@ namespace App\Enums;
 
 /**
  * Enum WorkType
- * 
+ *
  * Rappresenta i diversi tipi di lavoro gestiti dall'applicazione.
- * 
+ *
  * Valori possibili:
  * - CASH: lavoro pagato in contanti
  * - AGENCY: lavoro tramite agenzia
@@ -18,10 +18,10 @@ namespace App\Enums;
 enum WorkType: string
 {
     // Lavoro pagato in contanti
-    case CASH = 'X'; 
+    case CASH = 'X';
 
     // Lavoro tramite agenzia
-    case AGENCY = 'A';    
+    case AGENCY = 'A';
 
     // Lavoro a noleggio
     case NOLO = 'N';
@@ -34,6 +34,35 @@ enum WorkType: string
 
     // Lavoro fisso
     case FIXED    = 'F';
+
+    /**
+     * Restituisce un array con tutti i valori stringa dell'enum.
+     *
+     * @param array<self> $exclude Casi da escludere
+     * @return array<string> Array di valori
+     */
+    public static function values(array $exclude = []): array
+    {
+        $cases = array_filter(
+            self::cases(),
+            fn(self $case) => !in_array($case, $exclude, true)
+        );
+
+        return array_map(fn(self $case) => $case->value, $cases);
+    }
+
+    /**
+     * Restituisce un array associativo [valore => etichetta].
+     *
+     * @return array<string, string> Array ['X' => 'Contanti', 'A' => 'Agenzia', ...]
+     */
+    public static function options(): array
+    {
+        return array_combine(
+            array_map(fn(self $case) => $case->value, self::cases()),
+            array_map(fn(self $case) => $case->label(), self::cases())
+        );
+    }
 
     /**
      * Restituisce l'etichetta leggibile per l'utente.
@@ -66,7 +95,7 @@ enum WorkType: string
         return match ($this) {
             self::AGENCY      => 'bg-indigo-100 text-indigo-900',
             self::NOLO        => 'bg-yellow-100 text-yellow-900',
-            self::CASH        => 'bg-green-100 text-green-900', 
+            self::CASH        => 'bg-green-100 text-green-900',
             self::PERDI_VOLTA => 'bg-red-100 text-red-900',
             self::EXCLUDED    => 'bg-teal-100 text-teal-900',
             self::FIXED       => 'bg-teal-100 text-teal-900',
@@ -79,7 +108,7 @@ enum WorkType: string
         return match ($this) {
             self::AGENCY      => 'bg-indigo-600',
             self::NOLO        => 'bg-yellow-400',
-            self::CASH        => 'bg-emerald-500', 
+            self::CASH        => 'bg-emerald-500',
             self::PERDI_VOLTA => 'bg-rose-600 ',
             default           => 'bg-gray-100 text-gray-500',
         };

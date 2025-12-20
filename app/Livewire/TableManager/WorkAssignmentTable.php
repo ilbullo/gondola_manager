@@ -51,6 +51,21 @@ class WorkAssignmentTable extends Component
     // ===================================================================
 
     /**
+     * Attiva disattiva il valore di only_cash_works
+     */
+
+    public function toggleOnlyCash($licenseId)
+    {
+        // Recupera la licenza (o il record della tabella licenze) e inverti il valore
+        $license = LicenseTable::findOrFail($licenseId);
+        $license->only_cash_works = !$license->only_cash_works;
+        $license->save();
+
+        // Opzionale: invia un feedback visivo o aggiorna la board
+        $this->dispatch('refreshTableBoard');
+    }
+
+    /**
      * Evento Livewire: aggiornamento del lavoro selezionato dalla sidebar.
      * Resetta eventuali messaggi di errore precedenti.
      */
@@ -190,7 +205,7 @@ class WorkAssignmentTable extends Component
     public function refreshTable(): void
     {
         $licenses = LicenseTable::with([
-            'user:id,license_number',
+            'user:id,name,license_number',
             'works' => fn($q) => $q->whereDate('timestamp', today())
                 ->orderBy('slot')
                 ->with('agency:id,name,code'),

@@ -216,8 +216,8 @@ class Sidebar extends Component
         // Caso AGENZIA → apre modal selezione agenzia
         if ($value === 'A') {
             $agencies = Agency::orderBy('name')
-                ->get(['id', 'name'])
-                ->map(fn($a) => ['id' => $a->id, 'name' => $a->name])
+                ->get(['id', 'name','code'])
+                ->map(fn($a) => ['id' => $a->id, 'name' => $a->name, 'code' => $a->code])
                 ->toArray();
 
             $this->dispatch('toggleAgencyModal', true, $agencies);
@@ -250,7 +250,7 @@ class Sidebar extends Component
      * Richiede conferma per resettare completamente la tabella.
      */
     public function resetTable(): void
-    {   
+    {
         $this->dispatch('openConfirmModal', [
             'message'      => 'Resettare completamente la tabella del giorno?',
             'confirmEvent' => 'resetLicenses',
@@ -332,7 +332,7 @@ class Sidebar extends Component
             'agencyName'      => $this->workType === 'A' ? $this->agencyName : null,
             'agencyId'        => $this->workType === 'A' ? $this->agencyId : null,
             'slotsOccupied'   => $this->slotsOccupied,
-            'amount'          => $this->amount,
+            'amount'          => $this->amount ?? 0,
         ]);
     }
 

@@ -1,5 +1,5 @@
-<div class="h-full flex flex-col p-8 overflow-y-auto bg-slate-100">
-    <div class="max-w-4xl mx-auto w-full">
+<div class="h-full w-full flex flex-col p-4 sm:p-8 overflow-y-auto bg-slate-100 scroll-smooth">
+    <div class="max-w-4xl mx-auto w-full pb-20">
         <div class="flex justify-between items-center mb-8">
             <h1 class="text-3xl font-black text-slate-800 uppercase italic tracking-tighter">Configurazione Turno</h1>
             <button wire:click="resetTable" class="px-6 py-2 bg-rose-500 text-white rounded-xl font-black uppercase text-xs shadow-lg active:scale-95 transition-all">

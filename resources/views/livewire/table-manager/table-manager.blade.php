@@ -1,26 +1,26 @@
-{{-- resources/views/livewire/table-manager/table-manager.blade.php (Massimizzazione Spazio) --}}
+{{-- resources/views/livewire/table-manager/table-manager.blade.php --}}
 
-<div class="max-w-full mx-auto min-h-screen bg-gray-100 p-0 sm:p-0">
+{{-- CAMBIO 1: h-screen e overflow-hidden per bloccare lo scroll "brutto" del browser --}}
+<div class="w-full h-screen bg-slate-100 overflow-hidden flex flex-col">
 
-    {{-- Il contenuto principale viene racchiuso in un div con lo stile delle altre sezioni, ma senza margine esterno fisso --}}
-    <div class="bg-white rounded-none sm:rounded-2xl shadow-none sm:shadow-sm border-t sm:border border-gray-200">
+    {{-- Header / Toolbar (se presente, altrimenti ignora) --}}
+    
+    {{-- CAMBIO 2: Il contenitore interno deve essere flex-1 (prende lo spazio rimanente) e overflow-hidden --}}
+    <div class="flex-1 flex overflow-hidden relative">
         
-        @if ($tableConfirmed)
-            {{-- SE la tabella è confermata --}}
-
-            @if ($isRedistributed)
-                {{-- SE è stata richiesta la ripartizione, carica il TableSplitter --}}
-                <livewire:table-manager.table-splitter />
+        <main class="flex-1 w-full h-full relative flex flex-col">
+            
+            @if ($tableConfirmed)
+                @if ($isRedistributed)
+                    <livewire:table-manager.table-splitter />
+                @else
+                    <livewire:table-manager.work-assignment-table />
+                @endif
             @else
-                {{-- ALTRIMENTI (modalità assegnazione standard), carica WorkAssignmentTable --}}
-                {{-- Nota: WorkAssignmentTable al suo interno ha già una sidebar e una tabella a tutta larghezza --}}
-                <livewire:table-manager.work-assignment-table />
+                {{-- Qui c'è il tuo LicenseManager --}}
+                <livewire:table-manager.license-manager />
             @endif
-        @else
-            {{-- SE la tabella NON è confermata, mostra LicenseManager --}}
-            {{-- Nota: LicenseManager ha un layout a colonne, manterrà lo stile interno unificato --}}
-            <livewire:table-manager.license-manager />
-        @endif
-        
+            
+        </main>
     </div>
 </div>

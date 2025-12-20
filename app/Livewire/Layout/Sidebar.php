@@ -247,17 +247,6 @@ class Sidebar extends Component
     // ===================================================================
 
     /**
-     * Richiede conferma per resettare completamente la tabella.
-     */
-    public function resetTable(): void
-    {
-        $this->dispatch('openConfirmModal', [
-            'message'      => 'Resettare completamente la tabella del giorno?',
-            'confirmEvent' => 'resetLicenses',
-        ]);
-    }
-
-    /**
      * Gestisce la logica della modalità modifica.
      * Cambia comportamento se si è in modalità ripartizione.
      */

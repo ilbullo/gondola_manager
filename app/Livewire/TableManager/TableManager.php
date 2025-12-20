@@ -112,6 +112,9 @@ class TableManager extends Component
         // Notifica altri componenti che dipendono dallo stato della tabella
         $this->dispatch('licensesCleared');
         $this->dispatch('tableReset');
+        //$this->dispatch('refreshLicenseBoard');
+        $this->refreshLicenseStatus();
+        
     }
 
     // ===================================================================

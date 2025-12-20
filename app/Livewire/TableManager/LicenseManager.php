@@ -6,6 +6,7 @@ use App\Models\{LicenseTable, User};
 use Livewire\Component;
 use Illuminate\Support\Facades\DB;
 
+
 class LicenseManager extends Component
 {
     /**
@@ -337,6 +338,17 @@ class LicenseManager extends Component
     private function getNextOrder(): int
     {
         return LicenseTable::whereDate('date', today())->max('order') + 1 ?? 1;
+    }
+
+     /**
+     * Richiede conferma per resettare completamente la tabella.
+     */
+    public function resetTable(): void
+    {
+        $this->dispatch('openConfirmModal', [
+            'message'      => 'Resettare completamente la tabella del giorno?',
+            'confirmEvent' => 'resetLicenses',
+        ]);
     }
 
     // ===================================================================

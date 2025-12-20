@@ -43,7 +43,7 @@
 
     <div class="config-item relative shrink-0">
         <div class="absolute left-3 top-1 text-[7px] font-black text-slate-500 uppercase">Voucher</div>
-        <input type="text" wire:model.live="voucher" class="w-40 h-full bg-white/5 border border-white/10 rounded-xl pl-3 pt-2 text-xs font-black text-white uppercase outline-none">
+        <input type="text" wire:model.live="voucher" class="w-40 h-full bg-white/5 border border-white/10 rounded-xl pl-3 pt-2 text-xl font-black text-white uppercase outline-none">
     </div>
 
     <div class="flex gap-1.5 bg-white/5 p-1 rounded-xl border border-white/10">

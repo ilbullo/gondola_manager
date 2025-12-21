@@ -115,7 +115,7 @@ class Sidebar extends Component
     // ===================================================================
 
     /**
-     * Apre la sidebar.
+     * Apre la sidebar. INUTILE?
      */
     public function openSidebar(): void
     {
@@ -123,7 +123,7 @@ class Sidebar extends Component
     }
 
     /**
-     * Chiude la sidebar.
+     * Chiude la sidebar. INUTILE?
      */
     public function closeSidebar(): void
     {

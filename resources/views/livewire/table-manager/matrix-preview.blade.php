@@ -54,9 +54,32 @@
         </div>
         
         <div class="flex gap-2">
-            <button wire:click="printSplitTable" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-xl text-[10px] font-black uppercase transition-all shadow-lg">Stampa Tabella</button>
-            <button wire:click="printAgencyReport" class="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-xl text-[10px] font-black uppercase transition-all shadow-lg">Report Agenzie</button>
-            <button wire:click="$dispatch('goToAssignmentTable')" class="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-900 rounded-xl text-[10px] font-black uppercase transition-all shadow-lg">Indietro</button>
+            {{-- STAMPA TABELLA --}}
+            <button wire:click="printSplitTable" 
+                class="flex items-center gap-2 px-4 py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-[10px] font-black uppercase transition-all shadow-lg active:scale-95">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                </svg>
+                Stampa Tabella
+            </button>
+
+            {{-- REPORT AGENZIE --}}
+            <button wire:click="printAgencyReport" 
+                class="flex items-center gap-2 px-4 py-4 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-[10px] font-black uppercase transition-all shadow-lg active:scale-95">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                </svg>
+                Report Agenzie
+            </button>
+
+            {{-- INDIETRO --}}
+            <button wire:click="$dispatch('goToAssignmentTable')" 
+                class="flex items-center gap-2 px-4 py-4 bg-amber-500 hover:bg-amber-400 text-slate-900 rounded-xl text-[10px] font-black uppercase transition-all shadow-lg active:scale-95">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Indietro
+            </button>
         </div>
     </header>
 

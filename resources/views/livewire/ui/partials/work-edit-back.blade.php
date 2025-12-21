@@ -16,7 +16,7 @@
     </div>
 
     {{-- Form Body (Scorrevole) --}}
-    <div class="p-8 space-y-5 flex-1 overflow-y-auto">
+    < class="p-8 space-y-5 flex-1 overflow-y-auto">
 
         <div>
             <label class="block text-[10px] font-black text-slate-400 uppercase mb-2 ml-1">Importo (€)</label>
@@ -31,31 +31,52 @@
                 placeholder="Inserisci codice o nota...">
         </div>
 
+        {{-- FISSO ALLA LICENZA (EXCLUDED) --}}
         <div class="flex items-center justify-between bg-slate-50 p-4 rounded-2xl border border-slate-200">
-            <div>
-                <span class="text-xs font-black text-slate-700 uppercase">Fisso alla licenza</span>
-                <p class="text-[9px] text-slate-400 uppercase">anche dopo la ripartizione</p>
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-rose-500 flex items-center justify-center shadow-sm">
+                    {{-- Icona Mano aperta --}}
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="w-4 h-4 text-white">
+                        <path d="M8.5 1a.75.75 0 0 0-.75.75V6.5a.5.5 0 0 1-1 0V2.75a.75.75 0 0 0-1.5 0V7.5a.5.5 0 0 1-1 0V4.75a.75.75 0 0 0-1.5 0v4.5a5.75 5.75 0 0 0 11.5 0v-2.5a.75.75 0 0 0-1.5 0V9.5a.5.5 0 0 1-1 0V2.75a.75.75 0 0 0-1.5 0V6.5a.5.5 0 0 1-1 0V1.75A.75.75 0 0 0 8.5 1Z" />
+                    </svg>
+
+                </div>
+                <div>
+                    <span class="text-xs font-black text-slate-700 uppercase leading-none">Fisso alla licenza</span>
+                    <p class="text-[9px] text-slate-400 uppercase">anche dopo la ripartizione</p>
+                </div>
             </div>
             <button type="button" @click="$wire.excluded = !$wire.excluded"
                 :class="$wire.excluded ? 'bg-rose-500' : 'bg-slate-300'"
-                class="w-12 h-6 rounded-full relative transition-colors duration-200">
+                class="w-12 h-6 rounded-full relative transition-colors duration-200 shadow-inner">
                 <span :class="$wire.excluded ? 'translate-x-6' : 'translate-x-1'"
-                      class="absolute top-1 left-0 w-4 h-4 bg-white rounded-full transition-transform"></span>
+                      class="absolute top-1 left-0 w-4 h-4 bg-white rounded-full transition-transform shadow-md"></span>
             </button>
         </div>
 
+        {{-- RIPARTISCI DAL PRIMO (SHARED) --}}
         <div class="flex items-center justify-between bg-slate-50 p-4 rounded-2xl border border-slate-200">
-            <div>
-                <span class="text-xs font-black text-slate-700 uppercase">Ripartisci dal primo</span>
-                <p class="text-[9px] text-slate-400 uppercase">Ripartisce il lavoro partendo dal primo</p>
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-yellow-300 flex items-center justify-center shadow-sm">
+                    {{-- Icona pollice insù --}}
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="w-4 h-4 text-white">
+                    <path d="M2.09 15a1 1 0 0 0 1-1V8a1 1 0 1 0-2 0v6a1 1 0 0 0 1 1ZM5.765 13H4.09V8c.663 0 1.218-.466 1.556-1.037a4.02 4.02 0 0 1 1.358-1.377c.478-.292.907-.706.989-1.26V4.32a9.03 9.03 0 0 0 0-2.642c-.028-.194.048-.394.224-.479A2 2 0 0 1 11.09 3c0 .812-.08 1.605-.235 2.371a.521.521 0 0 0 .502.629h1.733c1.104 0 2.01.898 1.901 1.997a19.831 19.831 0 0 1-1.081 4.788c-.27.747-.998 1.215-1.793 1.215H9.414c-.215 0-.428-.035-.632-.103l-2.384-.794A2.002 2.002 0 0 0 5.765 13Z" />
+                    </svg>
+
+                </div>
+                <div>
+                    <span class="text-xs font-black text-slate-700 uppercase leading-none">Ripartisci dal primo</span>
+                    <p class="text-[9px] text-slate-400 uppercase leading-tight">Priorità 1° colonna</p>
+                </div>
             </div>
             <button type="button" @click="$wire.shared_from_first = !$wire.shared_from_first"
-                :class="$wire.shared_from_first ? 'bg-rose-500' : 'bg-slate-300'"
-                class="w-12 h-6 rounded-full relative transition-colors duration-200">
+                :class="$wire.shared_from_first ? 'bg-yellow-300' : 'bg-slate-300'"
+                class="w-12 h-6 rounded-full relative transition-colors duration-200 shadow-inner">
                 <span :class="$wire.shared_from_first ? 'translate-x-6' : 'translate-x-1'"
-                      class="absolute top-1 left-0 w-4 h-4 bg-white rounded-full transition-transform"></span>
+                      class="absolute top-1 left-0 w-4 h-4 bg-white rounded-full transition-transform shadow-md"></span>
             </button>
         </div>
+
     </div>
 
     {{-- Footer Azioni (Ancorato in basso) --}}

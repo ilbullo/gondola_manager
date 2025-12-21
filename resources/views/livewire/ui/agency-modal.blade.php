@@ -2,54 +2,72 @@
 <div x-data="{ show: @entangle('show') }"
      x-show="show"
      x-cloak
-     class="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-900/90 backdrop-blur-md p-4">
+     class="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-900/95 backdrop-blur-md p-4">
 
-    <div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col relative animate-in zoom-in duration-300"
-         style="max-height: 85vh;">
+    <div class="bg-white rounded-[3rem] shadow-[0_0_50px_rgba(0,0,0,0.5)] w-full max-w-2xl overflow-hidden flex flex-col relative animate-in zoom-in duration-300 border border-white/10"
+         style="max-height: 80vh;">
 
-        {{-- Tasto Chiudi in alto a destra --}}
-        <button type="button"
-                wire:click="close"
-                class="absolute top-4 right-4 z-50 w-10 h-10 flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-full text-white transition-all backdrop-blur-sm">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-        </button>
-
-        {{-- Header Fisso --}}
-        <div class="bg-indigo-600 p-10 text-center text-white shrink-0">
-            <div class="w-16 h-16 bg-white/20 rounded-2xl mx-auto flex items-center justify-center text-2xl font-black mb-3 shadow-xl border border-white/20">
-                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                </svg>
+        {{-- Header "Pro Black" --}}
+        <div class="bg-slate-900 px-8 py-6 flex items-center justify-between shrink-0 border-b border-slate-800">
+            <div class="flex items-center gap-4">
+                <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-lg font-black text-white uppercase italic tracking-tighter leading-none">Seleziona Agenzia</h3>
+                    <p class="text-slate-500 text-[9px] font-black uppercase mt-1 tracking-[0.2em]">Partner autorizzati</p>
+                </div>
             </div>
-            <h3 class="text-2xl font-black uppercase italic tracking-widest">Seleziona Agenzia</h3>
-            <p class="text-indigo-100 text-[10px] font-bold uppercase mt-1 tracking-tighter opacity-70">Scegli il partner per l'assegnazione del servizio</p>
+
+            <button type="button" wire:click="close" class="text-slate-500 hover:text-white transition-colors p-2">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
         </div>
 
-        {{-- Corpo Scorrevole --}}
-        <div class="p-8 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 flex-1 overflow-y-auto bg-white">
-            @foreach ($agencies as $agency)
+        {{-- Lista Agenzie (Grid compatta) --}}
+        <div class="p-6 grid grid-cols-2 sm:grid-cols-3 gap-3 flex-1 overflow-y-auto bg-slate-50/50">
+            @forelse ($agencies as $agency)
                 <button wire:click="$dispatch('selectAgency', { agencyId: {{ $agency['id'] }} })"
-                    class="h-20 bg-slate-50 border-2 border-slate-200 rounded-2xl flex flex-col items-center justify-center hover:border-indigo-500 transition-all">
+                    class="group relative flex items-center p-3 bg-white border border-slate-200 rounded-2xl hover:border-indigo-500 hover:shadow-xl hover:shadow-indigo-500/5 transition-all active:scale-95 text-left">
+                    
+                    <div class="w-8 h-8 bg-slate-100 group-hover:bg-indigo-600 rounded-lg flex items-center justify-center transition-colors shrink-0">
+                        <span class="text-[9px] font-black text-slate-400 group-hover:text-white uppercase">
+                            {{ substr($agency['name'], 0, 2) }}
+                        </span>
+                    </div>
 
-                    {{-- Badge Codice --}}
-                    <span class="text-[8px] font-black text-slate-400 uppercase">
-                        {{ $agency['code'] ?? "" }}
-                    </span>
+                    <div class="ml-3 overflow-hidden">
+                        <p class="text-[8px] font-black text-indigo-600 uppercase tracking-tighter opacity-70 mb-0.5">
+                             {{ $agency['code'] ?? 'N/D' }}
+                        </p>
+                        <p class="text-[10px] font-black text-slate-700 uppercase leading-none truncate group-hover:text-indigo-900">
+                            {{ $agency['name'] }}
+                        </p>
+                    </div>
 
-                    <span class="text-xs font-black text-slate-700 uppercase mt-1">
-                        {{ $agency['name'] }}
-                    </span>
+                    {{-- Icona Check Invisibile --}}
+                    <div class="absolute right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                        </svg>
+                    </div>
                 </button>
-            @endforeach
+            @empty
+                <div class="col-span-full py-20 text-center">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Nessuna agenzia trovata</p>
+                </div>
+            @endforelse
         </div>
 
-        {{-- Footer Fisso --}}
-        <div class="p-6 bg-slate-50 border-t border-slate-100 shrink-0">
+        {{-- Footer --}}
+        <div class="p-4 bg-white border-t border-slate-100 shrink-0 text-center">
             <button wire:click="close"
-                    class="w-full py-5 bg-white border border-slate-200 text-slate-400 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-slate-100 hover:text-slate-600 transition-all shadow-sm">
-                Annulla Selezione
+                    class="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] hover:text-rose-500 transition-colors">
+                Esci senza selezionare
             </button>
         </div>
     </div>

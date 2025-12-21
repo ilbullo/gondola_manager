@@ -50,14 +50,14 @@
         {{-- Tasto Lavoro Fisso --}}
         <button type="button" 
             wire:click="toggleExcluded" 
-            class="h-10 px-3 rounded-lg text-[8px] font-black uppercase transition-all duration-200 {{ $excluded  ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:bg-white/5' }}">
+            class="h-10 px-3 rounded-lg text-[8px] font-black uppercase transition-all duration-200 {{ $excluded  ? 'bg-red-600 text-white shadow-lg' : 'text-slate-500 hover:bg-white/5' }}">
             Lavoro Fisso
         </button>
 
         {{-- Tasto Condiviso 1° --}}
         <button type="button" 
             wire:click="toggleShared" 
-            class="h-10 px-3 rounded-lg text-[8px] font-black uppercase transition-all duration-200 {{ $sharedFromFirst ? 'bg-cyan-600 text-white shadow-lg' : 'text-slate-500 hover:bg-white/5' }}">
+            class="h-10 px-3 rounded-lg text-[8px] font-black uppercase transition-all duration-200 {{ $sharedFromFirst ? 'bg-yellow-300 text-white shadow-lg' : 'text-slate-500 hover:bg-white/5' }}">
             Condiviso 1°
         </button>
     </div>

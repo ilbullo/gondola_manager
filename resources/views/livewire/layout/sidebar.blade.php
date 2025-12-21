@@ -47,8 +47,19 @@
     </div>
 
     <div class="flex gap-1.5 bg-white/5 p-1 rounded-xl border border-white/10">
-        <button wire:click="$toggle('excluded')" class="h-10 px-3 rounded-lg text-[8px] font-black uppercase {{ $excluded  ? 'bg-indigo-600' : 'text-slate-500' }}">Lavoro Fisso</button>
-        <button wire:click="$toggle('sharedFromFirst')" class="h-10 px-3 rounded-lg text-[8px] font-black uppercase {{ $sharedFromFirst ? 'bg-cyan-600' : 'text-slate-500' }}">Condiviso 1°</button>
+        {{-- Tasto Lavoro Fisso --}}
+        <button type="button" 
+            wire:click="toggleExcluded" 
+            class="h-10 px-3 rounded-lg text-[8px] font-black uppercase transition-all duration-200 {{ $excluded  ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:bg-white/5' }}">
+            Lavoro Fisso
+        </button>
+
+        {{-- Tasto Condiviso 1° --}}
+        <button type="button" 
+            wire:click="toggleShared" 
+            class="h-10 px-3 rounded-lg text-[8px] font-black uppercase transition-all duration-200 {{ $sharedFromFirst ? 'bg-cyan-600 text-white shadow-lg' : 'text-slate-500 hover:bg-white/5' }}">
+            Condiviso 1°
+        </button>
     </div>
 
     <button wire:click="$dispatch('printWorksTable')" class="config-item px-4 ml-auto bg-emerald-600 hover:bg-emerald-500 rounded-xl shadow-lg flex items-center gap-2">

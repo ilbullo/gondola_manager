@@ -51,6 +51,26 @@ class WorkAssignmentTable extends Component
     // ===================================================================
 
     /**
+     * Evento: cicla il turno di una licenza tra full, morning e afternoon.
+     */
+    public function cycleTurn(int $licenseId): void
+    {
+        $license = \App\Models\LicenseTable::findOrFail($licenseId);
+        
+        // Logica di rotazione: Full -> Morning -> Afternoon -> Full
+        $nextTurn = match($license->turn) {
+            'full'      => 'morning',
+            'morning'   => 'afternoon',
+            'afternoon' => 'full',
+            default     => 'full',
+        };
+
+        $license->update(['turn' => $nextTurn]);
+        $this->dispatch('refreshTableBoard');
+    }
+
+
+    /**
      * Attiva disattiva il valore di only_cash_works
      */
 

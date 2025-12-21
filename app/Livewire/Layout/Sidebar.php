@@ -231,10 +231,43 @@ class Sidebar extends Component
     // ===================================================================
 
     /**
-     * Emit automatico quando cambia una proprietà rilevante.
+     * Gestisce il toggle del Lavoro Fisso con mutua esclusione.
+     */
+    public function toggleExcluded(): void
+    {
+        $this->excluded = !$this->excluded;
+        if ($this->excluded) {
+            $this->sharedFromFirst = false;
+        }
+        $this->emitWorkSelected();
+    }
+
+    /**
+     * Gestisce il toggle del Condiviso con mutua esclusione.
+     */
+    public function toggleShared(): void
+    {
+        $this->sharedFromFirst = !$this->sharedFromFirst;
+        if ($this->sharedFromFirst) {
+            $this->excluded = false;
+        }
+        $this->emitWorkSelected();
+    }
+
+    /**
+     * Aggiorna il metodo updated esistente per gestire la mutua esclusione 
+     * anche se i dati arrivano da input diretti o altre interazioni.
      */
     public function updated($property, $value): void
     {
+        if ($property === 'excluded' && $value) {
+            $this->sharedFromFirst = false;
+        }
+
+        if ($property === 'sharedFromFirst' && $value) {
+            $this->excluded = false;
+        }
+
         $relevant = ['voucher', 'sharedFromFirst', 'slotsOccupied', 'excluded', 'amount'];
 
         if (str($property)->contains($relevant)) {

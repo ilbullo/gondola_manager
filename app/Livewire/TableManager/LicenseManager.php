@@ -5,6 +5,8 @@ namespace App\Livewire\TableManager;
 use App\Models\{LicenseTable, User};
 use Livewire\Component;
 use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\On;
+
 
 
 class LicenseManager extends Component
@@ -349,6 +351,11 @@ class LicenseManager extends Component
             'message'      => 'Resettare completamente la tabella del giorno?',
             'confirmEvent' => 'resetLicenses',
         ]);
+    }
+
+    #[On('performRefreshLicenseBoard')]
+    public function refreshTableBoard() {
+        $this->refreshData();
     }
 
     // ===================================================================

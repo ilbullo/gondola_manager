@@ -46,7 +46,7 @@
     <header class="bg-slate-900 text-white p-4 shadow-2xl z-40 flex flex-wrap items-center justify-between gap-4">
         <div class="flex items-center gap-6">
             <h1 class="text-2xl font-black uppercase italic tracking-tighter border-r border-white/10 pr-6">Splitter</h1>
-            <div class="flex items-center gap-3 bg-white/5 p-1 px-3 rounded-xl border border-white/10">
+            <div class="flex items-center gap-3 bg-white/5 p-2 rounded-xl border border-white/10">
                 <span class="text-[8px] font-black text-slate-500 uppercase">Costo Bancale</span>
                 <input type="number" step="1" wire:model.live.debounce.300ms="bancaleCost"
                     class="w-20 bg-transparent border-none text-xl font-black text-emerald-400 p-0 focus:ring-0">
@@ -78,7 +78,7 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
-                Indietro
+                <span class="hidden lg:block">Indietro</span>
             </button>
         </div>
     </header>

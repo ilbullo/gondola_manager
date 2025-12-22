@@ -9,13 +9,6 @@
         x-on:flip-to-front.window="flipped = false"
         class="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/90 backdrop-blur-md p-4"
     >
-        <style>
-            .perspective-1000 { perspective: 1000px; }
-            .preserve-3d { transform-style: preserve-3d; }
-            .backface-hidden { backface-visibility: hidden !important; -webkit-backface-visibility: hidden !important; }
-            .rotate-y-180 { transform: rotateY(180deg); }
-            .card-side { position: absolute; inset: 0; width: 100%; height: 100%; }
-        </style>
 
         <div class="relative w-full max-w-sm mx-auto perspective-1000" @click.away="$wire.closeModal()">
             <div class="relative preserve-3d transition-transform duration-500 ease-in-out shadow-2xl rounded-[2.5rem]"
@@ -37,3 +30,13 @@
         </div>
     </div>
 </div>
+
+@push('custom_css')
+        <style>
+            .perspective-1000 { perspective: 1000px; }
+            .preserve-3d { transform-style: preserve-3d; }
+            .backface-hidden { backface-visibility: hidden !important; -webkit-backface-visibility: hidden !important; }
+            .rotate-y-180 { transform: rotateY(180deg); }
+            .card-side { position: absolute; inset: 0; width: 100%; height: 100%; }
+        </style>
+@endpush

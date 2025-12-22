@@ -59,36 +59,37 @@
 
         </div>
     </div>
-
-    <style>
-        /* Unifichiamo i bottoni di salvataggio al tuo stile Indigo */
-        button[type="submit"], .inline-flex.items-center.px-4.py-2.bg-gray-800 {
-            background-color: #4f46e5 !important;
-            border: none !important;
-            font-weight: 900 !important;
-            text-transform: uppercase !important;
-            letter-spacing: 0.1em !important;
-            font-size: 10px !important;
-            border-radius: 0.75rem !important;
-            padding: 0.75rem 1.5rem !important;
-            transition: all 0.2s !important;
-        }
-        button[type="submit"]:hover {
-            background-color: #4338ca !important;
-            transform: translateY(-1px);
-        }
-        /* Unifichiamo gli input allo stile delle altre pagine */
-        input {
-            border-radius: 1rem !important;
-            border: none !important;
-            background-color: #f8fafc !important;
-            font-weight: 700 !important;
-            font-size: 13px !important;
-            padding: 0.75rem 1rem !important;
-        }
-        input:focus {
-            ring: 4px !important;
-            ring-color: #e0e7ff !important; /* indigo-100 */
-        }
-    </style>
+    @push('custom_css')
+        <style>
+            /* Unifichiamo i bottoni di salvataggio al tuo stile Indigo */
+            button[type="submit"], .inline-flex.items-center.px-4.py-2.bg-gray-800 {
+                background-color: #4f46e5 !important;
+                border: none !important;
+                font-weight: 900 !important;
+                text-transform: uppercase !important;
+                letter-spacing: 0.1em !important;
+                font-size: 10px !important;
+                border-radius: 0.75rem !important;
+                padding: 0.75rem 1.5rem !important;
+                transition: all 0.2s !important;
+            }
+            button[type="submit"]:hover {
+                background-color: #4338ca !important;
+                transform: translateY(-1px);
+            }
+            /* Unifichiamo gli input allo stile delle altre pagine */
+            input {
+                border-radius: 1rem !important;
+                border: none !important;
+                background-color: #f8fafc !important;
+                font-weight: 700 !important;
+                font-size: 13px !important;
+                padding: 0.75rem 1rem !important;
+            }
+            input:focus {
+                ring: 4px !important;
+                ring-color: #e0e7ff !important; /* indigo-100 */
+            }
+        </style>
+    @endpush
 </x-app-layout>

@@ -92,9 +92,10 @@
             </div>
         </div>
     @endif
-
-    <style>
-        .custom-scrollbar::-webkit-scrollbar { width: 3px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-    </style>
+    @push('custom_css')
+        <style>
+            .custom-scrollbar::-webkit-scrollbar { width: 3px; }
+            .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        </style>
+    @endpush
 </div>

@@ -3,80 +3,110 @@
 <head>
     <meta charset="utf-8">
     <title>Pagamento {{ $date }}</title>
-    <style>
-        @page { margin: 7mm 5mm; size: A4 landscape; }
-        body {
-            font-family: Arial, Helvetica, sans-serif;
-            font-size: 8.4pt;
-            line-height: 1.25;
-            margin: 0;
-            color: #000;
-        }
-        h1 {
-            text-align: center;
-            font-size: 14pt;
-            font-weight: bold;
-            margin: 0 0 4px 0;
-            border-bottom: 1.5pt solid #000;
-        }
-        .info {
-            text-align: center;
-            font-size: 9pt;
-            font-weight: bold;
-            margin-bottom: 6px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            table-layout: fixed;
-            border: 0.5pt solid #000;           /* bordino sottilissimo esterno */
-        }
-        th, td {
-            border: 0.5pt solid #000;           /* bordi interni leggerissimi */
-            text-align: center;
-            vertical-align: middle;
-            padding: 3px 1px;
-            font-size: 8.6pt;
-        }
-        th {
-            font-weight: bold;
-            border-bottom: 2pt solid #000;
-            padding: 4px 1px;
-        }
-        /* larghezze */
-        .lic  { width: 62px; font-weight: bold;background-color: #f9fafb !important; }
-        .cash { width: 78px; font-weight: bold; font-size: 8.75pt;background-color: #f9fafb !important; }
-        .np   { width: 36px; font-weight: bold;background-color: #f9fafb !important; }
-        .slot {
-            width: 29px !important;
-            height: 32px;
-            font-size: 8.75pt;
-            font-weight: normal;
-        }
-        .excluded { text-decoration: underline; text-decoration-thickness: 1.8pt; }
-        .shared   { font-weight: bold; }
+<style>
+    /* 1. Riduzione margini pagina: guadagniamo circa 4mm verticali */
+    @page { margin: 5mm 5mm; size: A4 landscape; }
+    
+    body {
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 8.2pt; /* Leggerissimo downgrade per compattezza */
+        line-height: 1.1; /* Ridotto per evitare sprechi tra le righe */
+        margin: 0;
+        color: #000;
+    }
 
-        tfoot td {
-            font-weight: bold;
-            font-size: 8.75pt;
-            border-top: 2pt solid #000;
-        }
-        .note {
-            margin-top: 8px;
-            font-size: 8.6pt;
-            line-height: 1.3;
-        }
-        footer {
-            text-align:center;
-        }
-    </style>
+    h1 {
+        text-align: center;
+        font-size: 13pt; /* Da 14pt a 13pt */
+        font-weight: bold;
+        margin: 0; /* Rimosso margine per recuperare spazio in alto */
+        padding-bottom: 2px;
+        border-bottom: 1.2pt solid #000;
+    }
+
+    .info {
+        text-align: center;
+        font-size: 8.5pt;
+        font-weight: bold;
+        margin-top: 2px;
+        margin-bottom: 4px; /* Ridotto da 6px */
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+        border: 0.4pt solid #000;
+    }
+
+    th, td {
+        border: 0.4pt solid #000;
+        text-align: center;
+        vertical-align: middle;
+        padding: 1.5px 1px; /* Padding ridotto per abbassare l'altezza riga */
+        font-size: 8.4pt;
+    }
+
+    th {
+        font-weight: bold;
+        border-bottom: 1.5pt solid #000;
+        padding: 3px 1px;
+        background-color: #f3f4f6;
+    }
+
+    /* 2. ALTEZZA SLOT: Ridotta a 26px (dai 32px originali) */
+    /* 6px x 22 righe = 132px recuperati (ovvero circa 5-6 righe extra) */
+    .slot {
+        width: 29px !important;
+        height: 25px; 
+        font-size: 8.4pt;
+    }
+
+    /* Ottimizzazione testo "da:" per non spingere i bordi */
+    .prev-lic-text {
+        display: block;
+        font-size: 6.8pt;
+        color: #444;
+        line-height: 1;
+        margin-top: -1px;
+    }
+
+    /* Stile per l'alternanza colori righe */
+    .row-even { background-color: #ffffff; }
+    .row-odd { background-color: #fcfcfc; } /* Grigio quasi impercettibile per non pesare */
+
+    .lic  { width: 62px; font-weight: bold; background-color: #f9fafb !important; }
+    .cash { width: 75px; font-weight: bold; background-color: #f9fafb !important; }
+    .np   { width: 32px; font-weight: bold; background-color: #f9fafb !important; }
+
+    tfoot td {
+        font-weight: bold;
+        font-size: 8.5pt;
+        border-top: 1.5pt solid #000;
+        padding: 2px 1px;
+    }
+
+    .note {
+        margin-top: 5px; /* Da 8px a 5px */
+        font-size: 8pt;
+    }
+
+    footer {
+        text-align: center;
+        font-size: 7.5pt;
+        margin-top: 2px;
+    }
+</style>
 </head>
 <body>
 
-    <h1>PAGAMENTO LAVORI</h1>
-    <div class="info">
-        {{ $date }} — Costo Bancale € {{ number_format($bancaleCost, 2) }} - Bancale in servizio <strong>{{ $generatedBy }}</strong>
-    </div>
+<div style="border-bottom: 1.5pt solid #000; padding-bottom: 3px; margin-bottom: 5px; width: 100%;">
+    <span style="font-size: 13pt; font-weight: bold; text-transform: uppercase; margin-right: 15px;">PAGAMENTO LAVORI</span>
+    <span style="font-size: 8.5pt; font-weight: bold; float: right; margin-top: 4px;">
+        {{ $date }} — Costo Bancale € {{ number_format($bancaleCost, 2) }} — Servizio: <strong>{{ $generatedBy }}</strong>
+    </span>
+    <div style="clear: both;"></div>
+</div>
 
     <table>
         <thead>
@@ -92,8 +122,12 @@
         </thead>
         <tbody>
             @foreach($matrix as $row)
-                @php $netCash = $row['cash_total'] - $bancaleCost; @endphp
-                <tr>
+                @php 
+                    $netCash = $row['cash_total'] - $bancaleCost; 
+                    // Alternanza classi
+                    $rowClass = $loop->index % 2 == 0 ? 'row-even' : 'row-odd';
+                @endphp
+                <tr class="{{ $rowClass }}">
                     <td class="lic">{{ $row['license_number'] }}</td>
                     <td class="cash">€ {{ number_format($netCash, 0) }}</td>
                     <td class="np">{{ $row['n_count'] }}</td>
@@ -113,8 +147,7 @@
                                     {{ $isAgency ? ($work['agency_code'] ?? 'AG') : strtoupper($work['value']) }}
                                 </span>
                                 @if($prevLicenseNumber)
-                                    <br>
-                                    <span style="font-size: 7.5pt; color: #555;">
+                                    <span class="prev-lic-text">
                                         (da: {{ $prevLicenseNumber }})
                                     </span>
                                 @endif
@@ -135,14 +168,14 @@
         </tfoot>
     </table>
 
-    <div class="note">
-        <strong>Legenda:</strong>
-        Normale = lavoro normale •
-        <strong>Grassetto</strong> = ufficio •
-        <u>Sottolineato</u> = lavoro fisso alla licenza
+    <div style="margin-top: 5px; padding-top: 3px; font-size: 7.5pt; width: 100%;">
+    <div style="float: left; width: 70%;">
+        <strong>Legenda:</strong> Normale = lavoro • <strong>Grassetto</strong> = ufficio • <u>Sottolineato</u> = fisso licenza
     </div>
-    <footer>
-       Generato alle {{ $generatedAt }} da {{ $generatedBy }}
-    </footer>
+    <div style="float: right; width: 30%; text-align: right; color: #555;">
+        Generato alle {{ $generatedAt }} da {{ $generatedBy }}
+    </div>
+    <div style="clear: both;"></div>
+</div>
 </body>
 </html>

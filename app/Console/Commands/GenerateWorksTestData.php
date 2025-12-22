@@ -17,14 +17,15 @@ class GenerateWorksTestData extends Command
      *
      * @var string
      */
-    protected $signature = 'app:generate-works';
+    protected $signature = 'app:generate-works 
+                        {licenze : Numero totale di licenze attive} ';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Command description';
+    protected $description = 'Genera un numero di 11 lavori per le licenze attive per testare la gestione lavori.';
 
     /**
      * Execute the console command.
@@ -36,7 +37,9 @@ class GenerateWorksTestData extends Command
         LicenseTable::truncate();
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
-        $licenses = \App\Models\User::inRandomOrder()->take(15)->get();
+        $licenze = (int) $this->argument('licenze') ?? 10;
+
+        $licenses = \App\Models\User::inRandomOrder()->take($licenze)->get();
         foreach($licenses as $key => $license) {
             LicenseTable::factory()->create([
                 'user_id'      => $license->id,
@@ -50,13 +53,19 @@ class GenerateWorksTestData extends Command
         foreach($licenseTable as $license) {
             // Creazione lavori di test per ogni licenza
             $this->createMorningWorkForLicense($license,'GT',1,1);
-            $this->createAfternoonWorkForLicense($license,'ITC',1,2);
-            $this->createAgencyWorkForLicense($license,'ALBA',1,3,'afternoon');
+            $this->createAfternoonWorkForLicense($license,'ITC',1,2,'afternoon');
+            $this->createAgencyWorkForLicense($license,'ALBA',1,3);
             $this->createCashWorkForLicense($license,1,5);
             $this->createNPWorkForLicense($license,'N',1,4);
             $this->createSharableFirstWorkForLicense($license,'BASS',1,7);
             $this->createFixedWorkForLicense($license,'ALBA',1,6);
             $this->createFixedCashWorkForLicense($license,1,8);
+            $this->createCashWorkForLicense($license,1,9);
+            $this->createAgencyWorkForLicense($license,'ALBA',1,10);
+            $this->createCashWorkForLicense($license,1,11);
+
+
+
         }        
         
     }

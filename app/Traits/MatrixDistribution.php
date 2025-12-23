@@ -112,7 +112,7 @@ trait MatrixDistribution
     private function sortMatrixRows(): void
     {
         $matrix = $this->getMatrix();
-        $totalSlots = config('constants.matrix.total_slots', 25);
+        $totalSlots = config('app_settings.matrix.total_slots', 25);
 
         foreach ($matrix as $key => &$row) { // Reference
             $worksMap = $row['worksMap'];
@@ -181,10 +181,10 @@ trait MatrixDistribution
         if (in_array($turn, [DayType::MORNING->value, DayType::AFTERNOON->value], true)) {
             $workTime = $this->extractWorkTime($work);
 
-            if ($turn === DayType::MORNING->value && $workTime > config('constants.matrix.morning_end')) {
+            if ($turn === DayType::MORNING->value && $workTime > config('app_settings.matrix.morning_end')) {
                 return false;
             }
-            if ($turn === DayType::AFTERNOON->value && $workTime < config('constants.matrix.afternoon_start')) {
+            if ($turn === DayType::AFTERNOON->value && $workTime < config('app_settings.matrix.afternoon_start')) {
                 return false;
             }
         }
@@ -229,7 +229,7 @@ trait MatrixDistribution
             $limit = $targetCapacity;
         } else {
             // Se non usiamo il limite target, usiamo il limite fisico (25)
-            $limit = config('constants.matrix.total_slots');
+            $limit = config('app_settings.matrix.total_slots');
         }
 
         // 3. Determina gli slot attualmente occupati (il numeratore)
@@ -294,7 +294,7 @@ trait MatrixDistribution
         }
 
         $matrix = $this->getMatrix();
-        $totalSlots = config('constants.matrix.total_slots', 25);
+        $totalSlots = config('app_settings.matrix.total_slots', 25);
 
         if ($useFirstSlotOnly) {
             // ===================================================================
@@ -308,7 +308,7 @@ trait MatrixDistribution
                 return;
             }
 
-            $totalSlots = config('constants.matrix.total_slots', 25);
+            $totalSlots = config('app_settings.matrix.total_slots', 25);
             $currentFixedSlot = null;
 
             // Trova il primo slot libero nella prima licenza

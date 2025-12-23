@@ -18,10 +18,10 @@ abstract class TestCase extends BaseTestCase
         
         // Set config values for testing
         config([
-            'constants.matrix.total_slots' => 25,
-            'constants.matrix.morning_end' => '13:00',
-            'constants.matrix.afternoon_start' => '14:00',
-            'constants.max_users_in_table' => 20,
+            'app_settings.matrix.total_slots' => 25,
+            'app_settings.matrix.morning_end' => '13:00',
+            'app_settings.matrix.afternoon_start' => '14:00',
+            'app_settings.max_users_in_table' => 20,
         ]);
     }
 

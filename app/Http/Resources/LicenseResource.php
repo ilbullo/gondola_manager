@@ -25,8 +25,8 @@ class LicenseResource extends JsonResource
     {
         try {
             $initialSlotsUsed = 0; // <-- NUOVO: Contatore per la capacità target
-            // Inizializza la mappa dei 25 slot (numero totale definito in config/constants.php)
-            $worksMap = array_fill(1, config('constants.matrix.total_slots'), null);
+            // Inizializza la mappa dei 25 slot (numero totale definito in config/app_settings.php)
+            $worksMap = array_fill(1, config('app_settings.matrix.total_slots'), null);
 
             // Cicla tutti i lavori associati alla licenza
             foreach ($this->works as $work) {
@@ -37,7 +37,7 @@ class LicenseResource extends JsonResource
 
                 for ($i = $start; $i <= $end; $i++) {
                     // Protezione da slot fuori range (dati corrotti)
-                    if ($i < 1 || $i > config('constants.matrix.total_slots')) {
+                    if ($i < 1 || $i > config('app_settings.matrix.total_slots')) {
                         continue;
                     }
 
@@ -100,7 +100,7 @@ class LicenseResource extends JsonResource
                 'id'               => $this->id,
                 'license_table_id' => $this->id,
                 'user'             => null,
-                'worksMap'         => array_fill(1, config('constants.matrix.total_slots'), null),
+                'worksMap'         => array_fill(1, config('app_settings.matrix.total_slots'), null),
             ];
         }
     }

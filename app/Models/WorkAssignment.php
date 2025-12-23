@@ -78,7 +78,7 @@ protected static function booted(): void
         // CONTROLLO CAPACITÀ SLOT (solo su creazione)
         // -----------------------------------------------------------------
         if (! $work->exists) {
-            $totalSlots = config('constants.matrix.total_slots', 25);
+            $totalSlots = config('app_settings.matrix.total_slots', 25);
 
             $usedSlots = self::where('license_table_id', $work->license_table_id)
                 ->sum('slots_occupied');

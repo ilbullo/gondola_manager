@@ -113,7 +113,7 @@
     <thead>
         <tr>
             <th class="license-col">Lic.</th>
-            @for($i = 1; $i <= config('constants.matrix.total_slots'); $i++)
+            @for($i = 1; $i <= config('app_settings.matrix.total_slots'); $i++)
                 <th style="width: 29px;">{{ $i }}</th>
             @endfor
         </tr>

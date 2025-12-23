@@ -129,7 +129,7 @@
                             <th class="p-4 text-[9px] font-black text-slate-400 uppercase border-b border-slate-200">P</th>
                             <th class="p-4 text-[9px] font-black text-slate-400 uppercase border-b border-slate-200">Capacità</th>
                             <th class="p-4 text-[9px] font-black text-slate-400 uppercase border-b border-slate-200">Netto €</th>
-                            @for ($i = 1; $i <= config('constants.matrix.total_slots'); $i++)
+                            @for ($i = 1; $i <= config('app_settings.matrix.total_slots'); $i++)
                                 <th class="p-2 text-[9px] font-black text-slate-300 border-b border-slate-200 min-w-[3.5rem]">{{ $i }}</th>
                             @endfor
                         </tr>
@@ -141,7 +141,7 @@
                                 $nCount = collect($works)->where('value', 'N')->count();
                                 $pCount = collect($works)->where('value', 'P')->count();
                                 $occupied = collect($works)->filter()->count();
-                                $maxCapacity = $license['target_capacity'] ?? config('constants.matrix.total_slots');
+                                $maxCapacity = $license['target_capacity'] ?? config('app_settings.matrix.total_slots');
                                 $cashTotal = collect($works)->where('value', 'X')->sum('amount') ?? 0;
                                 $walletBalance = $license['wallet'] - $nCount * 90;
                                 $cashNet = $cashTotal - $bancaleCost - $walletBalance;
@@ -168,7 +168,7 @@
                                 </td>
                                 <td class="p-3 text-center font-black text-emerald-600 bg-emerald-50/30">{{ number_format($cashNet, 0) }}</td>
 
-                                @for ($slotIndex = 1; $slotIndex <= config('constants.matrix.total_slots'); $slotIndex++)
+                                @for ($slotIndex = 1; $slotIndex <= config('app_settings.matrix.total_slots'); $slotIndex++)
                                     @php
                                         $work = $works[$slotIndex] ?? null;
                                         $isEmpty = is_null($work);

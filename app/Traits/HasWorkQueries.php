@@ -193,7 +193,7 @@ trait HasWorkQueries
     // =====================================================================
     public function prepareMatrix(): void
     {
-        $totalSlots = config('constants.matrix.total_slots', 25);
+        $totalSlots = config('app_settings.matrix.total_slots', 25);
         // Riga vuota template
         $emptyRow = [
             'id'                => null,
@@ -237,13 +237,13 @@ trait HasWorkQueries
     private function isMorning($work): bool
     {
         $time = $this->extractTime($work) ?? '09:01';
-        return $time !== null && $time <= config('constants.matrix.morning_end');
+        return $time !== null && $time <= config('app_settings.matrix.morning_end');
     }
 
     private function isAfternoon($work): bool
     {
         $time = $this->extractTime($work) ?? '14:00';
-        return $time !== null && $time >= config('constants.matrix.afternoon_start');
+        return $time !== null && $time >= config('app_settings.matrix.afternoon_start');
     }
 
     /** Estrae l'orario da timestamp in diversi formati */

@@ -254,7 +254,7 @@ class TableSplitter extends Component
             return [
                 'license_number' => $license['user']['license_number'] ?? '—',
                 'worksMap'       => $license['worksMap'],
-                'slots'          => $license['slots'] ?? config('constants.matrix.total_slots'),
+                'slots'          => $license['slots'] ?? config('app_settings.matrix.total_slots'),
                 'n_count'        => $nCount,
                 'p_count'        => $pCount,
                 'occupied'       => collect($license['worksMap'])->filter()->count(),

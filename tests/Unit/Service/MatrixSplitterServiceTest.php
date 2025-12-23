@@ -17,9 +17,9 @@ class MatrixSplitterServiceTest extends TestCase
         parent::setUp();
 
         config([
-            'constants.matrix.total_slots'      => 8,
-            'constants.matrix.morning_end'      => '12:00',
-            'constants.matrix.afternoon_start'  => '14:00',
+            'app_settings.matrix.total_slots'      => 8,
+            'app_settings.matrix.morning_end'      => '12:00',
+            'app_settings.matrix.afternoon_start'  => '14:00',
         ]);
     }
 
@@ -28,7 +28,7 @@ class MatrixSplitterServiceTest extends TestCase
      */
     private function licenseTable(array $worksMaps): array
     {
-        $total = config('constants.matrix.total_slots');
+        $total = config('app_settings.matrix.total_slots');
 
         return collect($worksMaps)->map(fn ($map, $i) => [
             'id'                => $i + 1,
@@ -79,7 +79,7 @@ public function it_preserves_fixed_agency_and_cash_works()
     #[Test]
     public function it_distributes_round_robin_cash_works()
     {
-        config(['constants.matrix.total_slots' => 4]);
+        config(['app_settings.matrix.total_slots' => 4]);
 
         $licenseTable = $this->licenseTable([
             array_fill(0, 4, null),
@@ -110,7 +110,7 @@ public function it_preserves_fixed_agency_and_cash_works()
     #[Test]
     public function it_respects_morning_turn_constraint()
     {
-        config(['constants.matrix.total_slots' => 4]);
+        config(['app_settings.matrix.total_slots' => 4]);
 
         $licenseTable = $this->licenseTable([
             array_fill(0, 4, null),

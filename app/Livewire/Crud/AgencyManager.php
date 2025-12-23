@@ -95,8 +95,12 @@ class AgencyManager extends Component
             'code' => $this->code,
         ]);
 
+        //elimino la cache delle agenzie per forzare il reload
+        cache()->forget('agencies_list');
+
         $this->notify('Agenzia creata con successo.');
         $this->closeForms();
+
     }
 
     /**
@@ -131,6 +135,9 @@ class AgencyManager extends Component
             'name' => $this->name,
             'code' => $this->code,
         ]);
+
+        //elimino la cache delle agenzie per forzare il reload
+        cache()->forget('agencies_list');
 
         $this->notify('Agenzia aggiornata con successo.');
         $this->closeForms();

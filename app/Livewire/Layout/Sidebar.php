@@ -5,6 +5,7 @@ namespace App\Livewire\Layout;
 use App\Models\Agency;
 use Livewire\Attributes\On;
 use Livewire\Component;
+use App\Enums\WorkType;
 
 /**
  * Componente Sidebar responsabile della selezione e configurazione
@@ -44,54 +45,16 @@ class Sidebar extends Component
     public ?int $agencyId = null;
 
     /** Numero di caselle occupate dal lavoro */
-    public int $slotsOccupied = 1;
+    public int $slotsOccupied;
 
     /** Importo predefinito del lavoro */
-    public int $amount = 90;
-
-    /** Mostra/nasconde la sezione delle azioni */
-    public bool $showActions = false;
+    public float|int $amount;
 
     /** Modalità ripartizione attiva? */
     public bool $isRedistributionMode = false;
 
     /** Stato di apertura della sidebar */
     public bool $sidebarOpen = true;
-
-    // ===================================================================
-    // Configurazione UI (può essere sovrascritta dal mount)
-    // ===================================================================
-
-    /**
-     * Configurazione completa del pannello:
-     * - Tipi di lavoro
-     * - Sezioni del form
-     * - Pulsanti di azione
-     */
-    public array $config = [
-        'work_types' => [
-            ['id' => 'quickNoloButton',       'label' => 'NOLO (N)',       'value' => 'N',     'classes' => 'text-gray-900 bg-yellow-400 hover:bg-yellow-500 focus:ring-orange-400','ring' => 'ring-orange-400 ring-offset-1'],
-            ['id' => 'quickContantiButton',   'label' => 'CONTANTI (X)',   'value' => 'X',     'classes' => 'text-white bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-300','ring' => 'ring-emerald-300 ring-offset-1'],
-            ['id' => 'selectAgencyButton',    'label' => 'AGENZIA',        'value' => 'A',     'classes' => 'text-white bg-sky-600 hover:bg-sky-700 focus:ring-sky-300','ring' => 'ring-sky-300 ring-offset-1'],
-            ['id' => 'quickPerdiVoltaButton', 'label' => 'PERDI VOLTA (P)', 'value' => 'P',     'classes' => 'text-white bg-red-600 hover:bg-red-700 focus:ring-red-300','ring' => 'ring-red-300 ring-offset-1'],
-            ['id' => 'clearSelectionButton',  'label' => 'ANNULLA',        'value' => 'clear', 'classes' => 'text-white bg-pink-600 hover:bg-pink-700 focus:ring-pink-300','ring' => 'ring-pink-300 ring-offset-1'],
-        ],
-        'sections' => [
-            'agency_input' => ['enabled' => true, 'label' => 'AGENZIA',        'placeholder' => 'Es: Agenzia Ufficiale'],
-            'notes'        => ['enabled' => true, 'label' => 'NOTE/VOUCHER',   'placeholder' => 'Es: Voucher 1234'],
-            'slots'        => ['enabled' => true, 'label' => 'CASELLE OCCUPATE', 'options' => [
-                ['value' => 1, 'label' => '1 Casella'],
-                ['value' => 2, 'label' => '2 Caselle'],
-            ]],
-            'actions'      => [
-                ['id' => 'redistributeButton', 'label' => 'RIPARTISCI',            'classes' => 'text-white bg-emerald-600 hover:bg-emerald-700', 'wire' => 'redistributeWorks','ring' => 'ring-emerald-300 ring-offset-1'],
-                ['id' => 'undoButton',         'label' => 'ANNULLA RIPARTIZIONE',  'classes' => 'text-white bg-orange-500 hover:bg-orange-600',   'wire' => 'backToOriginal', 'hidden' => true,'ring' => 'ring-orange-300 ring-offset-1'],
-                ['id' => 'updateButton',       'label' => 'MODIFICA TABELLA',      'classes' => 'text-white bg-indigo-600 hover:bg-indigo-700',   'wire' => 'editTable','ring' => 'ring-indigo-300 ring-offset-1'],
-                ['id' => 'printButton',        'label' => 'STAMPA TABELLA',        'classes' => 'text-white bg-blue-600 hover:bg-blue-700',        'wire' => 'printWorks','ring' => 'ring-blue-300 ring-offset-1'],
-                ['id' => 'resetButton',        'label' => 'RESET TABELLA',         'classes' => 'text-white bg-red-600 hover:bg-red-700',          'wire' => 'resetTable','ring' => 'ring-red-300 ring-offset-1'],
-            ],
-        ],
-    ];
 
     // ===================================================================
     // Lifecycle
@@ -103,9 +66,6 @@ class Sidebar extends Component
      */
     public function mount(array $config = []): void
     {
-        // Unisce la config personalizzata con quella di default
-        $this->config = array_merge_recursive($this->config, $config);
-
         // Resetta lo stato iniziale
         $this->resetSelection();
     }
@@ -114,30 +74,6 @@ class Sidebar extends Component
     // Azioni UI
     // ===================================================================
 
-    /**
-     * Apre la sidebar. INUTILE?
-     */
-    public function openSidebar(): void
-    {
-        $this->sidebarOpen = true;
-    }
-
-    /**
-     * Chiude la sidebar. INUTILE?
-     */
-    public function closeSidebar(): void
-    {
-        $this->sidebarOpen = false;
-    }
-
-
-    /**
-     * Mostra o nasconde la sezione delle azioni avanzate.
-     */
-    public function toggleActions(): void
-    {
-        $this->showActions = !$this->showActions;
-    }
 
     /**
      * Apre il modal dei dettagli lavoro.
@@ -157,16 +93,17 @@ class Sidebar extends Component
     #[On('selectAgency')]
     public function selectAgency(int $agencyId): void
     {
+        // Usa toBase() o find() ma assicurati di aggiornare anche il tipo
         $agency = Agency::find($agencyId);
 
         if ($agency) {
             $this->agencyId = $agency->id;
             $this->agencyName = $agency->name;
+            
+            // Sincronizzazione stato Enum
+            $this->applyWorkTypeState(WorkType::AGENCY);
 
-            // Chiude il modal agenzie
             $this->dispatch('toggleAgencyModal', false);
-
-            // Aggiorna la UI principale
             $this->emitWorkSelected();
         }
     }
@@ -177,8 +114,8 @@ class Sidebar extends Component
     #[On('updateWorkDetails')]
     public function updateWorkDetails(array $details): void
     {
-        $this->amount          = $details['amount'] ?? 90;
-        $this->slotsOccupied   = $details['slotsOccupied'] ?? 1;
+        $this->amount          = $details['amount'] ?? config('app_settings.works.default_amount');;
+        $this->slotsOccupied   = $details['slotsOccupied'] ?? config('app_settings.works.default_slots');;
         $this->excluded        = $details['excluded'];
         $this->sharedFromFirst = $details['sharedFromFirst'];
 
@@ -189,41 +126,50 @@ class Sidebar extends Component
     // Selezione tipo lavoro
     // ===================================================================
 
-    /**
-     * Imposta il tipo di lavoro selezionato.
-     * Può aprire automaticamente il modal delle agenzie.
-     */
     public function setWorkType(string $value): void
     {
-        // Resetta prima tutto
         $this->resetSelection();
 
-        if ($value === 'clear') {
-            return; // Nessuna selezione
-        }
+        if ($value === 'clear') return;
 
-        // Recupera configurazione del tipo selezionato
-        $workConfig = collect($this->config['work_types'])
-            ->firstWhere('value', $value);
+        // 1. Deleghiamo la validazione e l'assegnazione
+        $type = WorkType::tryFrom($value);
+        if (!$type) return;
 
-        if (!$workConfig) {
-            return;
-        }
+        $this->applyWorkTypeState($type);
 
-        $this->workType = $workConfig['value'];
-        $this->label    = $workConfig['label'];
+        // 2. Deleghiamo la logica di instradamento (Routing della logica)
+        $this->resolveWorkTypeAction($type);
+    }
 
-        // Caso AGENZIA → apre modal selezione agenzia
-        if ($value === 'A') {
-            $agencies = Agency::orderBy('name')
-                ->get(['id', 'name','code'])
-                ->map(fn($a) => ['id' => $a->id, 'name' => $a->name, 'code' => $a->code])
-                ->toArray();
+    /**
+     * Responsabilità: Aggiornare solo lo stato interno del componente
+     */
+    protected function applyWorkTypeState(WorkType $type): void
+    {
+        $this->workType = $type->value;
+        $this->label    = $type->label();
+    }
 
-            $this->dispatch('toggleAgencyModal', true, $agencies);
-        } else {
-            $this->emitWorkSelected();
-        }
+    /**
+     * Responsabilità: Decidere quale flusso attivare in base al tipo
+     */
+    protected function resolveWorkTypeAction(WorkType $type): void
+    {
+        match ($type) {
+            WorkType::AGENCY => $this->handleAgencySelection(),
+            default          => $this->emitWorkSelected(),
+        };
+    }
+
+    /**
+     * Responsabilità: Gestire esclusivamente il reperimento dati per le agenzie
+     */
+    protected function handleAgencySelection(): void
+    {
+        $agencies = cache()->remember('agencies_list', 3600, fn() => Agency::orderBy('name')->toBase()->get(['id', 'name', 'code'])->toArray());
+        //$agencies = Agency::orderBy('name')->toBase()->get(['id', 'name', 'code'])->toArray();
+        $this->dispatch('toggleAgencyModal', true, $agencies);
     }
 
     // ===================================================================
@@ -260,17 +206,14 @@ class Sidebar extends Component
      */
     public function updated($property, $value): void
     {
-        if ($property === 'excluded' && $value) {
-            $this->sharedFromFirst = false;
-        }
+        // Mutua esclusione rapida
+        if ($property === 'excluded' && $value) $this->sharedFromFirst = false;
+        if ($property === 'sharedFromFirst' && $value) $this->excluded = false;
 
-        if ($property === 'sharedFromFirst' && $value) {
-            $this->excluded = false;
-        }
+        // Lista esatta delle proprietà che devono scatenare l'aggiornamento in tabella
+        $syncRequired = ['voucher', 'sharedFromFirst', 'slotsOccupied', 'excluded', 'amount'];
 
-        $relevant = ['voucher', 'sharedFromFirst', 'slotsOccupied', 'excluded', 'amount'];
-
-        if (str($property)->contains($relevant)) {
+        if (in_array($property, $syncRequired)) {
             $this->emitWorkSelected();
         }
     }
@@ -331,13 +274,13 @@ class Sidebar extends Component
         $this->agencyName      = null;
         $this->agencyId        = null;
         $this->excluded        = false;
-        $this->slotsOccupied   = 1;
-        $this->amount          = 90;
+        $this->amount          = config('app_settings.works.default_amount');
+        $this->slotsOccupied   = config('app_settings.works.default_slots');
 
         // Chiude eventuale modal agenzie aperto
         $this->dispatch('toggleAgencyModal', false);
 
-        $this->emitWorkSelected();
+        //$this->emitWorkSelected();
     }
 
     /**

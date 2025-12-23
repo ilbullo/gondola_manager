@@ -33,7 +33,7 @@
                 <span class="text-3xl font-black text-slate-800">{{ $work['departure_time'] }}</span>
             </div>
             <div class="text-right">
-                <span class="text-[10px] font-black text-rose-500 uppercase block">Attesa</span>
+                <span class="text-[10px] font-black text-rose-500 uppercase block">Partito</span>
                 <span class="text-sm font-black text-slate-600 bg-slate-100 px-3 py-1 rounded-full mt-1 inline-block">
                     {{ $work['time_elapsed'] }}
                 </span>

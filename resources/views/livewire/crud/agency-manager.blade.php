@@ -8,13 +8,6 @@
                     <h1 class="text-3xl font-black text-slate-800 uppercase italic tracking-tighter leading-none">Gestione Agenzie</h1>
                     <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">Configurazione anagrafica partner</p>
                 </div>
-                
-                @if (session('message'))
-                    <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3000)" 
-                         class="bg-emerald-500 text-white px-6 py-2 rounded-xl font-black uppercase text-[10px] shadow-lg animate-bounce">
-                        {{ session('message') }}
-                    </div>
-                @endif
             </div>
 
             {{-- BARRA AZIONI & RICERCA --}}
@@ -39,7 +32,7 @@
 
                         <button wire:click="toggleCreateForm"
                             class="px-8 py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-black uppercase text-[10px] rounded-2xl transition-all shadow-lg shadow-indigo-100 flex items-center gap-2 active:scale-95">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"/></svg>
+                            <x-icon name="plus" class="w-4 h-4" />
                             Nuova Agenzia
                         </button>
                     </div>
@@ -117,7 +110,11 @@
 
     {{-- MODALE CREATE/EDIT (INVARATO NELLA LOGICA, AGGIUSTATO OVERLAY) --}}
     @if ($showCreateForm || $showEditForm)
-        <div class="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-md" x-cloak>
+        <div class="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-md" 
+        x-cloak
+        x-init="document.body.classList.add('overflow-hidden')" 
+         x-on:destroy="document.body.classList.remove('overflow-hidden')"
+        >
             <div class="w-full max-w-md bg-white rounded-[3rem] shadow-2xl overflow-hidden border border-white/10 animate-in zoom-in duration-300" @click.away="$wire.closeForms()">
                 <form wire:submit="{{ $showCreateForm ? 'create' : 'update' }}">
                     <div class="bg-slate-900 px-8 py-8 flex justify-between items-center text-white">

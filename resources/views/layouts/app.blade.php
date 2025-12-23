@@ -42,6 +42,8 @@
             position: fixed;
             width: 100%;
         }
+
+        [x-cloak] { display: none !important; }
     </style>
 
     @stack('custom_css')
@@ -69,6 +71,7 @@
         @stack('modals')
     </div>
 
+    <x-toast />
     @livewireScripts
     <script src="https://unpkg.com/@wotz/livewire-sortablejs@1.0.0/dist/livewire-sortable.js"></script>
 </body>

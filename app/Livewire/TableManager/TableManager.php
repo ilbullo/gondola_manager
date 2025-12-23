@@ -64,7 +64,7 @@ class TableManager extends Component
      * Conferma ufficialmente la tabella delle licenze.
      * Usato dopo il click "Conferma" in LicenseManager.
      */
-    #[On('confirmLicenses')]
+    #[On('licensesConfirmed')]
     public function confirmTable(): void
     {
         $this->tableConfirmed = true;

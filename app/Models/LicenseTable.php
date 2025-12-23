@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\DayType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class LicenseTable extends Model
 {
@@ -93,5 +94,27 @@ class LicenseTable extends Model
     public function onlyCash(): bool
     {
         return $this->only_cash_works;
+    }
+
+    public static function swap(int $id, string $direction): void
+    {
+        DB::transaction(function () use ($id, $direction) {
+            $current = self::lockForUpdate()->findOrFail($id);
+            $query = self::whereDate('date', $current->date);
+            
+            $partner = ($direction === 'up') 
+                ? $query->where('order', '<', $current->order)->orderBy('order', 'desc')->first()
+                : $query->where('order', '>', $current->order)->orderBy('order', 'asc')->first();
+
+            if ($partner) {
+                $oldOrder = $current->order;
+                $newOrder = $partner->order;
+
+                // Evitiamo collisioni UNIQUE
+                $partner->update(['order' => 99999 + $partner->id]); 
+                $current->update(['order' => $newOrder]);
+                $partner->update(['order' => $oldOrder]);
+            }
+        });
     }
 }

@@ -75,6 +75,9 @@
     .row-even { background-color: #ffffff; }
     .row-odd { background-color: #fcfcfc; } /* Grigio quasi impercettibile per non pesare */
 
+    .excluded { text-decoration: underline; text-decoration-thickness: 1.8pt; }
+    .shared   { font-weight: bold; }
+
     .lic  { width: 62px; font-weight: bold; background-color: #f9fafb !important; }
     .cash { width: 75px; font-weight: bold; background-color: #f9fafb !important; }
     .np   { width: 32px; font-weight: bold; background-color: #f9fafb !important; }
@@ -144,7 +147,13 @@
                         <td class="slot">
                             @if($work)
                                 <span class="{{ $isExcluded ? 'excluded' : '' }} {{ $isShared ? 'shared' : '' }}">
-                                    {{ $isAgency ? ($work['agency_code'] ?? 'AG') : strtoupper($work['value']) }}
+                                    @if($isAgency)
+                                        {{ ($work['agency_code'] ?? 'AG') }}
+                                    @elseif($isShared)
+                                        {{ strtoupper($work['voucher'] ?? $work['value'])  }}
+                                    @else
+                                        {{  strtoupper($work['value']) }}
+                                    @endif
                                 </span>
                                 @if($prevLicenseNumber)
                                     <span class="prev-lic-text">

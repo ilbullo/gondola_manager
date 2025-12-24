@@ -4,139 +4,97 @@ namespace App\Livewire\Ui;
 
 use Livewire\Component;
 use Livewire\Attributes\On;
+use Illuminate\View\View;
 
+/**
+ * Componente UI generico per la gestione di modali di conferma.
+ * Utilizza un sistema ad eventi per comunicare con i componenti chiamanti.
+ */
 class ModalConfirm extends Component
 {
-    /**
-     * Controlla la visibilità della modale di conferma.
-     * true  = modale aperta
-     * false = modale chiusa
-     */
+    /** @var bool Visibilità della modale */
     public bool $show = false;
 
-    /**
-     * Messaggio mostrato all’interno della modale.
-     */
+    /** @var string Messaggio descrittivo per l'utente */
     public string $message = 'Sei sicuro?';
 
-    /**
-     * Nome dell’evento Livewire che verrà emesso quando l’utente conferma.
-     */
+    /** @var string|null Evento da scatenare in caso di esito positivo */
     public ?string $confirmEvent = null;
 
-    /**
-     * Nome dell’evento Livewire che verrà emesso quando l’utente annulla.
-     */
+    /** @var string|null Evento da scatenare in caso di annullamento */
     public ?string $cancelEvent = null;
 
-    /**
-     * Payload opzionale che verrà passato all’evento di conferma/cancellazione.
-     * Accetta vari tipi per massima compatibilità.
-     *
-     * @var array|object|string|int|null
-     */
-    public array|object|string|int|null $confirmPayload = null;
-
-    // ===================================================================
-    // Event Handlers
-    // ===================================================================
+    /** @var mixed Dati contestuali da restituire con l'evento (es. ID, array, object) */
+    public mixed $payload = null;
 
     /**
-     * Gestisce l’apertura della modale tramite evento Livewire.
-     *
-     * @param array $data  Dati ricevuti dal chiamante:
-     *   - message        (string) Messaggio personalizzato
-     *   - confirmEvent   (string) Evento da emettere in caso di conferma
-     *   - cancelEvent    (string) Evento da emettere in caso di annullamento
-     *   - payload        (mixed)  Dati da passare agli eventi
+     * Inizializza e visualizza la modale di conferma.
+     * * @param array $data {
+     * @var string $message      Messaggio personalizzato.
+     * @var string $confirmEvent Nome dell'evento di conferma.
+     * @var string $cancelEvent  Nome dell'evento di annullamento (opzionale).
+     * @var mixed  $payload      Dati da allegare alla risposta.
+     * }
+     * @return void
      */
     #[On('openConfirmModal')]
-    public function open(array $data = []): void
+    public function open(array $data): void
     {
-        // Estrazione sicura con default sensati
-        $this->message        = $data['message'] ?? 'Sei sicuro?';
-        $this->confirmEvent   = $data['confirmEvent'] ?? null;
-        $this->cancelEvent    = $data['cancelEvent'] ?? null;
-        $this->confirmPayload = $data['payload'] ?? null;
+        // Reset preventivo per evitare che residui di chiamate precedenti appaiano durante l'animazione
+        $this->reset(['message', 'confirmEvent', 'cancelEvent', 'payload']);
+
+        $this->message      = $data['message'] ?? 'Sei sicuro?';
+        $this->confirmEvent = $data['confirmEvent'] ?? null;
+        $this->cancelEvent  = $data['cancelEvent'] ?? null;
+        $this->payload      = $data['payload'] ?? null;
 
         $this->show = true;
-        $this->resetErrorBag(); // Rimuove eventuali errori precedenti
     }
 
     /**
-     * Conferma l’azione richiesta dall’utente.
-     * Emette l’evento assegnato e chiude la modale.
+     * Gestisce l'azione di conferma dell'utente.
+     * Emette l'evento configurato includendo il payload e chiude la modale.
+     * * @return void
      */
     public function confirm(): void
     {
         if ($this->confirmEvent) {
-            $this->dispatch($this->confirmEvent, payload: $this->confirmPayload);
+            $this->dispatch($this->confirmEvent, payload: $this->payload);
         }
 
-        // Dopo la conferma, procedo allo stesso flusso della cancellazione
-        $this->cancel();
+        $this->close();
     }
 
     /**
-     * Annulla la richiesta dell’utente.
-     * Chiude la modale e emette un eventuale evento di annullamento.
+     * Gestisce l'azione di annullamento dell'utente.
+     * Emette l'evento di cancellazione se configurato e chiude la modale.
+     * * @return void
      */
     public function cancel(): void
     {
-        $this->close();
-
         if ($this->cancelEvent) {
-            $this->dispatch($this->cancelEvent, $this->confirmPayload);
+            $this->dispatch($this->cancelEvent, payload: $this->payload);
         }
 
-        // Ripristina la maggior parte dello state ad eccezione di "show"
-        $this->resetExcept('show');
+        $this->close();
     }
 
-    // ===================================================================
-    // Internal Helpers
-    // ===================================================================
-
     /**
-     * Chiude la modale e ripristina lo stato interno.
+     * Chiude la modale e ripristina lo stato predefinito del componente.
+     * Utilizzato internamente per garantire la pulizia dei dati sensibili o temporanei.
+     * * @return void
      */
-    private function close(): void
+    public function close(): void
     {
         $this->show = false;
-        $this->resetState();
+        $this->reset(); 
     }
 
     /**
-     * Ripristina tutte le proprietà allo stato iniziale.
+     * Renderizza il template Blade associato al componente.
+     * * @return View
      */
-    private function resetState(): void
-    {
-        $this->message        = 'Sei sicuro?';
-        $this->confirmEvent   = null;
-        $this->cancelEvent    = null;
-        $this->confirmPayload = null;
-    }
-
-    // ===================================================================
-    // Lifecycle
-    // ===================================================================
-
-    /**
-     * Inizializza lo stato del componente al mount.
-     */
-    public function mount(): void
-    {
-        $this->resetState();
-    }
-
-    // ===================================================================
-    // Render
-    // ===================================================================
-
-    /**
-     * Restituisce la vista Blade della modale di conferma.
-     */
-    public function render()
+    public function render(): View
     {
         return view('livewire.ui.modal-confirm');
     }

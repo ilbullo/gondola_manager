@@ -93,7 +93,7 @@
                 <th class="cash">Netto</th>
                 <th class="np">N</th>
                 <th class="np">X</th>
-                <th class="np">S</th>
+                <th class="np">U</th>
                 @for($i = 1; $i <= config('app_settings.matrix.total_slots'); $i++)
                     <th class="slot">{{ $i }}</th>
                 @endfor
@@ -142,7 +142,7 @@
         </tbody>
         <tfoot>
             <tr>
-                <td class="lic">TOTALI</td>
+                <td class="lic">TOT</td>
                 <td class="cash">€ {{ number_format($totalCash, 0, ',', '.') }}</td>
                 <td class="np">{{ $totalN }}</td>
                 <td class="np">{{ $totalX }}</td>
@@ -155,9 +155,9 @@
     <div style="margin-top: 5px; font-size: 7.5pt; width: 100%;">
         <div style="float: left; width: 70%;">
             <strong>Legenda:</strong> 
-            N = Noli (Wallet) • X = Contanti • S = Shared FF (Informativi) • 
+            N = Noli • X = Contanti • U = {{ config('app_settings.labels.shared_from_first') }} • 
             <u>Sottolineato</u> = Fisso Licenza • 
-            <strong>Grassetto</strong> = Shared/Ufficio
+            <strong>Grassetto</strong> = {{ config('app_settings.labels.shared_from_first') }}
         </div>
         <div style="float: right; width: 30%; text-align: right; color: #555;">
             Generato: {{ $generatedAt }}

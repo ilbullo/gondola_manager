@@ -4,147 +4,80 @@ namespace App\Livewire\Ui;
 
 use Livewire\Component;
 use Livewire\Attributes\On;
+use Livewire\Attributes\Computed;
+use Illuminate\Support\Collection;
+use App\Services\LiquidationService;
 
 class LicenseReceiptModal extends Component
 {
-    /**
-     * Dati completi della licenza selezionata (intera riga della matrice).
-     * Contiene:
-     * - user
-     * - worksMap
-     * - wallet
-     * - ecc.
-     */
+    public bool $showModal = false;
     public array $license = [];
-
-    /**
-     * Costo del bancale, passato dal componente padre (TableSplitter).
-     * Usato nel calcolo del totale finale.
-     */
     public float $bancaleCost = 0.0;
 
-    /**
-     * Controlla la visibilità della modale.
-     */
-    public bool $showModal = false;
-
     // ===================================================================
-    // Event Listeners
+    // Actions
     // ===================================================================
 
-    /**
-     * Apre la modale ricevendo la licenza selezionata
-     * e opzionalmente il costo del bancale.
-     *
-     * @param array $license   I dati della licenza da mostrare in ricevuta
-     * @param float $bancaleCost Costo del bancale (default = 0)
-     */
     #[On('open-license-receipt')]
     public function openModal(array $license, float $bancaleCost = 0.0): void
     {
-        $this->license     = $license;
-        $this->bancaleCost = $bancaleCost;
-        $this->showModal   = true;
+        $this->license = $license;
+        $this->bancaleCost = (float) $bancaleCost;
+        $this->showModal = true;
     }
 
-    /**
-     * Chiude la modale e resetta i dati della licenza.
-     */
     public function closeModal(): void
     {
         $this->showModal = false;
-        $this->reset('license');
+        $this->reset('license', 'bancaleCost');
+        $this->resetErrorBag();
     }
 
     // ===================================================================
-    // Computed Data Helpers
+    // Computed Properties
     // ===================================================================
 
-    /**
-     * Restituisce la collection dei lavori associati,
-     * filtrando eventuali null o valori inconsistenti.
-     */
-    public function getWorks()
+    #[Computed]
+    public function works(): Collection
     {
-        return collect($this->license['worksMap'] ?? [])
-            ->filter()
-            ->values();
+        // Trasformiamo la mappa dei lavori in una collezione pulita
+        return collect($this->license['worksMap'] ?? [])->filter()->values();
+    }
+
+    #[Computed]
+    public function walletDetail(): array
+    {
+        $nCount = $this->works->where('value', 'N')->count();
+        // Usiamo il valore 90 o quello da config
+        $defaultAmount = (float) config('app_settings.works.default_amount', 90.0);
+        $theoreticalTotal = $nCount * $defaultAmount;
+        
+        // Il wallet attuale della licenza (quello che hanno fisicamente in tasca dai noli)
+        $currentWallet = (float) ($this->license['wallet'] ?? 0);
+        
+        // Differenza da conguagliare
+        $diff = $theoreticalTotal - $currentWallet;
+
+        return [
+            'difference' => $diff,
+            'unit_price' => $defaultAmount,
+            // altri dati utili per la view se necessari
+        ];
     }
 
     /**
-     * Restituisce solo i lavori di Agenzia (value = 'A').
+     * L'unico metodo di calcolo necessario: delega tutto al Service.
      */
-    public function getAgencyWorks()
+    #[Computed]
+    public function liquidation(): array
     {
-        return $this->getWorks()->where('value', 'A');
+        return LiquidationService::calculate(
+            $this->works, 
+            $this->walletDetail['difference'], 
+            $this->bancaleCost
+        );
     }
 
-    /**
-     * Restituisce solo i lavori Cash (value = 'X').
-     */
-    public function getCashWorks()
-    {
-        return $this->getWorks()->where('value', 'X');
-    }
-
-    /**
-     * Numero di lavori tipo N.
-     */
-    public function getNCount()
-    {
-        return $this->getWorks()->where('value', 'N')->count();
-    }
-
-    /**
-     * Numero di lavori tipo P.
-     */
-    public function getPCount()
-    {
-        return $this->getWorks()->where('value', 'P')->count();
-    }
-
-    /**
-     * Totale contanti:
-     * - Somma dei lavori cash
-     * - + eventuale addebito da portafoglio/wallet
-     */
-    public function getCashTotal()
-    {
-        // Somma lavori X + eventuale differenza calcolata dal portafoglio
-        return $this->getCashWorks()->sum('amount') + $this->getWalletAmount() ?? 0;
-    }
-
-    /**
-     * Calcola la differenza tra (numero lavori N * 90€)
-     * e il wallet della licenza.
-     *
-     * Se wallet è inferiore al valore teorico dei lavori N,
-     * la differenza va sommata al totale cash.
-     */
-    public function getWalletAmount()
-    {
-        return ($this->getNCount() * config('app_settings.works.default_amount')) - $this->license['wallet'];
-    }
-
-    /**
-     * Calcolo del totale finale:
-     * Totale cash - costo bancale.
-     *
-     * (La versione con max(0, ...) è stata disattivata
-     *  su scelta implementativa.)
-     */
-    public function getFinalCash()
-    {
-        return $this->getCashTotal() - $this->bancaleCost;
-    }
-
-    // ===================================================================
-    // Render
-    // ===================================================================
-
-    /**
-     * Restituisce la vista Blade dedicata alla modale.
-     */
     public function render()
     {
         return view('livewire.ui.license-receipt-modal');

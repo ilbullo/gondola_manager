@@ -1,101 +1,116 @@
-{{-- resources/views/livewire/ui/license-receipt-modal.blade.php --}}
-<div>
+<div class="relative">
     @if($showModal)
-        <div x-data="{ open: @entangle('showModal') }" x-show="open" 
-             class="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 bg-slate-900/90 backdrop-blur-md">
+        <div x-data="{ open: @entangle('showModal') }" 
+             x-show="open" 
+             class="fixed inset-0 z-[100] flex items-center justify-center p-2 bg-slate-900/90 backdrop-blur-md">
             
-            <div x-show="open" x-transition.scale.95 
-                 class="relative bg-white rounded-[2rem] shadow-2xl max-w-lg w-full mx-auto overflow-hidden border border-slate-200 flex flex-col max-h-[95vh]">
+            <div x-show="open" x-on:click="open = false" class="fixed inset-0 cursor-pointer"></div>
+
+            <div x-show="open" 
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0 scale-95"
+                 class="relative bg-white rounded-[2rem] shadow-2xl max-w-lg w-full mx-auto overflow-hidden flex flex-col max-h-[95vh]">
                 
+                {{-- Header --}}
                 <div class="bg-slate-900 px-6 py-4 flex justify-between items-center text-white shrink-0">
                     <div class="flex flex-col">
-                        <span class="text-[8px] font-black uppercase tracking-widest text-slate-500 leading-none mb-1">Dettaglio Scontrino</span>
-                        <h2 class="text-xl font-black uppercase italic tracking-tighter">
-                            Licenza {{ $license['user']['license_number'] ?? 'N/D' }}
-                        </h2>
+                        <span class="text-[8px] font-black uppercase tracking-widest text-slate-500 mb-1">Cassa Odierna</span>
+                        <h2 class="text-xl font-black uppercase italic tracking-tighter">Licenza {{ $license['user']['license_number'] ?? 'N/D' }}</h2>
                     </div>
-                    <button wire:click="closeModal" class="text-slate-400 hover:text-white transition-colors">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-width="3"/></svg>
-                    </button>
+                    <button wire:click="closeModal" class="text-slate-400 hover:text-white"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-width="3"/></svg></button>
                 </div>
 
                 <div class="p-5 overflow-y-auto custom-scrollbar space-y-5">
                     
-                    <div class="flex justify-between items-center border-b border-slate-100 pb-3 text-[10px]">
-                        <span class="font-bold text-slate-400 uppercase">{{ now()->format('d/m/Y') }}</span>
-                        <span class="font-bold text-slate-400 uppercase">Op: {{ auth()->user()->name }}</span>
-                    </div>
-
+                    {{-- Badge Volumi (Dati dal Service) --}}
                     <div class="grid grid-cols-3 gap-2">
                         <div class="bg-amber-50 border border-amber-100 p-2 rounded-2xl text-center">
-                            <div class="text-lg font-black text-amber-600">{{ $this->getNCount() }}</div>
-                            <div class="text-[7px] font-black text-amber-500 uppercase">Nolo</div>
-                        </div>
-                        <div class="bg-rose-50 border border-rose-100 p-2 rounded-2xl text-center">
-                            <div class="text-lg font-black text-rose-600">{{ $this->getPCount() }}</div>
-                            <div class="text-[7px] font-black text-rose-500 uppercase">Perdi</div>
+                            <div class="text-lg font-black text-amber-600">{{ $this->liquidation['counts']['n'] }}</div>
+                            <div class="text-[7px] font-black uppercase">Noli</div>
                         </div>
                         <div class="bg-emerald-50 border border-emerald-100 p-2 rounded-2xl text-center">
-                            <div class="text-lg font-black text-emerald-600">{{ $this->getCashWorks()->count() }}</div>
-                            <div class="text-[7px] font-black text-emerald-500 uppercase">Contanti</div>
+                            <div class="text-lg font-black text-emerald-600">{{ $this->liquidation['counts']['x'] }}</div>
+                            <div class="text-[7px] font-black uppercase text-emerald-500">Contanti Oggi</div>
+                        </div>
+                        <div class="bg-blue-50 border border-blue-100 p-2 rounded-2xl text-center italic">
+                            <div class="text-lg font-black text-blue-600">{{ $this->liquidation['counts']['shared'] }}</div>
+                            <div class="text-[7px] font-black uppercase text-blue-500">{{ config('app_settings.labels.shared_from_first') }}</div>
                         </div>
                     </div>
 
+                    {{-- Elenco Agenzie (Dati dal Service) --}}
                     <div class="space-y-2">
-                        <div class="flex items-center gap-2">
-                            <h3 class="text-[8px] font-black text-slate-400 uppercase tracking-widest">Agenzie</h3>
-                            <div class="flex-1 h-[1px] bg-slate-100"></div>
-                        </div>
-                        
+                        <h3 class="text-[8px] font-black text-slate-400 uppercase tracking-widest px-1">Agenzie (Crediti Futuri)</h3>
                         <div class="space-y-1">
-                            @forelse($this->getAgencyWorks() as $work)
+                            @forelse($this->liquidation['lists']['agencies'] as $name => $voucher)
                                 <div class="flex justify-between items-center bg-slate-50 px-3 py-2 rounded-xl border border-slate-100 text-[10px]">
-                                    <span class="font-black text-slate-700 uppercase">{{ Str::limit($work['agency'] ?? 'N/D', 20) }}</span>
-                                    <span class="font-bold text-slate-400">{{ $work['voucher'] ? 'Cod: '.$work['voucher'] : '—' }}</span>
+                                    <span class="font-bold text-slate-600 uppercase">{{ Str::limit($name, 25) }}</span>
+                                    <span class="font-black text-indigo-500">{{ $voucher ?: '---' }}</span>
                                 </div>
                             @empty
-                                <div class="text-center py-2 text-slate-300 text-[8px] font-black uppercase italic">Nessuna agenzia</div>
+                                <div class="text-[8px] text-slate-300 italic px-1 uppercase text-center">Nessuna agenzia</div>
                             @endforelse
                         </div>
                     </div>
 
-                    <div class="bg-slate-900 rounded-3xl p-5 text-white shadow-lg">
+                    {{-- Box Economico Finale --}}
+                    <div class="bg-slate-900 rounded-3xl p-5 text-white shadow-xl">
                         <div class="space-y-2">
-                            <div class="flex justify-between items-center text-slate-400 text-[9px] font-black uppercase">
-                                <span>Incassato (X)</span>
-                                <span class="text-white">€ {{ number_format($this->getCashTotal(), 2) }}</span>
+                            <div class="flex justify-between items-center text-[9px] font-black uppercase">
+                                <span class="text-slate-400">Valore Contanti X</span>
+                                <span class="text-white">€ {{ number_format($this->liquidation['money']['valore_x'], 2, ',', '.') }}</span>
+                            </div>
+                            
+                            <div class="flex justify-between items-center text-[9px] font-black uppercase">
+                                <span class="text-slate-400">Conguaglio Wallet</span>
+                                <span class="{{ $this->liquidation['money']['wallet_diff'] < 0 ? 'text-rose-400' : 'text-emerald-400' }}">
+                                    {{ $this->liquidation['money']['wallet_diff'] < 0 ? '-' : '+' }} € {{ number_format(abs($this->liquidation['money']['wallet_diff']), 2, ',', '.') }}
+                                </span>
                             </div>
 
-                            @if($bancaleCost > 0)
+                            @if($this->liquidation['money']['bancale'] > 0)
                                 <div class="flex justify-between items-center text-rose-400 text-[9px] font-black uppercase italic">
-                                    <span>Bancale</span>
-                                    <span>- € {{ number_format($bancaleCost, 2) }}</span>
+                                    <span>Addebito Bancale</span>
+                                    <span>- € {{ number_format($this->liquidation['money']['bancale'], 2, ',', '.') }}</span>
                                 </div>
                             @endif
 
-                            <div class="pt-3 border-t border-white/10 flex justify-between items-center">
-                                <span class="text-[10px] font-black uppercase text-indigo-400 italic">Netto Ricevere</span>
-                                <span class="text-3xl font-black italic tracking-tighter {{ $this->getFinalCash() > 0 ? 'text-emerald-400' : 'text-rose-500' }}">
-                                    € {{ number_format($this->getFinalCash(), 2) }}
+                            <div class="pt-4 border-t border-white/10 flex justify-between items-center">
+                                <div class="flex flex-col">
+                                    <span class="text-[10px] font-black uppercase text-indigo-400 italic">Netto Ricevere</span>
+                                    <span class="text-[6px] text-slate-500 uppercase font-bold tracking-widest">Esclusi crediti futuri</span>
+                                </div>
+                                <span class="text-3xl font-black italic tracking-tighter {{ $this->liquidation['money']['netto'] >= 0 ? 'text-emerald-400' : 'text-rose-500' }}">
+                                    € {{ number_format($this->liquidation['money']['netto'], 2, ',', '.') }}
                                 </span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="p-4 bg-slate-50 border-t border-slate-100 shrink-0">
-                    <button wire:click="closeModal"
-                            class="w-full py-3 bg-white border border-slate-200 text-slate-500 rounded-xl font-black uppercase text-[10px] hover:bg-slate-100 transition-colors shadow-sm">
-                        Chiudi scontrino
-                    </button>
+                {{-- Footer con Link di Stampa --}}
+                <div class="p-4 bg-slate-50 border-t border-slate-100 flex gap-2 shrink-0">
+                    <a href="{{ route('print.receipt', [
+                            'license'    => $license['user']['license_number'] ?? 'N/D',
+                            'date'       => now()->format('d/m/Y H:i'),
+                            'op'         => auth()->user()->name,
+                            'n_count'    => $this->liquidation['counts']['n'],
+                            'x_count'    => $this->liquidation['counts']['x'],
+                            'wallet_diff'=> number_format($this->liquidation['money']['wallet_diff'], 2, ',', '.'),
+                            'shared_ff'  => $this->liquidation['counts']['shared'],
+                            'shared_vouchers' => $this->liquidation['lists']['shared_vouchers'],
+                            'agencies'   => $this->liquidation['lists']['agencies'],
+                            'bancale'    => number_format($this->liquidation['money']['bancale'], 2, ',', '.'),
+                            'final'      => number_format($this->liquidation['money']['netto'], 2, ',', '.')
+                        ]) }}" 
+                       target="_blank"
+                       class="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-black uppercase text-[10px] text-center shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" stroke-width="2.5"/></svg>
+                        Stampa Scontrino
+                    </a>
+                    <button wire:click="closeModal" class="flex-1 py-3 bg-white border border-slate-200 text-slate-500 rounded-xl font-black uppercase text-[10px]">Chiudi</button>
                 </div>
             </div>
         </div>
     @endif
-    @push('custom_css')
-        <style>
-            .custom-scrollbar::-webkit-scrollbar { width: 3px; }
-            .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        </style>
-    @endpush
 </div>

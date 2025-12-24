@@ -23,6 +23,11 @@ Route::group(
                 Route::view('agency-manager', 'livewire.pages.agency-manager')->name('agency-manager');
                 Route::view('table-manager', 'livewire.pages.table-manager')->name('table-manager');
                 Route::get('generate-pdf', [PdfController::class, 'generate'])->name('generate.pdf');
+                Route::get('/print-receipt/{license}', function ($licenseId) {
+                    // Qui recuperi i dati della licenza dal database
+                    // e restituisci una vista Blade pulita
+                    return view('print.thermal', ['id' => $licenseId]);
+                })->name('print.receipt');
     });
 
     // Solo Admin
@@ -34,7 +39,7 @@ Route::group(
 
     });
 
-    Route::view('test','test')->name('test');
+   // Route::view('test','test')->name('test');
 
 require __DIR__.'/auth.php';
 

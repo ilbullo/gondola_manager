@@ -10,5 +10,8 @@ return [
         'morning_end'     => '13:30',
         'afternoon_start' => '13:31',
     ],
+    'labels'    => [
+        'shared_from_first' => 'Ufficio'
+    ],
     'max_users_in_table'    => 25
 ];

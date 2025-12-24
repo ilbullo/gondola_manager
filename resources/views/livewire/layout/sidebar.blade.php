@@ -122,7 +122,7 @@
                 {{-- UFFICIO --}}
                 <div class="bg-white/5 rounded-2xl p-5 border border-white/5">
                     <div class="flex items-center gap-2 mb-2">
-                        <span class="px-2 py-0.5 bg-indigo-500 text-[9px] font-black rounded uppercase">Ufficio</span>
+                        <span class="px-2 py-0.5 bg-indigo-500 text-[9px] font-black rounded uppercase">{{ config('app_settings.labels.shared_from_first') }}</span>
                     </div>
                     <p class="text-slate-300 text-sm leading-relaxed">
                         Seleziona il lavoro <strong class="text-white">Cash (X)</strong>. Nel campo voucher scrivi l'<strong>agenzia</strong> o il nome del <strong>capogruppo</strong>. Infine, attiva il tasto <span class="text-yellow-300 font-bold uppercase text-xs">"1°"</span> (Ripartito dal 1°).

@@ -7,49 +7,48 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Livewire\Attributes\On;
 use Livewire\Component;
-use Livewire\Attributes\Base;
+use App\Services\LiquidationService;
+use Carbon\Carbon;
 
 class TableSplitter extends Component
 {
     /**
-     * Costo del bancale, sottratto dal totale in fase di stampa PDF.
+     * Costo del bancale, inserito all'apertura del componente.
      */
     public float $bancaleCost = 0.0;
 
-
-    public bool $showBancaleModal = true;   // Modale visibile all'avvio
+    /**
+     * Stato del modale iniziale per il costo bancale.
+     */
+    public bool $showBancaleModal = true;
 
     /**
-     * Matrice principale delle licenze con gli slot assegnati.
-     * Popolata dalla MatrixSplitterService.
+     * Matrice delle licenze e dei lavori assegnati.
      */
     public array $matrix = [];
 
     /**
-     * Lavori non assegnati presenti nella giornata corrente.
-     * Trovati dal MatrixSplitterService.
+     * Lavori che non sono ancora stati assegnati a nessuna licenza.
      */
     public array $unassignedWorks = [];
 
     /**
-     * Lavoro selezionato dall’utente per essere assegnato.
-     * Null se non è selezionato nulla.
+     * Lavoro attualmente selezionato per l'assegnazione manuale.
      */
     public ?array $selectedWork = null;
 
     // ======================================================================
-    // Lifecycle
+    // Lifecycle & Initialization
     // ======================================================================
 
-    /**
-     * Carica la matrice iniziale all’avvio del componente.
-     */
     public function mount(): void
     {
         $this->showBancaleModal = true;
-        //$this->loadMatrix();
     }
 
+    /**
+     * Conferma il costo del bancale e carica la matrice.
+     */
     public function confirmBancaleCost(): void
     {
         $cost = (float) str_replace(',', '.', $this->bancaleCost);
@@ -62,22 +61,21 @@ class TableSplitter extends Component
         $this->bancaleCost = $cost;
         $this->showBancaleModal = false;
 
-        // Ora carichiamo la matrice
         $this->loadMatrix();
 
         $this->dispatch('notify-success', [
-            'message' => "Costo bancale impostato a €{$cost}"
+            'message' => "Costo bancale impostato a €" . number_format($cost, 2, ',', '.')
         ]);
     }
 
     public function closeBancaleModal(): void
     {
         $this->showBancaleModal = false;
-        $this->loadMatrix(); // Opzionale: se vuoi chiudere senza inserire
+        $this->loadMatrix();
     }
+
     /**
-     * Prepara la matrice completa leggendo la tabella delle licenze,
-     * trasformandola tramite il MatrixSplitterService.
+     * Recupera i dati dal DB e li trasforma tramite MatrixSplitterService.
      */
     public function loadMatrix(): void
     {
@@ -91,10 +89,7 @@ class TableSplitter extends Component
             ->orderBy('order')
             ->get();
 
-        // Converte i modelli in array normalizzati con la risorsa
         $licenseTable = \App\Http\Resources\LicenseResource::collection($licenses)->resolve();
-
-        // Passaggio attraverso il servizio di splitting
         $service = new \App\Services\MatrixSplitterService($licenseTable);
 
         $this->matrix = $service->matrix->toArray();
@@ -103,12 +98,9 @@ class TableSplitter extends Component
     }
 
     // ======================================================================
-    // Eventi Livewire
+    // Eventi & Redistribuzione
     // ======================================================================
 
-    /**
-     * Rigenera la matrice quando viene emesso l'evento di redistribuzione.
-     */
     #[On('callRedistributeWorks')]
     public function generateTable(): void
     {
@@ -117,12 +109,9 @@ class TableSplitter extends Component
     }
 
     // ======================================================================
-    // Gestione rimozione lavori da slot
+    // Gestione Lavori (Assegnazione / Rimozione)
     // ======================================================================
 
-    /**
-     * Apre un modal di conferma per rimuovere un lavoro da uno slot.
-     */
     public function removeWork($licenseKey, $slotIndex): void
     {
         $work = $this->matrix[$licenseKey]['worksMap'][$slotIndex] ?? null;
@@ -139,36 +128,19 @@ class TableSplitter extends Component
         ]);
     }
 
-    /**
-     * Conferma la rimozione del lavoro:
-     * - libera lo slot
-     * - rimette il lavoro nei "non assegnati"
-     */
     #[On('confirmed-remove')]
     public function confirmedRemove(array $payload): void
     {
         $licenseKey = $payload['licenseKey'];
         $slotIndex  = $payload['slotIndex'];
-        $work       = $payload['work'];
-
-        // Svuota lo slot nella matrice
+        
+        $this->unassignedWorks[] = $this->matrix[$licenseKey]['worksMap'][$slotIndex];
         $this->matrix[$licenseKey]['worksMap'][$slotIndex] = null;
-
-        // Riaggiunge il lavoro ai non assegnati
-        $this->unassignedWorks[] = $work;
 
         $this->dispatch('notify-success', ['message' => 'Lavoro rimosso correttamente']);
         $this->dispatch('matrix-updated');
     }
 
-    // ======================================================================
-    // Gestione selezione / assegnazione lavori
-    // ======================================================================
-
-    /**
-     * Seleziona un lavoro dalla lista non assegnata.
-     * Toggle: se cliccato di nuovo viene deselezionato.
-     */
     public function selectUnassignedWork(int $index): void
     {
         $work = $this->unassignedWorks[$index] ?? null;
@@ -182,54 +154,29 @@ class TableSplitter extends Component
         $this->dispatch('work-selected');
     }
 
-    /**
-     * Deseleziona il lavoro attualmente selezionato.
-     */
     public function deselectWork(): void
     {
         $this->selectedWork = null;
         $this->dispatch('work-deselected');
     }
 
-    /**
-     * Assegna il lavoro selezionato ad uno slot libero della matrice.
-     */
     public function assignToSlot($licenseKey, $slotIndex): void
     {
-        if (!$this->selectedWork) {
-            $this->dispatch('notify', [
-                'message' => 'Seleziona un lavoro prima!',
-                'type' => 'warning'
-            ]);
-            return;
-        }
+        if (!$this->selectedWork) return;
 
         if (!is_null($this->matrix[$licenseKey]['worksMap'][$slotIndex] ?? null)) {
-            $this->dispatch('notify', [
-                'message' => 'Slot già occupato!',
-                'type' => 'error'
-            ]);
+            $this->dispatch('notify', ['message' => 'Slot già occupato!', 'type' => 'error']);
             return;
         }
 
-        // Assegna il lavoro
         $this->matrix[$licenseKey]['worksMap'][$slotIndex] = $this->selectedWork;
-
-        // Rimuove il lavoro dalla lista dei non assegnati
-        $this->unassignedWorks = array_filter(
-            $this->unassignedWorks,
-            fn ($w) => !$this->areWorksEqual($w, $this->selectedWork)
-        );
-
+        $this->unassignedWorks = array_filter($this->unassignedWorks, fn ($w) => !$this->areWorksEqual($w, $this->selectedWork));
         $this->selectedWork = null;
 
         $this->dispatch('matrix-updated');
         $this->dispatch('work-deselected');
     }
 
-    /**
-     * Confronta due lavori verificando che abbiano lo stesso id.
-     */
     private function areWorksEqual(?array $a, ?array $b): bool
     {
         if ($a === null || $b === null) return false;
@@ -237,179 +184,115 @@ class TableSplitter extends Component
     }
 
     // ======================================================================
-    // Esportazione PDF
+    // Esportazione PDF & Reportistica
     // ======================================================================
 
     /**
-     * Stampa PDF della tabella di ripartizione lavori.
-     * I dati vengono messi in sessione e letti dal controller PDF.
+     * Genera la sessione per il PDF della tabella di ripartizione.
+     * Utilizza LiquidationService per calcolare il netto di ogni licenza.
      */
-
     public function printSplitTable(): void
     {
-        $matrixData = collect($this->matrix)->map(function ($license) {
+        $defaultAmount = (float) config('app_settings.works.default_amount', 90.0);
+
+        $matrixData = collect($this->matrix)->map(function ($license) use ($defaultAmount) {
+            // Calcolo manuale della differenza Wallet specifica per riga
             $nCount = collect($license['worksMap'])->where('value', 'N')->count();
-            $pCount = collect($license['worksMap'])->where('value', 'P')->count();
-            $wallet = $license['wallet'] - $nCount * config('app_settings.works.default_amount');
+            $theoreticalFromN = $nCount * $defaultAmount;
+            $currentWallet = (float) ($license['wallet'] ?? 0);
+            $walletDiff = $theoreticalFromN - $currentWallet;
+
+            // Delega al Service per i calcoli economici finali
+            $liquidation = LiquidationService::calculate(
+                $license['worksMap'], 
+                $walletDiff, 
+                $this->bancaleCost
+            );
+
             return [
                 'license_number' => $license['user']['license_number'] ?? '—',
                 'worksMap'       => $license['worksMap'],
-                'slots'          => $license['slots'] ?? config('app_settings.matrix.total_slots'),
-                'n_count'        => $nCount,
-                'p_count'        => $pCount,
-                'occupied'       => collect($license['worksMap'])->filter()->count(),
-                'cash_total'     => collect($license['worksMap'])->where('value', 'X')->sum('amount') - $wallet ?? 0,
+                'n_count'        => $liquidation['counts']['n'],
+                'x_count'        => $liquidation['counts']['x'],
+                'shared_count'   => $liquidation['counts']['shared'],
+                'wallet_diff'    => $liquidation['money']['wallet_diff'],
+                'cash_netto'     => $liquidation['money']['netto'], // Totale da incassare oggi
             ];
-        })->sortBy('order')->values();
-
-        // Calcoli riepilogativi usati nel footer del PDF
-        $totalN       = $matrixData->sum('n_count');
-        $totalP       = $matrixData->sum('p_count');
-        $totalOccupied = $matrixData->sum('occupied');
-        $totalCash    = $matrixData->sum('cash_total') - $this->bancaleCost;
+        })->values();
 
         Session::flash('pdf_generate', [
-            'view'        => 'pdf.split-table',
-            'data'        => [
+            'view' => 'pdf.split-table',
+            'data' => [
                 'matrix'        => $matrixData,
                 'bancaleCost'   => $this->bancaleCost,
-                'totalN'        => $totalN,
-                'totalP'        => $totalP,
-                'totalOccupied' => $totalOccupied,
-                'totalCash'     => $totalCash,
+                'totalN'        => $matrixData->sum('n_count'),
+                'totalX'        => $matrixData->sum('x_count'),
+                'totalCash'     => $matrixData->sum('cash_netto'),
                 'generatedBy'   => Auth::user()->name,
                 'generatedAt'   => now()->format('d/m/Y H:i'),
-                'date'          => now()->format('d/m/Y'),
+                'date'          => today()->format('d/m/Y'),
             ],
-            'filename'     => 'ripartizione_lavori_' . now()->format('Ymd') . '.pdf',
+            'filename'     => 'ripartizione_' . today()->format('Ymd') . '.pdf',
             'orientation'  => 'landscape',
         ]);
 
         $this->redirectRoute('generate.pdf');
     }
 
-    /**
-     * Stampa PDF raggruppato per agenzia.
-     */
     public function printAgencyReport(): void
     {
         $agencyReport = $this->prepareAgencyReport();
 
         Session::flash('pdf_generate', [
-            'view'        => 'pdf.agency-report',
-            'data'        => [
+            'view' => 'pdf.agency-report',
+            'data' => [
                 'agencyReport'  => $agencyReport,
                 'generatedBy'   => Auth::user()->name,
-                'generatedAt'   => now()->format('d/m/Y H:i'),
                 'date'          => today()->format('d/m/Y'),
-                'totalLicenses' => collect($this->matrix)->count(),
+                'generatedAt'   => now()
             ],
-            'filename'     => 'report_agenzie_' . today()->format('Ymd') . '.pdf',
-            'orientation'  => 'portrait',
+            'filename' => 'report_agenzie_' . today()->format('Ymd') . '.pdf',
         ]);
 
         $this->redirectRoute('generate.pdf');
     }
 
-    /**
-     * Prepara una struttura dati raggruppata per Agenzia → Voucher → Orario,
-     * con elenco delle licenze coinvolte.
-     */
-private function prepareAgencyReport(): array
-{
-    $services = [];
+    private function prepareAgencyReport(): array
+    {
+        $services = [];
 
-    foreach ($this->matrix as $licenseRow) {
-        $licenseNumber = $licenseRow['user']['license_number'] ?? 'N/D';
+        foreach ($this->matrix as $licenseRow) {
+            $licenseNumber = $licenseRow['user']['license_number'] ?? 'N/D';
 
-        foreach ($licenseRow['worksMap'] as $work) {
-            if (empty($work) || ($work['value'] ?? '') !== 'A' || $work['shared_from_first']) continue;
+            foreach ($licenseRow['worksMap'] as $work) {
+                if (empty($work) || ($work['value'] ?? '') !== 'A' || $work['shared_from_first']) continue;
 
-            $agencyName = $work['agency']['name']
-                ?? $work['agency_name']
-                ?? $work['agency']
-                ?? 'Agenzia sconosciuta';
+                $agencyName = $work['agency']['name'] ?? $work['agency'] ?? 'Sconosciuta';
+                $voucher = trim($work['voucher'] ?? '') ?: '–';
+                $timeObj = Carbon::parse($work['timestamp'] ?? now());
 
-            $voucher = trim($work['voucher'] ?? '') ?: '–';
-            $timeObj = \Carbon\Carbon::parse($work['timestamp'] ?? now());
+                // Logica di raggruppamento voucher o prossimità (5 min)
+                $key = ($voucher !== '–') ? $agencyName . '|V:' . $voucher : $agencyName . '|T:' . $timeObj->format('H:i');
 
-            if ($voucher !== '–') {
-                // Gruppo voucher → chiave basata su voucher
-                $key = $agencyName . '|voucher:' . $voucher;
-                $timeStr = $timeObj->format('H:i'); // verrà corretto al min
-            } else {
-                // Gruppi senza voucher → ricerca se esiste già un gruppo entro 5 minuti
-                $foundKey = null;
-                foreach ($services as $k => $group) {
-                    if ($group['voucher'] === '–' && $group['agency_name'] === $agencyName) {
-                        $groupTime = \Carbon\Carbon::parse($group['time']);
-                        if (abs($timeObj->diffInMinutes($groupTime)) <= 5) {
-                            $foundKey = $k;
-                            break;
-                        }
-                    }
+                if (!isset($services[$key])) {
+                    $services[$key] = [
+                        'agency_name' => $agencyName,
+                        'voucher'     => $voucher,
+                        'time'        => $timeObj->format('H:i'),
+                        'licenses'    => [],
+                        'count'       => 0,
+                    ];
                 }
 
-                if ($foundKey !== null) {
-                    $key = $foundKey;
-                    $timeStr = $services[$key]['time']; // mantieni l'orario originale del gruppo
-                } else {
-                    // nuovo gruppo
-                    $key = $agencyName . '|time:' . $timeObj->format('H:i');
-                    $timeStr = $timeObj->format('H:i');
-                }
+                $services[$key]['licenses'][] = $licenseNumber;
+                $services[$key]['count']++;
             }
-
-            // Inizializzazione gruppo
-            if (!isset($services[$key])) {
-                $services[$key] = [
-                    'agency_name' => $agencyName,
-                    'voucher'     => $voucher,
-                    'time'        => $timeStr,
-                    'licenses'    => [],
-                    'count'       => 0,
-                    'all_times'   => [], // utile solo per voucher
-                ];
-            }
-
-            // Aggiunge licenza (duplicati ammessi)
-            $services[$key]['licenses'][] = $licenseNumber;
-
-            // Memorizza l’orario reale (solo voucher)
-            $services[$key]['all_times'][] = $timeObj->format('H:i');
-
-            // Incrementa conteggio servizi
-            $services[$key]['count']++;
         }
+
+        uasort($services, fn($a, $b) => strtotime($a['time']) <=> strtotime($b['time']));
+        return array_values($services);
     }
 
-    // Post-processing finale
-    foreach ($services as &$group) {
-        if ($group['voucher'] !== '–') {
-            // Gruppi voucher → mostra solo l'orario più piccolo
-            $group['time'] = collect($group['all_times'])->min();
-        }
-        unset($group['all_times']); // rimuovo campo tecnico
-    }
-
-    // Ordinamento finale per orario
-    uasort($services, fn($a, $b) => strtotime($a['time']) <=> strtotime($b['time']));
-
-    return array_values($services);
-}
-
-
-
-
-
-
-    // ======================================================================
-    // Render
-    // ======================================================================
-
-    /**
-     * Render della vista del Table Splitter.
-     */
     public function render()
     {
         return view('livewire.table-manager.matrix-preview');

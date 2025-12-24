@@ -18,7 +18,7 @@ class AgencyWorkFactory extends Factory
             'user_id' => User::factory(),
             'agency_id' => Agency::factory(),
             'voucher' => $this->faker->uuid,
-            'amount'   => 90
+            'amount'   => config('app_settings.works.default_amount')
         ];
     }
 }

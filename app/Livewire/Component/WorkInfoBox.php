@@ -57,7 +57,7 @@ class WorkInfoBox extends Component
         $this->label = $data['label'] ?? '';
         $this->voucher = $data['voucher'] ?? '';
         $this->agencyName = $data['agencyName'] ?? null;
-        $this->amount = $data['amount'] ?? 90; // valore di default 90 se non presente
+        $this->amount = $data['amount'] ?? config('app_settings.works.default_amount'); // valore di default 90 se non presente
         $this->slotsOccupied = $data['slotsOccupied'] ?? 1; // default 1 slot
         $this->sharedFromFirst = $data['sharedFromFirst'] ?? false;
         $this->excluded = $data['excluded'] ?? false;

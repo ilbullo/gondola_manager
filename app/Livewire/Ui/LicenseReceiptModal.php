@@ -123,7 +123,7 @@ class LicenseReceiptModal extends Component
      */
     public function getWalletAmount()
     {
-        return ($this->getNCount() * 90) - $this->license['wallet'];
+        return ($this->getNCount() * config('app_settings.works.default_amount')) - $this->license['wallet'];
     }
 
     /**

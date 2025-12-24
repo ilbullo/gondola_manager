@@ -250,7 +250,7 @@ class TableSplitter extends Component
         $matrixData = collect($this->matrix)->map(function ($license) {
             $nCount = collect($license['worksMap'])->where('value', 'N')->count();
             $pCount = collect($license['worksMap'])->where('value', 'P')->count();
-            $wallet = $license['wallet'] - $nCount * 90;
+            $wallet = $license['wallet'] - $nCount * config('app_settings.works.default_amount');
             return [
                 'license_number' => $license['user']['license_number'] ?? '—',
                 'worksMap'       => $license['worksMap'],

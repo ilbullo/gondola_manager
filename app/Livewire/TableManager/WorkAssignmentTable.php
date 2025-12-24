@@ -199,7 +199,7 @@ class WorkAssignmentTable extends Component
                 'agency_id'         => $agencyId,
                 'slot'              => $slot,
                 'value'             => $this->selectedWork['value'],
-                'amount'            => $this->selectedWork['amount'] ?? 90,
+                'amount'            => $this->selectedWork['amount'] ?? config('app_settings.works.default_amount'),
                 'voucher'           => $this->selectedWork['voucher'] ?? null,
                 'slots_occupied'    => $slotsOccupied,
                 'excluded'          => $this->selectedWork['excluded'] ?? false,

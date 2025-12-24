@@ -20,7 +20,7 @@ class WorkDetailsModal extends Component
      * Default comune ai nuovi job.
      * @var float|int
      */
-    public float|int $amount = 90;
+    public float|int $amount;
 
     /**
      * Numero di slot occupati dal lavoro (1–4).
@@ -45,6 +45,10 @@ class WorkDetailsModal extends Component
      * @var bool
      */
     public bool $sharedFromFirst = false;
+
+    public function __construct() {
+        $this->amount = config('app_settings.works.default_amount');
+    }
 
     // === Regole di validazione ===
     /**
@@ -86,7 +90,7 @@ class WorkDetailsModal extends Component
     public function updateFromSelectedWork(array $work): void
     {
         $this->value            = $work['value'] ?? "X";
-        $this->amount           = $work['amount'] ?? 90;
+        $this->amount           = $work['amount'] ?? config('app_settings.works.default_amount');
         $this->slotsOccupied    = $work['slotsOccupied'] ?? 1;
         $this->excluded         = $work['excluded'] ?? false;
         $this->sharedFromFirst  = $work['sharedFromFirst'] ?? false;
@@ -130,7 +134,7 @@ class WorkDetailsModal extends Component
      */
     private function resetForm(): void
     {
-        $this->amount           = 90;
+        $this->amount           = config('app_settings.works.default_amount');
         $this->slotsOccupied    = 1;
         $this->excluded         = false;
         $this->sharedFromFirst  = false;

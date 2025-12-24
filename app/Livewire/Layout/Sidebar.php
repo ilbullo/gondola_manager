@@ -90,7 +90,7 @@ class Sidebar extends Component
     /**
      * Evento chiamato quando viene selezionata un’agenzia dal modal.
      */
-    #[On('selectAgency')]
+    #[On('agencySelected')]
     public function selectAgency(int $agencyId): void
     {
         // Usa toBase() o find() ma assicurati di aggiornare anche il tipo
@@ -167,9 +167,8 @@ class Sidebar extends Component
      */
     protected function handleAgencySelection(): void
     {
-        $agencies = cache()->remember('agencies_list', 3600, fn() => Agency::orderBy('name')->toBase()->get(['id', 'name', 'code'])->toArray());
         //$agencies = Agency::orderBy('name')->toBase()->get(['id', 'name', 'code'])->toArray();
-        $this->dispatch('toggleAgencyModal', true, $agencies);
+        $this->dispatch('toggleAgencyModal', true);
     }
 
     // ===================================================================

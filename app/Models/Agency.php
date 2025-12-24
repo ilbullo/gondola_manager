@@ -35,6 +35,11 @@ class Agency extends Model
         static::addGlobalScope('order', function (Builder $builder) {
             $builder->orderBy('name', 'asc');
         });
+
+        //cancella cache in caso di cambiamenti
+        static::saved(fn() => cache()->forget('agencies_list'));
+        static::deleted(fn() => cache()->forget('agencies_list'));
+        static::restored(fn() => cache()->forget('agencies_list'));
     }
 
     // ===================================================================
@@ -68,4 +73,5 @@ class Agency extends Model
     {
         return "{$this->name} ({$this->code})";
     }
+    
 }

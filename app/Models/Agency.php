@@ -73,5 +73,15 @@ class Agency extends Model
     {
         return "{$this->name} ({$this->code})";
     }
+
+    /**
+     * Trova l'agenzia dal codice
+     * @param String $code
+     */
+
+    public static function findByCode(?string $code): ?self
+    {
+        return $code ? static::where('code', $code)->first() : null;
+    }
     
 }

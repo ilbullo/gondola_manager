@@ -176,12 +176,10 @@
                                                 @endif
 
                                                 @if ($work['excluded'] ?? false)
-                                                    <div class="absolute -top-1 -left-1 w-3 h-3 bg-rose-600 border border-white rounded-full flex items-center justify-center"><div class="w-1.5 h-0.5 bg-white rounded-full"></div></div>
+                                                    <x-badge name="excluded" title="Escluso dalla ripartizione" />
                                                 @endif
                                                 @if ($work['shared_from_first'] ?? false)
-                                                    <div class="absolute -top-1 -right-1 w-3 h-3 bg-emerald-400 border border-white rounded-full flex items-center justify-center">
-                                                        <svg class="w-1.5 h-1.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 7h8m0 0l-4-4m4 4l-4 4" stroke-width="4"/></svg>
-                                                    </div>
+                                                    <x-badge name="shared_ff" title="Condiviso dal primo" />
                                                 @endif
                                             </div>
                                         @else

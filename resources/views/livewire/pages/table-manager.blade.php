@@ -1,12 +1,13 @@
-<x-tm>
-        @livewire('table-manager.table-manager')
+<x-table-manager-layout>
+        
+    @livewire('table-manager.table-manager')
 
-        @push('modals')
-            @livewire('ui.agency-modal')
-            @livewire('ui.work-details-modal')
-            @livewire('ui.work-live-info-modal')
-            @livewire('ui.modal-confirm')
+    @push('modals')
+        @livewire('ui.agency-modal')
+        @livewire('ui.work-details-modal')
+        @livewire('ui.work-live-info-modal')
+        @livewire('ui.modal-confirm')
 
-        @endpush
+    @endpush
 
-</x-tm>
+</x-table-manager-layout>

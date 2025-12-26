@@ -17,7 +17,8 @@ class LiquidationService
         $agencies = $worksColl->where('value', 'A');
 
         // 2. Calcolo Economico Reale (Solo Cassa di oggi)
-        $valoreX = $cashXStandard->count() * $unitPrice;
+        //$valoreX = $cashXStandard->count() * $unitPrice;
+        $valoreX = $cashXStandard->sum('amount');
         
         // Netto = (X oggi) + (Conguaglio Wallet) - (Costo Bancale)
         $nettoOggi = $valoreX + $walletDifference - $bancaleCost;

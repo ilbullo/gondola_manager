@@ -139,10 +139,24 @@ class MatrixSplitterService
             $this->matrix[$licenseIndex] = $license;
         }
 
+        // Compattamento finale per visualizzazione
+        $this->matrix = $this->matrix->map(function ($license) {
+            $works = collect($license['worksMap'])->filter()->values()->all();
+            
+            // Riempie fino a 25 partendo dall'indice 1
+            $compacted = [];
+            for ($i = 1; $i <= 25; $i++) {
+                $compacted[$i] = $works[$i - 1] ?? null;
+            }
+            
+            $license['worksMap'] = $compacted;
+            return $license;
+        });
+
         // Salva la matrice aggiornata
         $this->saveMatrix($this->matrix->all());
 
-
+        
         // Ordinamento visivo finale – rende la matrice bellissima per l'utente
         //$this->sortMatrixRows();
     }

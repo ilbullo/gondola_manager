@@ -265,7 +265,8 @@ class TableSplitter extends Component
             $licenseNumber = $licenseRow['user']['license_number'] ?? 'N/D';
 
             foreach ($licenseRow['worksMap'] as $work) {
-                if (empty($work) || ($work['value'] ?? '') !== 'A' || $work['shared_from_first']) continue;
+//                if (empty($work) || ($work['value'] ?? '') !== 'A' || $work['shared_from_first']) continue;
+                if (empty($work) || ($work['value'] ?? '') !== 'A' ) continue;
 
                 $agencyName = $work['agency']['name'] ?? $work['agency'] ?? 'Sconosciuta';
                 $voucher = trim($work['voucher'] ?? '') ?: '–';

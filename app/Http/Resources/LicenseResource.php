@@ -17,7 +17,7 @@ class LicenseResource extends JsonResource
         return [
             // Identificatori
             'id'                => $this->id,
-            'license_table_id'  => $this->id, // Mantenuto per retrocompatibilità con frontend esistente
+           // 'license_table_id'  => $this->id, // Mantenuto per retrocompatibilità con frontend esistente
 
             // Informazioni sull'utente assegnatario
             'user' => $this->whenLoaded('user', function () {

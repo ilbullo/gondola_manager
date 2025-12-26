@@ -201,8 +201,8 @@ trait MatrixDistribution
      * Calcola la capacità residua per una licenza.
      * Ora limitata da 'target_capacity' anziché dal totale degli slot fisici (25).
      *
-     * @param int|string $key La chiave (indice array o license_table_id) della licenza nella matrice.
-     * @param bool $isFixed Se true, usa la chiave come license_table_id (usato in distributeFixed).
+     * @param int|string $key La chiave (indice array o id) della licenza nella matrice.
+     * @param bool $isFixed Se true, usa la chiave come id (usato in distributeFixed).
      * @param bool $useTargetLimit Se TRUE, il limite massimo è target_capacity. Altrimenti è 25.
      * @return int La capacità residua (slot liberi).
      */
@@ -221,7 +221,7 @@ trait MatrixDistribution
         }
         
         // 2. Determina la capacità MASSIMA (il denominatore corretto)
-        $numberOfPWorks = $this->pendingPWorks()->where('license_table_id',$license['license_table_id'])->count();
+        $numberOfPWorks = $this->pendingPWorks()->where('license_table_id',$license['id'])->count();
         $targetCapacity = $license['target_capacity'] - $numberOfPWorks ?? 0;
 
         // Se stiamo usando il limite target, usiamo quello.
@@ -465,7 +465,7 @@ trait MatrixDistribution
  */
 public function distributeFixed(Collection $worksToAssign): void
     {
-        $this->matrix = $this->matrix->keyBy('license_table_id');
+        $this->matrix = $this->matrix->keyBy('id');
 
         foreach ($worksToAssign as $work) {
             $licenseId = $work['license_table_id'] ?? null;

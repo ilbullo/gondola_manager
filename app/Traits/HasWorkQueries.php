@@ -44,8 +44,6 @@ trait HasWorkQueries
         $this->cachedAllWorks = $works
             ->groupBy('id') // Raggruppa i duplicati con lo stesso ID
             ->map(fn (Collection $group) => $group->first()) // Prendi solo il primo lavoro del gruppo (contiene slots_occupied corretto)
-            //->sortByDesc('slots_occupied') // Ordina come richiesto
-            //->sortBy('timestamp')
             ->sortBy([
                 // Primo criterio: slots_occupied decrescente (più slot in alto)
                 ['slots_occupied', 'desc'],
@@ -56,41 +54,6 @@ trait HasWorkQueries
         
         return $this->cachedAllWorks;
     }
-/*
-   public function allWorks(): Collection
-    {
-        if ($this->cachedAllWorks !== null) {
-            return $this->cachedAllWorks;
-        }
-
-        $this->cachedAllWorks = collect($this->licenseTable)
-            ->flatMap(fn ($license) => $license['worksMap'] ?? [])
-            ->filter()
-            // Deduplicazione: prendi il lavoro completo (quello non continuation)
-            ->filter(fn ($work) => !($work['is_continuation'] ?? false))
-            // Ordinamento: prima slots_occupied DESC, poi timestamp ASC
-            ->sort(function ($a, $b) {
-                $slotsA = $a['slots_occupied'] ?? 1;
-                $slotsB = $b['slots_occupied'] ?? 1;
-
-                if ($slotsA !== $slotsB) {
-                    return $slotsB <=> $slotsA; // DESC su slots_occupied
-                }
-
-                $timeA = $a['timestamp'] instanceof \Carbon\Carbon
-                    ? $a['timestamp']->timestamp
-                    : strtotime($a['timestamp'] ?? 'now');
-
-                $timeB = $b['timestamp'] instanceof \Carbon\Carbon
-                    ? $b['timestamp']->timestamp
-                    : strtotime($b['timestamp'] ?? 'now');
-
-                return $timeA <=> $timeB; // ASC su timestamp
-            })
-            ->values();
-
-        return $this->cachedAllWorks;
-    }*/
 
     /** Lavori condivisibili e non esclusi */
     public function sharableWorks(): Collection
@@ -197,7 +160,6 @@ trait HasWorkQueries
         // Riga vuota template
         $emptyRow = [
             'id'                => null,
-            'license_table_id'  => null,
             'user'              => null,
             'turn'              => DayType::FULL->value,
             'real_slots_today'  => $totalSlots,
@@ -216,7 +178,6 @@ trait HasWorkQueries
         foreach ($this->licenseTable ?? [] as $index => $license) {
             $this->matrix[$index] = array_merge($this->matrix[$index], [
                 'id'                    => $license['id'] ?? null,
-                'license_table_id'      => $license['id'] ?? null,
                 'user'                  => $license['user'] ?? null,
                 'turn'                  => $license['turn'] ?? DayType::FULL->value,
                 'only_cash_works'       => $license['only_cash_works'],

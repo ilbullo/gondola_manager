@@ -96,6 +96,7 @@
                             'op'         => auth()->user()->name,
                             'n_count'    => $this->liquidation['counts']['n'],
                             'x_count'    => $this->liquidation['counts']['x'],
+                            'x_amount'   => $this->liquidation['money']['valore_x'],
                             'wallet_diff'=> number_format($this->liquidation['money']['wallet_diff'], 2, ',', '.'),
                             'shared_ff'  => $this->liquidation['counts']['shared'],
                             'shared_vouchers' => $this->liquidation['lists']['shared_vouchers'],

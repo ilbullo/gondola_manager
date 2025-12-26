@@ -4,76 +4,147 @@
     <meta charset="UTF-8">
     <title>Scontrino Licenza {{ request('license') }}</title>
     <style>
-        @page { margin: 0; }
+        @page { 
+            margin: 0; 
+        }
         body { 
             font-family: 'Courier New', Courier, monospace; 
-            width: 72mm; padding: 4mm; margin: 0;
-            font-size: 12px; line-height: 1.3; color: #000;
+            width: 72mm; 
+            padding: 5mm 4mm; 
+            margin: 0;
+            font-size: 12px; 
+            line-height: 1.4; 
+            color: #000;
+            background-color: #fff;
         }
         .text-center { text-align: center; }
+        .text-right { text-align: right; }
         .bold { font-weight: bold; }
         .italic { font-style: italic; }
-        .border-b { border-bottom: 1px dashed #000; margin: 6px 0; }
-        .flex { display: flex; justify-content: space-between; align-items: flex-start; }
-        .total-box { font-size: 15px; margin-top: 10px; border-top: 2px solid #000; padding-top: 6px; }
-        .small { font-size: 10px; }
-        @media print { .no-print { display: none; } }
+        .uppercase { text-transform: uppercase; }
+        
+        /* Divider tratteggiato tipico delle stampanti termiche */
+        .divider { 
+            border-bottom: 1px dashed #000; 
+            margin: 8px 0; 
+            width: 100%;
+        }
+        
+        .flex { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: flex-start; 
+            gap: 4px;
+        }
+        
+        .header-title {
+            font-size: 16px;
+            line-height: 1.2;
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        .section-title {
+            font-size: 13px;
+            text-decoration: underline;
+            margin-top: 5px;
+            margin-bottom: 3px;
+        }
+
+        .total-box { 
+            font-size: 16px; 
+            margin-top: 12px; 
+            border-top: 1px solid #000; 
+            border-bottom: 1px solid #000;
+            padding: 8px 0; 
+        }
+
+        .small { font-size: 10px; line-height: 1.2; }
+        
+        /* Gestione nomi agenzia lunghi */
+        .item-name {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        @media print { 
+            .no-print { display: none; } 
+        }
     </style>
 </head>
 <body onload="window.print();" onafterprint="window.close();">
 
     <div class="text-center">
-        <span class="bold" style="font-size: 15px;">LIQUIDAZIONE TURNO</span><br>
+        <span class="bold header-title">LIQUIDAZIONE TURNO</span>
         <span class="bold">LICENZA N. {{ request('license') }}</span>
     </div>
 
-    <div class="border-b"></div>
+    <div class="divider"></div>
+    
     <div class="flex"><span>DATA:</span> <span class="bold">{{ request('date') }}</span></div>
-    <div class="flex"><span>OP:</span> <span class="bold">{{ request('op') }}</span></div>
-    <div class="border-b"></div>
+    <div class="flex"><span>OPERATORE:</span> <span class="bold">{{ request('op') }}</span></div>
+    
+    <div class="divider"></div>
 
     {{-- VOLUMI --}}
-    <div class="flex"><span>NOLI EFFETTIVI (N):</span> <span>{{ request('n_count') }}</span></div>
-    <div class="flex"><span>CONTANTI (X) OGGI:</span> <span>{{ request('x_count') }}</span></div>
+    <div class="flex"><span>NOLI EFFETTIVI (N):</span> <span class="bold">{{ request('n_count') }}</span></div>
+    <div class="flex"><span>CONTANTI (X):</span> <span class="bold">{{ request('x_count') }}</span></div>
 
     {{-- CREDITI FUTURI (Shared FF) --}}
     @if(request('shared_ff') > 0)
-        <div class="flex italic small"><span>di cui {{ config('app_settings.labels.shared_from_first') }}:</span> <span>{{ request('shared_ff') }}</span></div>
-        <div class="small italic" style="padding-left: 5px;">
-            Voucher {{ config('app_settings.labels.shared_from_first') }}: {{ implode(', ', (array)request('shared_vouchers')) }}
+        <div class="divider"></div>
+        <div class="flex bold uppercase">
+            <span>{{ config('app_settings.labels.shared_from_first') }}:</span> 
+            <span>{{ request('shared_ff') }}</span>
+        </div>
+        <div class="small italic" style="margin-top: 2px;">
+            Voucher: {{ implode(', ', (array)request('shared_vouchers')) }}
         </div>
     @endif
 
-    <div class="border-b"></div>
+    <div class="divider"></div>
 
-    {{-- AGENZIE (Crediti Futuri) --}}
+    {{-- AGENZIE --}}
     @if(request('agencies') && is_array(request('agencies')))
-        <div class="text-center bold small">AGENZIE (Crediti Futuri)</div>
+        <div class="bold section-title">RIEPILOGO AGENZIE</div>
         @foreach(request('agencies') as $name => $voucher)
-            <div class="flex small">
-                <span>{{ strtoupper(substr($name, 0, 18)) }}</span>
+            <div class="flex">
+                <span class="item-name">{{ strtoupper($name) }}</span>
                 <span class="bold">{{ $voucher ?: '---' }}</span>
             </div>
         @endforeach
-        <div class="border-b"></div>
+        <div class="divider"></div>
     @endif
 
-    {{-- CASSA --}}
-    <div class="flex"><span>CONGUAGLIO WALLET:</span> <span class="bold">{{ request('wallet_diff') }} €</span></div>
+    {{-- DETTAGLIO CASSA --}}
+    <div class="flex">
+        <span>TOTALE LAVORI CASH:</span> 
+        <span class="bold">{{ number_format((float)str_replace(',', '.', request('x_amount')), 2, ',', '.') }} €</span>
+    </div>
+    <div class="flex">
+        <span>CONGUAGLIO PORTAFOGLIO:</span> 
+        <span class="bold">{{ number_format((float)str_replace(',', '.', request('wallet_diff')), 2, ',', '.') }} €</span>
+    </div>
 
-    @if(request('bancale') && request('bancale') !== '0,00')
-        <div class="flex"><span>BANCALE:</span> <span class="bold">-{{ request('bancale') }} €</span></div>
+    @if(request('bancale') && request('bancale') != '0' && request('bancale') != '0,00')
+        <div class="flex">
+            <span>BANCALE:</span> 
+            <span class="bold">-{{ request('bancale') }} €</span>
+        </div>
     @endif
 
     <div class="flex total-box bold">
-        <span>NETTO DA CONSEGNARE:</span>
+        <span>NETTO PAGATO:</span>
         <span>{{ request('final') }} €</span>
     </div>
 
-    <div class="border-b" style="margin-top: 15px;"></div>
+    <div style="margin-top: 20px;"></div>
     <div class="text-center small italic">
-        I lavori 'N', 'A' e '{{ config('app_settings.labels.shared_from_first') }}' sono crediti/attività esclusi dal contante attuale.<br>
-        *** DOCUMENTO GESTIONALE ***
+        I lavori 'N', 'A' e '{{ config('app_settings.labels.shared_from_first') }}' sono crediti<br>
+        o attività esclusi dal contante attuale.<br>
+        <div class="bold" style="margin-top: 5px; font-style: normal;">*** DOCUMENTO GESTIONALE ***</div>
     </div>
 
 </body>

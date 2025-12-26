@@ -1,0 +1,157 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Services;
+
+use App\Enums\DayType;
+//use App\Models\WorkAssignment;
+use DateTimeInterface;
+use Illuminate\Support\Collection;
+use App\Contracts\WorkQueryInterface;
+
+class WorkQueryService implements WorkQueryInterface
+{
+    /**
+     * Estrae e deduplica tutti i lavori da una collezione di licenze.
+     */
+    public function allWorks(Collection|array $licenseTable): Collection
+    {
+        // Raccogli tutti i lavori non nulli dalle worksMap
+        $works = collect($licenseTable)
+            ->flatMap(fn ($license) => $license['worksMap'] ?? [])
+            ->filter();
+
+        // Raggruppa per ID, deduplica e ordina
+        return $works->groupBy('id')
+            ->map(fn (Collection $group) => $group->first())
+            ->sortBy([
+                ['slots_occupied', 'desc'],
+                ['timestamp', 'asc'],
+            ])
+            ->values();
+    }
+
+    /** Lavori condivisibili e non esclusi */
+    public function sharableWorks(Collection|array $licenseTable): Collection
+    {
+        return $this->allWorks($licenseTable)
+            ->where('excluded', false)
+            ->where('shared_from_first', false);
+    }
+
+    /** Lavori non condivisibili (esclusi) */
+    public function unsharableWorks(Collection|array $licenseTable): Collection
+    {
+        return $this->allWorks($licenseTable)
+            ->where('excluded', true)
+            ->where('shared_from_first', false);
+    }
+
+    /** Lavori condivisibili obbligatori nel primo slot */
+    public function sharableFirstWorks(Collection|array $licenseTable): Collection
+    {
+        return $this->allWorks($licenseTable)
+            ->where('excluded', false)
+            ->where('shared_from_first', true);
+    }
+
+    /** Lavori condivisibili obbligatori nel primo slot di tipo A */
+    public function sharableFirstAgencyWorks(Collection|array $licenseTable): Collection
+    {
+        return $this->sharableFirstWorks($licenseTable)
+            ->where('value','A');
+    }
+
+    /** Lavori condivisibili obbligatori nel primo slot di tipo X */
+    public function sharableFirstCashWorks(Collection|array $licenseTable): Collection 
+    {
+        return $this->sharableFirstWorks($licenseTable)
+            ->where('value','X');
+    }
+
+    /** Filtri specifici per tipologia e orario */
+    public function pendingMorningAgencyWorks(Collection|array $licenseTable): Collection
+    {
+        return $this->sharableWorks($licenseTable)
+            ->filter(fn ($work) => $this->isMorning($work))
+            ->where('value', 'A');
+    }
+
+    public function pendingAfternoonAgencyWorks(Collection|array $licenseTable): Collection
+    {
+        return $this->sharableWorks($licenseTable)
+            ->filter(fn ($work) => $this->isAfternoon($work))
+            ->where('value', 'A');
+    }
+
+    public function pendingCashWorks(Collection|array $licenseTable): Collection
+    {
+        return $this->sharableWorks($licenseTable)->where('value', 'X');
+    }
+
+    public function pendingNWorks(Collection|array $licenseTable): Collection
+    {
+        return $this->sharableWorks($licenseTable)->where('value', 'N');
+    }
+
+    public function pendingPWorks(Collection|array $licenseTable): Collection
+    {
+        return $this->sharableWorks($licenseTable)->where('value', 'P');
+    }
+
+    /**
+     * Inizializza la matrice vuota partendo dai dati delle licenze.
+     */
+    public function prepareMatrix(Collection|array $licenseTable): Collection
+    {
+        $totalSlots = config('app_settings.matrix.total_slots', 25);
+        
+        return collect($licenseTable)->map(function ($license) use ($totalSlots) {
+            return [
+                'id'                => $license['id'] ?? null,
+                'user'              => $license['user'] ?? null,
+                'turn'              => $license['turn'] ?? DayType::FULL->value,
+                'real_slots_today'  => $license['real_slots_today'] ?? $totalSlots,
+                'only_cash_works'   => $license['only_cash_works'] ?? false,
+                'target_capacity'   => $license['target_capacity'] ?? 0,
+                'slots_occupied'    => $license['slots_occupied'] ?? 0,
+                'wallet'            => $license['wallet'] ?? 0,
+                'worksMap'          => array_fill(0, $totalSlots, null),
+            ];
+        })->values();
+    }
+
+    // =====================================================================
+    // Helper Privati
+    // =====================================================================
+
+    private function isMorning(array $work): bool
+    {
+        $time = $this->extractTime($work) ?? '09:01';
+        return $time <= config('app_settings.matrix.morning_end');
+    }
+
+    private function isAfternoon(array $work): bool
+    {
+        $time = $this->extractTime($work) ?? '14:00';
+        return $time >= config('app_settings.matrix.afternoon_start');
+    }
+
+    private function extractTime(array $work): ?string
+    {
+        $ts = $work['timestamp'] ?? null;
+        if (!$ts) return null;
+
+        if ($ts instanceof DateTimeInterface) {
+            return $ts->format('H:i');
+        }
+
+        if (is_string($ts)) {
+            if (strlen($ts) >= 19) return substr($ts, 11, 5);
+            if (preg_match('/^(\d{2}:\d{2})/', $ts, $matches)) return $matches[1];
+        }
+
+        return null;
+    }
+}

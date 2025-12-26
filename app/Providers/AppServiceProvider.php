@@ -10,7 +10,11 @@ use Illuminate\Auth\Events\Login;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
-
+use Illuminate\Support\Facades\Auth;
+use App\Contracts\WorkQueryInterface;
+use App\Services\WorkQueryService;
+use App\Contracts\MatrixEngineInterface;
+use App\Services\MatrixEngineService;
 
 /** FIX FOR REGISTER POLICY INTELLIPHASE VS EDITOR
  * @method void registerPolicies()
@@ -37,7 +41,11 @@ class AppServiceProvider extends AuthServiceProvider
      */
     public function register(): void
     {
-        //
+        // Diciamo a Laravel: "Ogni volta che qualcuno chiede WorkQueryInterface, dagli WorkQueryService"
+        $this->app->bind(WorkQueryInterface::class, WorkQueryService::class);
+
+        // Facciamo lo stesso per il motore della matrice
+        $this->app->bind(MatrixEngineInterface::class, MatrixEngineService::class);
     }
 
     /**
@@ -84,9 +92,9 @@ class AppServiceProvider extends AuthServiceProvider
 
         view()->composer('*', function ($view) {
         $view->with([
-                'isAdmin'   => auth()->check() && auth()->user()->role === UserRole::ADMIN,
-                'isBancale' => auth()->check() && auth()->user()->role === UserRole::BANCALE,
-                'isUser'    => auth()->check() && auth()->user()->role === UserRole::USER,
+                'isAdmin'   => Auth::check() && Auth::user()->role === UserRole::ADMIN,
+                'isBancale' => Auth::check() && Auth::user()->role === UserRole::BANCALE,
+                'isUser'    => Auth::check() && Auth::user()->role === UserRole::USER,
             ]);
         });
 

@@ -1,164 +1,195 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Services;
+
+use App\Models\LicenseTable;
+use App\Enums\WorkType;
 use Illuminate\Support\Collection;
-use App\Traits\{HasWorkQueries, MatrixDistribution};
+use App\Contracts\{WorkQueryInterface, MatrixSplitterInterface, MatrixEngineInterface};
 
-class MatrixSplitterService
+class MatrixSplitterService implements MatrixSplitterInterface
 {
-    // ===================================================================
-    // Traits utilizzati
-    // ===================================================================
-    use HasWorkQueries;       // Contiene metodi per filtrare e preparare i lavori
-    use MatrixDistribution;   // Contiene logica per assegnare i lavori nella matrice
+    public Collection $matrix;
+    public Collection $unassignedWorks;
+    private Collection $licenseTable;
 
-    // ===================================================================
-    // Proprietà della classe
-    // ===================================================================
-    public $licenseTable = [];      // Array o Collection di licenze
-    public $matrix;                 // La matrice in cui vengono assegnati i lavori
-    public $unassignedWorks;        // Collezione di lavori non ancora assegnati
-    
-    // ===================================================================
-    // Costruttore
-    // ===================================================================
-    public function __construct(array|Collection $licenseTable)
+    public function __construct(
+        private WorkQueryInterface $queryService,    
+        private MatrixEngineInterface $engineService 
+    ) {
+        $this->unassignedWorks = collect();
+    }
+
+    /**
+     * Esegue la logica di splitting mantenendo l'ordine originale delle chiamate.
+     */
+    public function execute(array|Collection $licenseTable): Collection
     {
-        // Converte la Collection in array se necessario
-        $this->licenseTable = $licenseTable instanceof Collection
-            ? $licenseTable->toArray()
-            : $licenseTable;
-
-        // Inizializza i lavori non assegnati come collezione
-        $this->unassignedWorks = collect($this->unassignedWorks ?? []);
-
-        // ===================================================================
-        // Preparazione della matrice e distribuzione dei lavori
-        // ===================================================================
-
-        $this->prepareMatrix();  // Crea la matrice vuota basata sulle licenze
-
-        // Distribuzione dei lavori "fissi" di agenzia (non spostabili)
-        $this->distributeFixed($this->fixedAgencyWorks()->values());
-
-        //Distribuzione del lavori shared from first di tipo agenzia 
-        $this->distribute($this->sharableFirstAgencyWorks()->values(), true);
-
-        // Distribuzione lavori di agenzia mattina ancora pendenti
-        $this->distribute($this->pendingMorningAgencyWorks()->values());
-
-        // Distribuzione lavori di agenzia pomeriggio ancora pendenti
-        $this->distribute($this->pendingAfternoonAgencyWorks()->values());
-
-         // Distribuzione dei lavori "fissi" cash (non spostabili)
-        $this->distributeFixed($this->fixedCashWorks()->values());
-
-        //Distribuzione dei lavori shared from first di tipo cash
-        $this->distribute($this->sharableFirstCashWorks()->values(), true);
+        // Inizializzazione dati
+        $this->licenseTable = collect($licenseTable);
+        //tutti i lavori
+        $allWorks = $this->queryService->allWorks($this->licenseTable);
         
-        // Distribuzione lavori condivisibili (sharable) che occupano il primo slot
-        //$this->distribute($this->sharableFirstWorks()->values(), true);
+        // 1. Preparazione della matrice base (prepareMatrix)
+        $this->matrix = $this->queryService->prepareMatrix($this->licenseTable);
 
-        // Distribuzione lavori N (nolo) fissi
-        $this->distributeFixed($this->pendingNWorks());
+        // 2. Distribuzione dei lavori "fissi" di agenzia (distributeFixed + fixedAgencyWorks)
+        $this->engineService->distributeFixed(
+            $this->queryService->unsharableWorks($this->licenseTable)->where('value', 'A'),
+            $this->matrix,
+            $this->unassignedWorks,
+            $allWorks
+        );
 
-        // Distribuzione lavori in contanti
-        $this->distribute($this->pendingCashWorks());
+        // 3. Distribuzione shared from first agenzia
+        $this->engineService->distribute(
+            $this->queryService->sharableFirstAgencyWorks($this->licenseTable)->values(),
+            $this->matrix,
+            $this->unassignedWorks,
+            $allWorks,
+            true // useFirstSlotOnly
+        );
 
-        // Distribuzione lavori unassigned rimanenti
-        // Aggiunta di informazioni sui lavori di tipo NOLO
-        $this->unassignedWorks = $this->unassignedWorks->map(function ($work) {
-            if($work['value'] === \App\Enums\WorkType::NOLO->value) {
-                $work['unassigned'] = true;
-                $work['prev_license_number'] = \App\Models\LicenseTable::find($work['license_table_id'])->user->license_number ?? 'N/A';
-            }
-            return $work; 
-        });
+        // 4. Distribuzione lavori agenzia mattina pendenti
+        $this->engineService->distribute(
+            $this->queryService->pendingMorningAgencyWorks($this->licenseTable)->values(),
+            $this->matrix,
+            $this->unassignedWorks,
+            $allWorks
+        );
 
-        // Ordinamento speciale: tutti i lavori di tipo 'A' (agenzia) alla fine
-        $this->unassignedWorks = $this->unassignedWorks
-            ->sortBy(function ($work) {
-                return $work['value'] === 'A' ? 100 : 0;   // tutti gli A vanno alla fine
-            })
-            ->values();
-        
-        // === TENTATIVO DI ASSEGNAZIONE SICURO ===
+        // 5. Distribuzione lavori agenzia pomeriggio pendenti
+        $this->engineService->distribute(
+            $this->queryService->pendingAfternoonAgencyWorks($this->licenseTable)->values(),
+            $this->matrix,
+            $this->unassignedWorks,
+            $allWorks
+        );
+
+        // 6. Distribuzione dei lavori "fissi" cash
+        $this->engineService->distributeFixed(
+            $this->queryService->unsharableWorks($this->licenseTable)->where('value', 'X'),
+            $this->matrix,
+            $this->unassignedWorks,
+            $allWorks
+        );
+
+        // 7. Distribuzione shared from first cash
+        $this->engineService->distribute(
+            $this->queryService->sharableFirstCashWorks($this->licenseTable)->values(),
+            $this->matrix,
+            $this->unassignedWorks,
+            $allWorks,
+            true
+        );
+
+        // 8. Distribuzione lavori N (nolo) fissi
+        $this->engineService->distributeFixed(
+            $this->queryService->pendingNWorks($this->licenseTable),
+            $this->matrix,
+            $this->unassignedWorks,
+            $allWorks
+        );
+
+        // 9. Distribuzione lavori in contanti pendenti
+        $this->engineService->distribute(
+            $this->queryService->pendingCashWorks($this->licenseTable),
+            $this->matrix,
+            $this->unassignedWorks,
+            $allWorks
+        );
+
+        // 10. Aggiunta informazioni metadata NOLO su unassigned
+        $this->handleUnassignedMetadata();
+
+        // 11. TENTATIVO DI ASSEGNAZIONE SICURO
         if ($this->unassignedWorks->isNotEmpty()) {
-
-            // Passa una COPIA della collection
-            $worksToTry = $this->unassignedWorks->values(); // o clone, o ->values()
-
-            // Prova a distribuirli
-            $this->distribute($worksToTry);
-
-            // Ora $worksToTry contiene SOLO i lavori NON assegnati
-            // (quelli assegnati sono stati rimossi con shift())
-
-            // Aggiorna la proprietà con i soli non assegnati
+            $worksToTry = $this->unassignedWorks->values();
+            $this->engineService->distribute($worksToTry, $this->matrix, $this->unassignedWorks, $allWorks);
+            
+            // Aggiorna con i soli non assegnati (escludendo i P che gestiamo dopo)
             $this->unassignedWorks = $worksToTry->filter(fn ($work) => ($work['value'] ?? '') !== 'P')->values();
         }
 
-        //assegno alle rispettive licenze i lavori di tipo P
-        //$this->distributeFixed($this->pendingPWorks());
-        
-        // ======= AGGIUNTA DEI LAVORI DI TIPO P =============
-        foreach ($this->pendingPWorks() as $pWork) {
-            $licenseId = $pWork['license_table_id'];
+        // 12. AGGIUNTA DEI LAVORI DI TIPO P (Forzata)
+        $this->assignPWorks();
 
-            // Trova l'indice della licenza nella matrice
-            $licenseIndex = $this->matrix->search(function ($row) use ($licenseId) {
-                return $row['license_table_id'] == $licenseId;
-            });
+        // 13. Compattamento finale (Sposta i null alla fine)
+        $this->compactMatrix();
+
+        return $this->matrix;
+    }
+
+    /**
+     * Metadata per lavori NOLO non assegnati e ordinamento finale unassigned.
+     */
+    private function handleUnassignedMetadata(): void
+    {
+        $this->unassignedWorks = $this->unassignedWorks->map(function ($work) {
+            if ($work['value'] === WorkType::NOLO->value) {
+                $work['unassigned'] = true;
+                $work['prev_license_number'] = LicenseTable::find($work['license_table_id'])->user->license_number ?? 'N/A';
+            }
+            return $work;
+        });
+
+        // Ordinamento speciale: agenzie (A) alla fine della lista unassigned
+        $this->unassignedWorks = $this->unassignedWorks
+            ->sortBy(fn($work) => $work['value'] === 'A' ? 100 : 0)
+            ->values();
+    }
+
+    /**
+     * Logica specifica per i lavori P (Perdi Volta).
+     */
+    private function assignPWorks(): void
+    {
+        foreach ($this->queryService->pendingPWorks($this->licenseTable) as $pWork) {
+            $licenseId = $pWork['license_table_id'];
+            $licenseIndex = $this->matrix->search(fn($row) => $row['id'] == $licenseId);
 
             if ($licenseIndex === false) {
-                $this->addToUnassigned($pWork);  // Se licenza non trovata, mandalo in unassigned
+                $this->unassignedWorks->push($pWork);
                 continue;
             }
 
             $license = $this->matrix[$licenseIndex];
             $slotsNeeded = $pWork['slots_occupied'] ?? 1;
 
-            // Trova spazio consecutivo libero
-            $startSlot = $this->findConsecutiveFreeSlots($license['worksMap'], $slotsNeeded);
+            // Cerca spazio consecutivo libero
+            $startSlot = $this->engineService->findConsecutiveFreeSlots($license['worksMap'], $slotsNeeded);
 
-            // Se non c'è spazio consecutivo, forza in fondo
+            // Forza in fondo se non c'è spazio
             if ($startSlot === false) {
-                $occupiedCount = collect($license['worksMap'])->filter()->count();
-                $startSlot = $occupiedCount + 1;
+                $startSlot = collect($license['worksMap'])->filter()->count() + 1;
             }
 
-            // Assegna il P
             for ($i = 0; $i < $slotsNeeded; $i++) {
                 $license['worksMap'][$startSlot + $i] = $pWork;
             }
 
-            // Aggiorna slots_occupied
             $license['slots_occupied'] = collect($license['worksMap'])->filter()->count();
-
             $this->matrix[$licenseIndex] = $license;
         }
+    }
 
-        // Compattamento finale per visualizzazione
+    /**
+     * Compattamento finale per la visualizzazione (1-25).
+     */
+    private function compactMatrix(): void
+    {
         $this->matrix = $this->matrix->map(function ($license) {
             $works = collect($license['worksMap'])->filter()->values()->all();
-            
-            // Riempie fino a 25 partendo dall'indice 1
-            $compacted = [];
-            for ($i = 1; $i <= 25; $i++) {
-                $compacted[$i] = $works[$i - 1] ?? null;
+            $compacted = array_fill(1, 25, null);
+
+            foreach ($works as $index => $work) {
+                $compacted[$index + 1] = $work;
             }
             
             $license['worksMap'] = $compacted;
             return $license;
         });
-
-        // Salva la matrice aggiornata
-        $this->saveMatrix($this->matrix->all());
-
-        
-        // Ordinamento visivo finale – rende la matrice bellissima per l'utente
-        //$this->sortMatrixRows();
     }
-
 }

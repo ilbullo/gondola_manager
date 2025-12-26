@@ -89,9 +89,16 @@ class TableSplitter extends Component
             ->orderBy('order')
             ->get();
 
+        // 1. Trasformiamo i dati tramite la Resource
         $licenseTable = \App\Http\Resources\LicenseResource::collection($licenses)->resolve();
-        $service = new \App\Services\MatrixSplitterService($licenseTable);
 
+        // 2. Risolviamo il Service tramite il Container (Dependency Injection manuale)
+        $service = app(\App\Services\MatrixSplitterService::class);
+
+        // 3. Eseguiamo la logica passando i dati al metodo execute
+        $service->execute($licenseTable);
+
+        // 4. Aggiorniamo le proprietà del componente
         $this->matrix = $service->matrix->toArray();
         $this->unassignedWorks = $service->unassignedWorks->toArray();
         $this->selectedWork = null;

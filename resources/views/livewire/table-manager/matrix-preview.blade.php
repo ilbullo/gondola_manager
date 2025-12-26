@@ -111,6 +111,7 @@
                             <th class="p-4 text-[9px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-200 sticky left-0 bg-slate-50 z-40 w-24">Licenza</th>
                             <th class="p-4 text-[9px] font-black text-slate-400 uppercase border-b border-slate-200">N</th>
                             <th class="p-4 text-[9px] font-black text-slate-400 uppercase border-b border-slate-200">X</th>
+                            <th class="p-4 text-[9px] font-black text-slate-400 uppercase border-b border-slate-200">P</th>
                             <th class="p-4 text-[9px] font-black text-slate-400 uppercase border-b border-slate-200">Capacità</th>
                             <th class="p-4 text-[9px] font-black text-slate-400 uppercase border-b border-slate-200">Netto €</th>
                             @for ($i = 1; $i <= config('app_settings.matrix.total_slots'); $i++)
@@ -131,7 +132,6 @@
                                     $walletDiff, 
                                     $this->bancaleCost
                                 );
-
                                 $occupied = collect($license['worksMap'])->filter()->count();
                                 $maxCapacity = $license['target_capacity'] ?? config('app_settings.matrix.total_slots');
                             @endphp
@@ -149,6 +149,7 @@
 
                                 <td class="p-3 text-center font-black text-amber-500 bg-amber-50/30">{{ $liq['counts']['n'] }}</td>
                                 <td class="p-3 text-center font-black text-emerald-500 bg-emerald-50/30">{{ $liq['counts']['x'] }}</td>
+                                <td class="p-3 text-center font-black text-rose-500 bg-rose-50/30">{{ $liq['counts']['p'] }}</td>
                                 <td class="p-3 text-center">
                                     <div class="flex flex-col">
                                         <span class="text-xs font-black {{ $maxCapacity > 0 && $occupied >= $maxCapacity ? 'text-rose-600' : 'text-slate-700' }}">{{ $occupied }}/{{ $maxCapacity }}</span>

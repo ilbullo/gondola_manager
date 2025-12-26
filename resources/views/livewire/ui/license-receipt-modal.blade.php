@@ -23,18 +23,23 @@
                 <div class="p-5 overflow-y-auto custom-scrollbar space-y-5">
                     
                     {{-- Badge Volumi (Dati dal Service) --}}
-                    <div class="grid grid-cols-3 gap-2">
+                    <div class="grid grid-cols-4 gap-2">
                         <div class="bg-amber-50 border border-amber-100 p-2 rounded-2xl text-center">
                             <div class="text-lg font-black text-amber-600">{{ $this->liquidation['counts']['n'] }}</div>
                             <div class="text-[7px] font-black uppercase">Noli</div>
                         </div>
                         <div class="bg-emerald-50 border border-emerald-100 p-2 rounded-2xl text-center">
                             <div class="text-lg font-black text-emerald-600">{{ $this->liquidation['counts']['x'] }}</div>
-                            <div class="text-[7px] font-black uppercase text-emerald-500">Contanti Oggi</div>
+                            <div class="text-[7px] font-black uppercase text-emerald-500">Contanti</div>
                         </div>
                         <div class="bg-blue-50 border border-blue-100 p-2 rounded-2xl text-center italic">
                             <div class="text-lg font-black text-blue-600">{{ $this->liquidation['counts']['shared'] }}</div>
                             <div class="text-[7px] font-black uppercase text-blue-500">{{ config('app_settings.labels.shared_from_first') }}</div>
+                        </div>
+
+                        <div class="bg-rose-50 border border-rose-100 p-2 rounded-2xl text-center italic">
+                            <div class="text-lg font-black text-rose-600">{{ $this->liquidation['counts']['p'] }}</div>
+                            <div class="text-[7px] font-black uppercase text-rose-500">{{ \App\Enums\WorkType::PERDI_VOLTA->label() }}</div>
                         </div>
                     </div>
 
@@ -96,6 +101,7 @@
                             'op'         => auth()->user()->name,
                             'n_count'    => $this->liquidation['counts']['n'],
                             'x_count'    => $this->liquidation['counts']['x'],
+                            'p_count'    => $this->liquidation['counts']['p'],
                             'x_amount'   => $this->liquidation['money']['valore_x'],
                             'wallet_diff'=> number_format($this->liquidation['money']['wallet_diff'], 2, ',', '.'),
                             'shared_ff'  => $this->liquidation['counts']['shared'],

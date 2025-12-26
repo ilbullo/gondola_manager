@@ -92,8 +92,9 @@
                 <th class="lic">Lic.</th>
                 <th class="cash">Netto</th>
                 <th class="np">N</th>
-                <th class="np">X</th>
-                <th class="np">U</th>
+                {{-- <th class="np">X</th>
+                <th class="np">U</th> --}}
+                <th class="np">P</th>
                 @for($i = 1; $i <= config('app_settings.matrix.total_slots'); $i++)
                     <th class="slot">{{ $i }}</th>
                 @endfor
@@ -109,8 +110,9 @@
                     {{-- Il valore cash_netto è già pulito dal Service (X + Wallet - Bancale) --}}
                     <td class="cash">€ {{ number_format($row['cash_netto'], 0, ',', '.') }}</td>
                     <td class="np">{{ $row['n_count'] }}</td>
-                    <td class="np">{{ $row['x_count'] }}</td>
-                    <td class="np" style="color: #666;">{{ $row['shared_count'] }}</td>
+                   {{-- <td class="np">{{ $row['x_count'] }}</td>
+                    <td class="np" style="color: #666;">{{ $row['shared_count'] }}</td> --}}
+                    <td class="np">{{ $row['p_count'] }}</td>
 
                     @for($slot = 1; $slot <= config('app_settings.matrix.total_slots'); $slot++)
                         @php

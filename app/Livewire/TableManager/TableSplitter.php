@@ -221,6 +221,7 @@ class TableSplitter extends Component
                 'worksMap'       => $license['worksMap'],
                 'n_count'        => $liquidation['counts']['n'],
                 'x_count'        => $liquidation['counts']['x'],
+                'p_count'        => $liquidation['counts']['p'],
                 'shared_count'   => $liquidation['counts']['shared'],
                 'wallet_diff'    => $liquidation['money']['wallet_diff'],
                 'cash_netto'     => $liquidation['money']['netto'], // Totale da incassare oggi

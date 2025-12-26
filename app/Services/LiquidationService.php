@@ -15,6 +15,7 @@ class LiquidationService
         $cashXStandard = $worksColl->where('value', 'X')->where('shared_from_first', 0);
         $sharedFF = $worksColl->where('value', 'X')->where('shared_from_first', 1);
         $agencies = $worksColl->where('value', 'A');
+        $pWorks = $worksColl->where('value','P');
 
         // 2. Calcolo Economico Reale (Solo Cassa di oggi)
         //$valoreX = $cashXStandard->count() * $unitPrice;
@@ -27,6 +28,7 @@ class LiquidationService
             'counts' => [
                 'n' => $noli->count(),
                 'x' => $cashXStandard->count(),
+                'p' => $pWorks->count(),
                 'shared' => $sharedFF->count(),
                 'agencies' => $agencies->count(),
             ],

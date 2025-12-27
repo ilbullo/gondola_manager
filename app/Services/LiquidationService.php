@@ -1,6 +1,7 @@
 <?php 
 
 namespace App\Services;
+use App\DataObjects\LiquidationResult;
 
 class LiquidationService
 {
@@ -24,24 +25,24 @@ class LiquidationService
         // Netto = (X oggi) + (Conguaglio Wallet) - (Costo Bancale)
         $nettoOggi = $valoreX + $walletDifference - $bancaleCost;
 
-        return [
-            'counts' => [
+        return new LiquidationResult(
+            counts: [
                 'n' => $noli->count(),
                 'x' => $cashXStandard->count(),
                 'p' => $pWorks->count(),
                 'shared' => $sharedFF->count(),
                 'agencies' => $agencies->count(),
             ],
-            'money' => [
+            money: [
                 'valore_x' => $valoreX,
                 'wallet_diff' => $walletDifference,
                 'bancale' => $bancaleCost,
                 'netto' => $nettoOggi,
             ],
-            'lists' => [
+            lists: [
                 'shared_vouchers' => $sharedFF->pluck('voucher')->filter()->toArray(),
                 'agencies' => $agencies->mapWithKeys(fn($w) => [$w['agency'] => $w['voucher']])->toArray(),
             ]
-        ];
+        );
     }
 }

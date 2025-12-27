@@ -122,17 +122,9 @@
                     <tbody class="divide-y divide-slate-100">
                         @foreach ($matrix as $licenseKey => $license)
                             @php
-                                // 1. Calcolo Wallet specifico per la riga
-                                $nCount = collect($license['worksMap'])->where('value', 'N')->count();
-                                $walletDiff = ($nCount * (config('app_settings.works.default_amount') ?? 90 )) - (float)($license['wallet'] ?? 0);
-
-                                // 2. Applichiamo il SERVICE centralizzato
-                                $liq = \App\Services\LiquidationService::calculate(
-                                    $license['worksMap'], 
-                                    $walletDiff, 
-                                    $this->bancaleCost
-                                );
-                                $occupied = collect($license['worksMap'])->filter()->count();
+                                // SOLID: Accediamo all'oggetto LiquidationResult e alle proprietà pre-calcolate nel componente
+                                $liq = $license['liquidation']; 
+                                $occupied = $license['slots_occupied'] ?? 0;
                                 $maxCapacity = $license['target_capacity'] ?? config('app_settings.matrix.total_slots');
                             @endphp
                             <tr class="hover:bg-slate-50 transition-colors group">
@@ -142,23 +134,25 @@
                                             <span class="w-8 h-8 flex items-center justify-center bg-slate-800 text-white rounded-lg font-black text-xs">{{ $license['user']['license_number'] }}</span>
                                             @if($license['only_cash_works']) <span class="text-[8px] bg-emerald-100 text-emerald-700 px-1 rounded font-black">X</span> @endif
                                         </div>
+                                        {{-- SOLID: Dispatch verso il modale utilizzando l'oggetto liquidazione --}}
                                         <button wire:click="$dispatch('open-license-receipt', { license: {{ \Illuminate\Support\Js::from($license) }}, bancaleCost: {{ $bancaleCost }} })"
                                             class="text-[8px] font-black uppercase text-indigo-600 hover:text-indigo-800 transition">Scontrino</button>
                                     </div>
                                 </td>
 
-                                <td class="p-3 text-center font-black text-amber-500 bg-amber-50/30">{{ $liq['counts']['n'] }}</td>
-                                <td class="p-3 text-center font-black text-emerald-500 bg-emerald-50/30">{{ $liq['counts']['x'] }}</td>
-                                <td class="p-3 text-center font-black text-rose-500 bg-rose-50/30">{{ $liq['counts']['p'] }}</td>
+                                <td class="p-3 text-center font-black text-amber-500 bg-amber-50/30">{{ $liq->counts['n'] }}</td>
+                                <td class="p-3 text-center font-black text-emerald-500 bg-emerald-50/30">{{ $liq->counts['x'] }}</td>
+                                <td class="p-3 text-center font-black text-rose-500 bg-rose-50/30">{{ $liq->counts['p'] }}</td>
                                 <td class="p-3 text-center">
                                     <div class="flex flex-col">
                                         <span class="text-xs font-black {{ $maxCapacity > 0 && $occupied >= $maxCapacity ? 'text-rose-600' : 'text-slate-700' }}">{{ $occupied }}/{{ $maxCapacity }}</span>
                                         @if ($maxCapacity > 0 && $occupied >= $maxCapacity) <span class="text-[7px] font-black text-rose-400 uppercase">Piena</span> @endif
                                     </div>
                                 </td>
-                                {{-- NETTO DERIVATO DAL SERVICE --}}
+                                
+                                {{-- NETTO DERIVATO DAL DTO --}}
                                 <td class="p-3 text-center font-black text-emerald-600 italic">
-                                    {{ number_format($liq['money']['netto'], 0) }}
+                                    {{ number_format($liq->money['netto'], 0, ',', '.') }}
                                 </td>
 
                                 @for ($slotIndex = 1; $slotIndex <= config('app_settings.matrix.total_slots'); $slotIndex++)

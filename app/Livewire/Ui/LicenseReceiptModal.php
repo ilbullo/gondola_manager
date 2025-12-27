@@ -7,6 +7,7 @@ use Livewire\Attributes\On;
 use Livewire\Attributes\Computed;
 use Illuminate\Support\Collection;
 use App\Services\LiquidationService;
+use App\DataObjects\LiquidationResult;
 
 class LicenseReceiptModal extends Component
 {
@@ -18,6 +19,10 @@ class LicenseReceiptModal extends Component
     // Actions
     // ===================================================================
 
+    /**
+     * Riceve i parametri dal TableSplitter.
+     * Ora può accettare sia i dati grezzi che i parametri già processati.
+     */
     #[On('open-license-receipt')]
     public function openModal(array $license, float $bancaleCost = 0.0): void
     {
@@ -37,43 +42,42 @@ class LicenseReceiptModal extends Component
     // Computed Properties
     // ===================================================================
 
+    /**
+     * Trasforma la mappa dei lavori in una collezione pulita per il calcolo.
+     */
     #[Computed]
     public function works(): Collection
     {
-        // Trasformiamo la mappa dei lavori in una collezione pulita
         return collect($this->license['worksMap'] ?? [])->filter()->values();
     }
 
+    /**
+     * Calcola la differenza di wallet necessaria per il Service.
+     */
     #[Computed]
-    public function walletDetail(): array
+    private function walletDifference(): float
     {
         $nCount = $this->works->where('value', 'N')->count();
-        // Usiamo il valore 90 o quello da config
         $defaultAmount = (float) config('app_settings.works.default_amount', 90.0);
         $theoreticalTotal = $nCount * $defaultAmount;
         
-        // Il wallet attuale della licenza (quello che hanno fisicamente in tasca dai noli)
-        $currentWallet = (float) ($this->license['wallet'] ?? 0);
-        
-        // Differenza da conguagliare
-        $diff = $theoreticalTotal - $currentWallet;
-
-        return [
-            'difference' => $diff,
-            'unit_price' => $defaultAmount,
-            // altri dati utili per la view se necessari
-        ];
+        return $theoreticalTotal - (float) ($this->license['wallet'] ?? 0);
     }
 
     /**
-     * L'unico metodo di calcolo necessario: delega tutto al Service.
+     * SOLID: Restituisce l'oggetto DTO LiquidationResult.
+     * La View utilizzerà i metodi dell'oggetto per formattazione e stampa.
      */
     #[Computed]
-    public function liquidation(): array
+    public function liquidation(): LiquidationResult
     {
+        if (empty($this->license)) {
+            return new LiquidationResult();
+        }
+
         return LiquidationService::calculate(
             $this->works, 
-            $this->walletDetail['difference'], 
+            $this->walletDifference, 
             $this->bancaleCost
         );
     }

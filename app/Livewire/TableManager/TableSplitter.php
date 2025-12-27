@@ -74,7 +74,7 @@ class TableSplitter extends Component
         $this->loadMatrix();
     }
 
-    /**
+/**
      * Recupera i dati dal DB e li trasforma tramite MatrixSplitterService.
      */
     public function loadMatrix(): void
@@ -92,14 +92,36 @@ class TableSplitter extends Component
         // 1. Trasformiamo i dati tramite la Resource
         $licenseTable = \App\Http\Resources\LicenseResource::collection($licenses)->resolve();
 
-        // 2. Risolviamo il Service tramite il Container (Dependency Injection manuale)
+        // 2. Risolviamo il Service tramite il Container
         $service = app(\App\Services\MatrixSplitterService::class);
 
         // 3. Eseguiamo la logica passando i dati al metodo execute
         $service->execute($licenseTable);
 
-        // 4. Aggiorniamo le proprietà del componente
-        $this->matrix = $service->matrix->toArray();
+        // 4. SOLID: Integriamo i dati di liquidazione nella matrice
+        $defaultAmount = (float) config('app_settings.works.default_amount', 90.0);
+
+        $this->matrix = $service->matrix->map(function ($license) use ($defaultAmount) {
+            // Calcolo Wallet (Logica di Business)
+            $nCount = collect($license['worksMap'])->where('value', 'N')->count();
+            $theoreticalFromN = $nCount * $defaultAmount;
+            $currentWallet = (float) ($license['wallet'] ?? 0);
+            $walletDiff = $theoreticalFromN - $currentWallet;
+
+            // Generiamo il DTO
+            $liq = LiquidationService::calculate(
+                $license['worksMap'], 
+                $walletDiff, 
+                $this->bancaleCost
+            );
+
+            // Per compatibilità con Livewire array state, aggiungiamo i dati calcolati
+            $license['liquidation'] = $liq; // Se implementi Wireable nel DTO
+            $license['slots_occupied'] = collect($license['worksMap'])->filter()->count();
+
+            return $license;
+        })->toArray();
+
         $this->unassignedWorks = $service->unassignedWorks->toArray();
         $this->selectedWork = null;
     }
@@ -194,38 +216,21 @@ class TableSplitter extends Component
     // Esportazione PDF & Reportistica
     // ======================================================================
 
-    /**
+/**
      * Genera la sessione per il PDF della tabella di ripartizione.
-     * Utilizza LiquidationService per calcolare il netto di ogni licenza.
+     * Utilizza il DTO LiquidationResult per uniformare i dati.
      */
     public function printSplitTable(): void
     {
-        $defaultAmount = (float) config('app_settings.works.default_amount', 90.0);
+        $matrixData = collect($this->matrix)->map(function ($license) {
+            // Recuperiamo l'oggetto liquidation (o lo rigeneriamo se non Wireable)
+            $liq = $license['liquidation'];
 
-        $matrixData = collect($this->matrix)->map(function ($license) use ($defaultAmount) {
-            // Calcolo manuale della differenza Wallet specifica per riga
-            $nCount = collect($license['worksMap'])->where('value', 'N')->count();
-            $theoreticalFromN = $nCount * $defaultAmount;
-            $currentWallet = (float) ($license['wallet'] ?? 0);
-            $walletDiff = $theoreticalFromN - $currentWallet;
-
-            // Delega al Service per i calcoli economici finali
-            $liquidation = LiquidationService::calculate(
-                $license['worksMap'], 
-                $walletDiff, 
-                $this->bancaleCost
-            );
-
-            return [
+            // Se cambi i nomi delle chiavi nel PDF, li modifichi solo nel DTO method 'toPrintParams'
+            return array_merge([
                 'license_number' => $license['user']['license_number'] ?? '—',
                 'worksMap'       => $license['worksMap'],
-                'n_count'        => $liquidation['counts']['n'],
-                'x_count'        => $liquidation['counts']['x'],
-                'p_count'        => $liquidation['counts']['p'],
-                'shared_count'   => $liquidation['counts']['shared'],
-                'wallet_diff'    => $liquidation['money']['wallet_diff'],
-                'cash_netto'     => $liquidation['money']['netto'], // Totale da incassare oggi
-            ];
+            ], $liq->toPrintParams());
         })->values();
 
         Session::flash('pdf_generate', [
@@ -235,7 +240,7 @@ class TableSplitter extends Component
                 'bancaleCost'   => $this->bancaleCost,
                 'totalN'        => $matrixData->sum('n_count'),
                 'totalX'        => $matrixData->sum('x_count'),
-                'totalCash'     => $matrixData->sum('cash_netto'),
+                'totalCash'     => $matrixData->sum('cash_netto'), // Mappato correttamente da 'final' o 'netto'
                 'generatedBy'   => Auth::user()->name,
                 'generatedAt'   => now()->format('d/m/Y H:i'),
                 'date'          => today()->format('d/m/Y'),

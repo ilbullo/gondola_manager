@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Session;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use App\Services\LiquidationService;
+use App\Services\AgencyReportService;
 use App\DataObjects\LiquidationResult;
 use Carbon\Carbon;
 use App\Helpers\Format;
@@ -276,45 +277,48 @@ class TableSplitter extends Component
     // Esportazione PDF & Reportistica
     // ======================================================================
 
-/**
+    /**
      * Genera la sessione per il PDF della tabella di ripartizione.
      * Utilizza il DTO LiquidationResult per uniformare i dati.
      */
-public function printSplitTable(): void
-{
-    $liquidations = collect($this->matrix)->pluck('liquidation');
-    $totals = LiquidationResult::aggregateTotals($liquidations);
-
-    $matrixData = collect($this->matrix)->map(function($l) {
-        // Estraiamo i parametri dal DTO
-        $params = $l['liquidation']->toPrintParams();
-        
-        // Uniamo i dati identificativi E la mappa dei lavori
-        return array_merge($params, [
-            'license_number' => $l['user']['license_number'] ?? '—',
-            'worksMap'       => $l['worksMap'], 
-        ]);
-    })->values()->toArray();
-
-    Session::flash('pdf_generate', [
-        'view' => 'pdf.split-table',
-        'data' => [
-            'matrix'      => $matrixData,
-            'totals'      => $totals,
-            'bancaleCost' => $this->bancaleCost,
-            'generatedBy' => Auth::user()->name,
-            'generatedAt' => now(),
-            'date'        => today(),
-        ],
-        'filename'    => 'ripartizione_' . today()->format('Ymd') . '.pdf',
-    ]);
-
-    $this->redirectRoute('generate.pdf');
-}
-
-    public function printAgencyReport(): void
+    public function printSplitTable(): void
     {
-        $agencyReport = $this->prepareAgencyReport();
+        $liquidations = collect($this->matrix)->pluck('liquidation');
+        $totals = LiquidationResult::aggregateTotals($liquidations);
+
+        $matrixData = collect($this->matrix)->map(function($l) {
+            // Estraiamo i parametri dal DTO
+            $params = $l['liquidation']->toPrintParams();
+            
+            // Uniamo i dati identificativi E la mappa dei lavori
+            return array_merge($params, [
+                'license_number' => $l['user']['license_number'] ?? '—',
+                'worksMap'       => $l['worksMap'], 
+            ]);
+        })->values()->toArray();
+
+        Session::flash('pdf_generate', [
+            'view' => 'pdf.split-table',
+            'data' => [
+                'matrix'      => $matrixData,
+                'totals'      => $totals,
+                'bancaleCost' => $this->bancaleCost,
+                'generatedBy' => Auth::user()->name,
+                'generatedAt' => now(),
+                'date'        => today(),
+            ],
+            'filename'    => 'ripartizione_' . today()->format('Ymd') . '.pdf',
+        ]);
+
+        $this->redirectRoute('generate.pdf');
+    }
+
+    // In TableSplitter.php
+
+    public function printAgencyReport(AgencyReportService $service): void
+    {
+        // SOLID: Delega totale della logica algoritmica al service
+        $agencyReport = $service->generate($this->matrix);
 
         Session::flash('pdf_generate', [
             'view' => 'pdf.agency-report',
@@ -328,47 +332,11 @@ public function printSplitTable(): void
         ]);
 
         $this->redirectRoute('generate.pdf');
-    }
-
-    private function prepareAgencyReport(): array
-    {
-        $services = [];
-
-        foreach ($this->matrix as $licenseRow) {
-            $licenseNumber = $licenseRow['user']['license_number'] ?? 'N/D';
-
-            foreach ($licenseRow['worksMap'] as $work) {
-//                if (empty($work) || ($work['value'] ?? '') !== 'A' || $work['shared_from_first']) continue;
-                if (empty($work) || ($work['value'] ?? '') !== 'A' ) continue;
-
-                $agencyName = $work['agency']['name'] ?? $work['agency'] ?? 'Sconosciuta';
-                $voucher = trim($work['voucher'] ?? '') ?: '–';
-                $timeObj = Carbon::parse($work['timestamp'] ?? now());
-
-                // Logica di raggruppamento voucher o prossimità (5 min)
-                $key = ($voucher !== '–') ? $agencyName . '|V:' . $voucher : $agencyName . '|T:' . $timeObj->format('H:i');
-
-                if (!isset($services[$key])) {
-                    $services[$key] = [
-                        'agency_name' => $agencyName,
-                        'voucher'     => $voucher,
-                        'time'        => $timeObj->format('H:i'),
-                        'licenses'    => [],
-                        'count'       => 0,
-                    ];
-                }
-
-                $services[$key]['licenses'][] = $licenseNumber;
-                $services[$key]['count']++;
-            }
-        }
-
-        uasort($services, fn($a, $b) => strtotime($a['time']) <=> strtotime($b['time']));
-        return array_values($services);
-    }
+    }  
 
     public function render()
     {
         return view('livewire.table-manager.matrix-preview');
     }
+
 }

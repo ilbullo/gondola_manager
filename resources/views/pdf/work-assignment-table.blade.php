@@ -7,7 +7,7 @@
 <style>
     /* 1. Margini e setup pagina identici all'altro documento per coerenza di stampa */
     @page { margin: 5mm 5mm; size: A4 landscape; }
-    
+
     body {
         font-family: Arial, Helvetica, sans-serif;
         font-size: 8.2pt;
@@ -41,7 +41,7 @@
     /* Dimensioni slot standardizzate 29x25px */
     .slot {
         width: 29px !important;
-        height: 25px; 
+        height: 25px;
         font-size: 8.4pt;
     }
 
@@ -62,16 +62,16 @@
     .shared   { font-weight: bold; color: #444; }
 
     /* Colonna Licenza coerente con l'altro PDF */
-    .lic { 
-        width: 55px; 
-        font-weight: bold; 
-        background-color: #f9fafb !important; 
+    .lic {
+        width: 55px;
+        font-weight: bold;
+        background-color: #f9fafb !important;
     }
 
     .header-box {
-        border-bottom: 1.5pt solid #000; 
-        padding-bottom: 3px; 
-        margin-bottom: 5px; 
+        border-bottom: 1.5pt solid #000;
+        padding-bottom: 3px;
+        margin-bottom: 5px;
         width: 100%;
     }
 
@@ -99,13 +99,13 @@
     </thead>
     <tbody>
         @foreach($matrix as $row)
-            @php 
+            @php
                 $rowClass = $loop->index % 2 == 0 ? 'row-even' : 'row-odd';
             @endphp
             <tr class="{{ $rowClass }}">
                 <td class="lic">{{ $row['license_number'] }}</td>
 
-                @for($slot = 1; $slot <= config('app_settings.matrix.total_slots'); $slot++)
+                @for($slot = 0; $slot < config('app_settings.matrix.total_slots'); $slot++)
                     @php
                         $work = $row['worksMap'][$slot] ?? null;
                         $isAgency   = $work && $work['value'] === 'A';
@@ -139,9 +139,9 @@
 
 <div style="margin-top: 5px; font-size: 7.5pt; width: 100%;">
     <div style="float: left; width: 70%;">
-        <strong>Legenda:</strong> 
-        <u>Sottolineato</u> = Fisso alla licenza • 
-        <strong>Grassetto</strong> = {{ config('app_settings.labels.shared_from_first') }} • 
+        <strong>Legenda:</strong>
+        <u>Sottolineato</u> = Fisso alla licenza •
+        <strong>Grassetto</strong> = {{ config('app_settings.labels.shared_from_first') }} •
         (Cod) = Voucher / Provenienza
     </div>
     <div style="float: right; width: 30%; text-align: right; color: #555;">

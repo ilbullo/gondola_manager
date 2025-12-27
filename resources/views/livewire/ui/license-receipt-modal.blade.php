@@ -24,34 +24,34 @@
 
                 <div class="p-5 overflow-y-auto custom-scrollbar space-y-5">
                     
-                    {{-- Badge Volumi --}}
+                    {{-- Badge Volumi (Utilizzo direttiva @number) --}}
                     <div class="grid grid-cols-4 gap-2">
                         <div class="bg-amber-50 border border-amber-100 p-2 rounded-2xl text-center">
-                            <div class="text-lg font-black text-amber-600">{{ $this->liquidation->counts['n'] }}</div>
+                            <div class="text-lg font-black text-amber-600">@number($this->liquidation->counts['n'])</div>
                             <div class="text-[7px] font-black uppercase">Noli</div>
                         </div>
                         <div class="bg-emerald-50 border border-emerald-100 p-2 rounded-2xl text-center">
-                            <div class="text-lg font-black text-emerald-600">{{ $this->liquidation->counts['x'] }}</div>
+                            <div class="text-lg font-black text-emerald-600">@number($this->liquidation->counts['x'])</div>
                             <div class="text-[7px] font-black uppercase text-emerald-500">Contanti</div>
                         </div>
                         <div class="bg-blue-50 border border-blue-100 p-2 rounded-2xl text-center italic">
-                            <div class="text-lg font-black text-blue-600">{{ $this->liquidation->counts['shared'] }}</div>
+                            <div class="text-lg font-black text-blue-600">@number($this->liquidation->counts['shared'])</div>
                             <div class="text-[7px] font-black uppercase text-blue-500">{{ config('app_settings.labels.shared_from_first') }}</div>
                         </div>
 
                         <div class="bg-rose-50 border border-rose-100 p-2 rounded-2xl text-center italic">
-                            <div class="text-lg font-black text-rose-600">{{ $this->liquidation->counts['p'] }}</div>
+                            <div class="text-lg font-black text-rose-600">@number($this->liquidation->counts['p'])</div>
                             <div class="text-[7px] font-black uppercase text-rose-500">{{ \App\Enums\WorkType::PERDI_VOLTA->label() }}</div>
                         </div>
                     </div>
 
-                    {{-- Elenco Agenzie --}}
+                    {{-- Elenco Agenzie (Utilizzo direttiva @trim) --}}
                     <div class="space-y-2">
                         <h3 class="text-[8px] font-black text-slate-400 uppercase tracking-widest px-1">Agenzie (Crediti Futuri)</h3>
                         <div class="space-y-1">
                             @forelse($this->liquidation->lists['agencies'] as $name => $voucher)
                                 <div class="flex justify-between items-center bg-slate-50 px-3 py-2 rounded-xl border border-slate-100 text-[10px]">
-                                    <span class="font-bold text-slate-600 uppercase">{{ Str::limit($name, 25) }}</span>
+                                    <span class="font-bold text-slate-600 uppercase">@trim($name, 25)</span>
                                     <span class="font-black text-indigo-500">{{ $voucher ?: '---' }}</span>
                                 </div>
                             @empty
@@ -60,25 +60,25 @@
                         </div>
                     </div>
 
-                    {{-- Box Economico Finale --}}
+                    {{-- Box Economico Finale (Utilizzo metodi Presenter del DTO) --}}
                     <div class="bg-slate-900 rounded-3xl p-5 text-white shadow-xl">
                         <div class="space-y-2">
                             <div class="flex justify-between items-center text-[9px] font-black uppercase">
                                 <span class="text-slate-400">Valore Contanti X</span>
-                                <span class="text-white">€ {{ number_format($this->liquidation->money['valore_x'], 2, ',', '.') }}</span>
+                                <span class="text-white">{{ $this->liquidation->valoreX() }}</span>
                             </div>
                             
                             <div class="flex justify-between items-center text-[9px] font-black uppercase">
                                 <span class="text-slate-400">Conguaglio Wallet</span>
                                 <span class="{{ $this->liquidation->money['wallet_diff'] < 0 ? 'text-rose-400' : 'text-emerald-400' }}">
-                                    {{ $this->liquidation->money['wallet_diff'] < 0 ? '-' : '+' }} € {{ number_format(abs($this->liquidation->money['wallet_diff']), 2, ',', '.') }}
+                                    {{ $this->liquidation->money['wallet_diff'] < 0 ? '-' : '+' }} {{ $this->liquidation->walletDiffFormatted() }}
                                 </span>
                             </div>
 
                             @if($this->liquidation->money['bancale'] > 0)
                                 <div class="flex justify-between items-center text-rose-400 text-[9px] font-black uppercase italic">
                                     <span>Addebito Bancale</span>
-                                    <span>- € {{ number_format($this->liquidation->money['bancale'], 2, ',', '.') }}</span>
+                                    <span>- @money($this->liquidation->money['bancale'])</span>
                                 </div>
                             @endif
 
@@ -88,18 +88,18 @@
                                     <span class="text-[6px] text-slate-500 uppercase font-bold tracking-widest">Esclusi crediti futuri</span>
                                 </div>
                                 <span class="text-3xl font-black italic tracking-tighter {{ $this->liquidation->money['netto'] >= 0 ? 'text-emerald-400' : 'text-rose-500' }}">
-                                    € {{ number_format($this->liquidation->money['netto'], 2, ',', '.') }}
+                                    {{ $this->liquidation->netto() }}
                                 </span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {{-- Footer con Link di Stampa (SOLID: Utilizza toPrintParams) --}}
+                {{-- Footer con Link di Stampa (Utilizzo @dateTime nel parametro opzionale) --}}
                 <div class="p-4 bg-slate-50 border-t border-slate-100 flex gap-2 shrink-0">
                     <a href="{{ route('print.receipt', $this->liquidation->toPrintParams([
                             'license' => $license['user']['license_number'] ?? 'N/D',
-                            'date'    => now()->format('d/m/Y H:i'),
+                            'date'    => \App\Helpers\Format::dateTime(now()),
                             'op'      => auth()->user()->name,
                         ])) }}" 
                        target="_blank"

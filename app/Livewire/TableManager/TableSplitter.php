@@ -8,7 +8,9 @@ use Illuminate\Support\Facades\Session;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use App\Services\LiquidationService;
+use App\DataObjects\LiquidationResult;
 use Carbon\Carbon;
+use App\Helpers\Format;
 
 class TableSplitter extends Component
 {
@@ -64,7 +66,7 @@ class TableSplitter extends Component
         $this->loadMatrix();
 
         $this->dispatch('notify-success', [
-            'message' => "Costo bancale impostato a €" . number_format($cost, 2, ',', '.')
+            'message' => "Costo bancale impostato a " . Format::currency($cost, true)
         ]);
     }
 
@@ -220,37 +222,37 @@ class TableSplitter extends Component
      * Genera la sessione per il PDF della tabella di ripartizione.
      * Utilizza il DTO LiquidationResult per uniformare i dati.
      */
-    public function printSplitTable(): void
-    {
-        $matrixData = collect($this->matrix)->map(function ($license) {
-            // Recuperiamo l'oggetto liquidation (o lo rigeneriamo se non Wireable)
-            $liq = $license['liquidation'];
+public function printSplitTable(): void
+{
+    $liquidations = collect($this->matrix)->pluck('liquidation');
+    $totals = LiquidationResult::aggregateTotals($liquidations);
 
-            // Se cambi i nomi delle chiavi nel PDF, li modifichi solo nel DTO method 'toPrintParams'
-            return array_merge([
-                'license_number' => $license['user']['license_number'] ?? '—',
-                'worksMap'       => $license['worksMap'],
-            ], $liq->toPrintParams());
-        })->values();
-
-        Session::flash('pdf_generate', [
-            'view' => 'pdf.split-table',
-            'data' => [
-                'matrix'        => $matrixData,
-                'bancaleCost'   => $this->bancaleCost,
-                'totalN'        => $matrixData->sum('n_count'),
-                'totalX'        => $matrixData->sum('x_count'),
-                'totalCash'     => $matrixData->sum('cash_netto'), // Mappato correttamente da 'final' o 'netto'
-                'generatedBy'   => Auth::user()->name,
-                'generatedAt'   => now()->format('d/m/Y H:i'),
-                'date'          => today()->format('d/m/Y'),
-            ],
-            'filename'     => 'ripartizione_' . today()->format('Ymd') . '.pdf',
-            'orientation'  => 'landscape',
+    $matrixData = collect($this->matrix)->map(function($l) {
+        // Estraiamo i parametri dal DTO
+        $params = $l['liquidation']->toPrintParams();
+        
+        // Uniamo i dati identificativi E la mappa dei lavori
+        return array_merge($params, [
+            'license_number' => $l['user']['license_number'] ?? '—',
+            'worksMap'       => $l['worksMap'], // <--- SENZA QUESTO IL PDF NON VEDE I LAVORI
         ]);
+    })->values()->toArray();
 
-        $this->redirectRoute('generate.pdf');
-    }
+    Session::flash('pdf_generate', [
+        'view' => 'pdf.split-table',
+        'data' => [
+            'matrix'      => $matrixData,
+            'totals'      => $totals,
+            'bancaleCost' => $this->bancaleCost,
+            'generatedBy' => Auth::user()->name,
+            'generatedAt' => now(),
+            'date'        => today(),
+        ],
+        'filename'    => 'ripartizione_' . today()->format('Ymd') . '.pdf',
+    ]);
+
+    $this->redirectRoute('generate.pdf');
+}
 
     public function printAgencyReport(): void
     {
@@ -261,7 +263,7 @@ class TableSplitter extends Component
             'data' => [
                 'agencyReport'  => $agencyReport,
                 'generatedBy'   => Auth::user()->name,
-                'date'          => today()->format('d/m/Y'),
+                'date'          => Format::date(today()),
                 'generatedAt'   => now()
             ],
             'filename' => 'report_agenzie_' . today()->format('Ymd') . '.pdf',

@@ -15,14 +15,6 @@ class LicenseReceiptModal extends Component
     public array $license = [];
     public float $bancaleCost = 0.0;
 
-    // ===================================================================
-    // Actions
-    // ===================================================================
-
-    /**
-     * Riceve i parametri dal TableSplitter.
-     * Ora può accettare sia i dati grezzi che i parametri già processati.
-     */
     #[On('open-license-receipt')]
     public function openModal(array $license, float $bancaleCost = 0.0): void
     {
@@ -34,52 +26,49 @@ class LicenseReceiptModal extends Component
     public function closeModal(): void
     {
         $this->showModal = false;
-        $this->reset('license', 'bancaleCost');
+        $this->reset(['license', 'bancaleCost']);
         $this->resetErrorBag();
-    }
-
-    // ===================================================================
-    // Computed Properties
-    // ===================================================================
-
-    /**
-     * Trasforma la mappa dei lavori in una collezione pulita per il calcolo.
-     */
-    #[Computed]
-    public function works(): Collection
-    {
-        return collect($this->license['worksMap'] ?? [])->filter()->values();
-    }
-
-    /**
-     * Calcola la differenza di wallet necessaria per il Service.
-     */
-    #[Computed]
-    private function walletDifference(): float
-    {
-        $nCount = $this->works->where('value', 'N')->count();
-        $defaultAmount = (float) config('app_settings.works.default_amount', 90.0);
-        $theoreticalTotal = $nCount * $defaultAmount;
-        
-        return $theoreticalTotal - (float) ($this->license['wallet'] ?? 0);
     }
 
     /**
      * SOLID: Restituisce l'oggetto DTO LiquidationResult.
-     * La View utilizzerà i metodi dell'oggetto per formattazione e stampa.
+     * Se il TableSplitter passa già l'oggetto, lo usiamo, altrimenti lo ricalcoliamo.
      */
     #[Computed]
     public function liquidation(): LiquidationResult
     {
+        // Se non c'è una licenza selezionata, restituiamo un DTO vuoto per evitare errori nella View
         if (empty($this->license)) {
             return new LiquidationResult();
         }
 
+        // Se la liquidazione è già presente nell'array license (passata da TableSplitter)
+        // Livewire la ricostruirà automaticamente tramite l'interfaccia Wireable
+        if (isset($this->license['liquidation']) && $this->license['liquidation'] instanceof LiquidationResult) {
+            return $this->license['liquidation'];
+        }
+
+        // Fallback: Ricalcolo (utile se il modale venisse usato in contesti isolati)
         return LiquidationService::calculate(
-            $this->works, 
+            collect($this->license['worksMap'] ?? [])->filter()->values(), 
             $this->walletDifference, 
             $this->bancaleCost
         );
+    }
+
+    /**
+     * Calcola la differenza di wallet.
+     * Nota: Spostato qui solo come logica di supporto al fallback.
+     */
+    #[Computed]
+    public function walletDifference(): float
+    {
+        $works = collect($this->license['worksMap'] ?? [])->filter();
+        $nCount = $works->where('value', 'N')->count();
+        $defaultAmount = (float) config('app_settings.works.default_amount', 90.0);
+        $theoreticalTotal = $nCount * $defaultAmount;
+        
+        return $theoreticalTotal - (float) ($this->license['wallet'] ?? 0);
     }
 
     public function render()

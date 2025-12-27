@@ -15,6 +15,8 @@ use App\Contracts\WorkQueryInterface;
 use App\Services\WorkQueryService;
 use App\Contracts\MatrixEngineInterface;
 use App\Services\MatrixEngineService;
+use Illuminate\Support\Facades\Blade;
+
 
 /** FIX FOR REGISTER POLICY INTELLIPHASE VS EDITOR
  * @method void registerPolicies()
@@ -96,6 +98,35 @@ class AppServiceProvider extends AuthServiceProvider
                 'isBancale' => Auth::check() && Auth::user()->role === UserRole::BANCALE,
                 'isUser'    => Auth::check() && Auth::user()->role === UserRole::USER,
             ]);
+        });
+
+        // ======================================================================
+        // HELPERS
+        // ======================================================================
+
+        // Direttiva @money(1000)
+        Blade::directive('money', function ($expression) {
+            return "<?php echo \App\Helpers\Format::currency($expression); ?>";
+        });
+
+        // @number(100) -> 100
+        Blade::directive('number', function ($expression) {
+            return "<?php echo \App\Helpers\Format::number($expression); ?>";
+        });
+
+        // @date($data)
+        Blade::directive('date', function ($expression) {
+            return "<?php echo \App\Helpers\Format::date($expression); ?>";
+        });
+
+        // @dateTime($data)
+        Blade::directive('dateTime', function ($expression) {
+            return "<?php echo \App\Helpers\Format::dateTime($expression); ?>";
+        });
+
+        // @trim($testo, 20)
+        Blade::directive('trim', function ($expression) {
+            return "<?php echo \App\Helpers\Format::trim($expression); ?>";
         });
 
     }

@@ -47,6 +47,7 @@
             <h1 class="text-2xl font-black uppercase italic tracking-tighter border-r border-white/10 pr-6">Splitter</h1>
             <div class="flex items-center gap-3 bg-white/5 p-2 rounded-xl border border-white/10">
                 <span class="text-[8px] font-black text-slate-500 uppercase">Costo Bancale</span>
+                {{-- Utilizzo di @number per formattare il valore di base se necessario --}}
                 <input type="number" step="1" wire:model.live.debounce.300ms="bancaleCost"
                     class="w-20 bg-transparent border-none text-xl font-black text-emerald-400 p-0 focus:ring-0">
             </div>
@@ -94,7 +95,8 @@
                                 {{ $work['value'] === 'A' ? $work['agency_code'] ?? 'A' : strtoupper($work['value']) }}
                             </span>
                             <span class="text-[8px] font-bold text-slate-400 uppercase">
-                                {{ \Carbon\Carbon::parse($work['timestamp'])->format('H:i') }}
+                                {{-- Utilizzo dell'helper Format::dateTime o della direttiva @dateTime per uniformità --}}
+                                {{ \App\Helpers\Format::dateTime($work['timestamp']) }}
                             </span>
                         </button>
                     @endforeach
@@ -122,7 +124,6 @@
                     <tbody class="divide-y divide-slate-100">
                         @foreach ($matrix as $licenseKey => $license)
                             @php
-                                // SOLID: Accediamo all'oggetto LiquidationResult e alle proprietà pre-calcolate nel componente
                                 $liq = $license['liquidation']; 
                                 $occupied = $license['slots_occupied'] ?? 0;
                                 $maxCapacity = $license['target_capacity'] ?? config('app_settings.matrix.total_slots');
@@ -134,15 +135,16 @@
                                             <span class="w-8 h-8 flex items-center justify-center bg-slate-800 text-white rounded-lg font-black text-xs">{{ $license['user']['license_number'] }}</span>
                                             @if($license['only_cash_works']) <span class="text-[8px] bg-emerald-100 text-emerald-700 px-1 rounded font-black">X</span> @endif
                                         </div>
-                                        {{-- SOLID: Dispatch verso il modale utilizzando l'oggetto liquidazione --}}
                                         <button wire:click="$dispatch('open-license-receipt', { license: {{ \Illuminate\Support\Js::from($license) }}, bancaleCost: {{ $bancaleCost }} })"
                                             class="text-[8px] font-black uppercase text-indigo-600 hover:text-indigo-800 transition">Scontrino</button>
                                     </div>
                                 </td>
 
-                                <td class="p-3 text-center font-black text-amber-500 bg-amber-50/30">{{ $liq->counts['n'] }}</td>
-                                <td class="p-3 text-center font-black text-emerald-500 bg-emerald-50/30">{{ $liq->counts['x'] }}</td>
-                                <td class="p-3 text-center font-black text-rose-500 bg-rose-50/30">{{ $liq->counts['p'] }}</td>
+                                {{-- Utilizzo di @number per i conteggi --}}
+                                <td class="p-3 text-center font-black text-amber-500 bg-amber-50/30">@number($liq->counts['n'])</td>
+                                <td class="p-3 text-center font-black text-emerald-500 bg-emerald-50/30">@number($liq->counts['x'])</td>
+                                <td class="p-3 text-center font-black text-rose-500 bg-rose-50/30">@number($liq->counts['p'])</td>
+                                
                                 <td class="p-3 text-center">
                                     <div class="flex flex-col">
                                         <span class="text-xs font-black {{ $maxCapacity > 0 && $occupied >= $maxCapacity ? 'text-rose-600' : 'text-slate-700' }}">{{ $occupied }}/{{ $maxCapacity }}</span>
@@ -150,9 +152,9 @@
                                     </div>
                                 </td>
                                 
-                                {{-- NETTO DERIVATO DAL DTO --}}
+                                {{-- NETTO DERIVATO DAL DTO - Utilizzo del nuovo metodo presenter --}}
                                 <td class="p-3 text-center font-black text-emerald-600 italic">
-                                    {{ number_format($liq->money['netto'], 0, ',', '.') }}
+                                    {{ $liq->netto() }}
                                 </td>
 
                                 @for ($slotIndex = 1; $slotIndex <= config('app_settings.matrix.total_slots'); $slotIndex++)
@@ -165,7 +167,15 @@
                                         
                                         @if ($work)
                                             <div class="relative h-12 w-full rounded-lg flex flex-col items-center justify-center shadow-sm transition-transform active:scale-90 {{ \App\Enums\WorkType::tryFrom($work['value'])?->colourButtonsClass() }} text-white">
-                                                <span class="text-[10px] font-black leading-none">{{ $work['value'] === 'A' ? $work['agency_code'] ?? 'A' : strtoupper($work['value']) }}</span>
+                                                {{-- Utilizzo di @trim per i codici agenzia lunghi --}}
+                                                <span class="text-[10px] font-black leading-none">
+                                                    @if($work['value'] === 'A')
+                                                        {{ \App\Helpers\Format::trim($work['agency_code'] ?? 'A', 4) }}
+                                                    @else
+                                                        {{ strtoupper($work['value']) }}
+                                                    @endif
+                                                </span>
+                                                
                                                 @if($work['unassigned'] ?? false)
                                                     <span class="text-[6px] font-bold opacity-70 italic">DA: {{ $work['prev_license_number'] }}</span>
                                                 @endif
@@ -199,10 +209,10 @@
                     <div class="h-4 w-[1px] bg-slate-200 mx-2"></div>
                     <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-rose-600 border border-white"></span><span class="text-[9px] font-black text-slate-500 uppercase">Fisso</span></div>
                     <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-emerald-400 border border-white"></span><span class="text-[9px] font-black text-slate-500 uppercase">{{ config('app_settings.labels.shared_from_first') }}</span></div>
+                    <div class="ml-auto text-[8px] font-bold text-slate-400 uppercase italic">Ultimo aggiornamento: @dateTime(now())</div>
                 </div>
             </footer>
         </div>
     </main>
-
     <livewire:ui.license-receipt-modal />
 </div>

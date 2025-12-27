@@ -17,7 +17,7 @@ class TableSplitter extends Component
     /**
      * Costo del bancale, inserito all'apertura del componente.
      */
-    public float $bancaleCost = 0.0;
+    public ?float $bancaleCost = 0.0;
 
     /**
      * Stato del modale iniziale per il costo bancale.
@@ -76,7 +76,7 @@ class TableSplitter extends Component
         $this->loadMatrix();
     }
 
-/**
+    /**
      * Recupera i dati dal DB e li trasforma tramite MatrixSplitterService.
      */
     public function loadMatrix(): void
@@ -139,6 +139,53 @@ class TableSplitter extends Component
         $this->dispatch('matrix-updated');
     }
 
+    /**
+     * Watcher universale sulle proprietà del componente.
+     * Qualsiasi cosa cambi (bancale o lavori), i totali si aggiornano.
+     */
+    public function updated($propertyName): void
+    {
+
+        // Se il valore è stato cancellato (null), lo trattiamo come 0 per i calcoli
+        if ($propertyName === 'bancaleCost' && is_null($this->bancaleCost)) {
+            $this->bancaleCost = 0.0;
+        }
+
+        // Se cambia il bancale o la matrice viene manipolata
+        if (in_array($propertyName, ['bancaleCost', 'matrix'])) {
+            $this->refreshAllLiquidations();
+        }
+    }
+
+    /**
+     * Centralizza il ricalcolo massivo.
+     * SOLID: Unico punto di responsabilità per la sincronizzazione dei dati.
+     */
+    protected function refreshAllLiquidations(): void
+    {
+        foreach ($this->matrix as $key => $license) {
+            $this->matrix[$key]['liquidation'] = $this->calculateLiquidation($license);
+            $this->matrix[$key]['slots_occupied'] = collect($license['worksMap'])->filter()->count();
+        }
+    }
+
+    /**
+     * Factory method per la liquidazione.
+     */
+    protected function calculateLiquidation(array $license): LiquidationResult
+    {
+        $defaultAmount = (float) config('app_settings.works.default_amount', 90.0);
+        
+        $nCount = collect($license['worksMap'])->where('value', 'N')->count();
+        $walletDiff = ($nCount * $defaultAmount) - (float)($license['wallet'] ?? 0);
+
+        return LiquidationService::calculate(
+            $license['worksMap'], 
+            $walletDiff, 
+            (float) $this->bancaleCost
+        );
+    }
+
     // ======================================================================
     // Gestione Lavori (Assegnazione / Rimozione)
     // ======================================================================
@@ -180,7 +227,7 @@ class TableSplitter extends Component
         $this->matrix[$licenseKey]['worksMap'][$slotIndex] = null;
 
         $this->dispatch('notify-success', ['message' => 'Lavoro rimosso correttamente']);
-        $this->dispatch('matrix-updated');
+        //$this->dispatch('matrix-updated');
     }
 
     public function selectUnassignedWork(int $index): void
@@ -215,8 +262,8 @@ class TableSplitter extends Component
         $this->unassignedWorks = array_filter($this->unassignedWorks, fn ($w) => !$this->areWorksEqual($w, $this->selectedWork));
         $this->selectedWork = null;
 
-        $this->dispatch('matrix-updated');
-        $this->dispatch('work-deselected');
+        //$this->dispatch('matrix-updated');
+        //$this->dispatch('work-deselected');
     }
 
     private function areWorksEqual(?array $a, ?array $b): bool

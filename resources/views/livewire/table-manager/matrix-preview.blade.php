@@ -160,6 +160,7 @@
                                 @for ($slotIndex = 1; $slotIndex <= config('app_settings.matrix.total_slots'); $slotIndex++)
                                     @php
                                         $work = $license['worksMap'][$slotIndex] ?? null;
+                                        $prevLic    = $work['prev_license_number'] ?? null;
                                         $isEmpty = is_null($work);
                                     @endphp
                                     <td class="p-1 border-r border-slate-50 transition-all {{ $isEmpty ? 'hover:bg-slate-100' : '' }}"
@@ -176,7 +177,7 @@
                                                     @endif
                                                 </span>
                                                 
-                                                @if($work['unassigned'] ?? false)
+                                                @if($prevLic)
                                                     <span class="text-[6px] font-bold opacity-70 italic">DA: {{ $work['prev_license_number'] }}</span>
                                                 @endif
 

@@ -164,8 +164,19 @@ class TableSplitter extends Component
     {
         $licenseKey = $payload['licenseKey'];
         $slotIndex  = $payload['slotIndex'];
+
+        // 1. Recuperiamo l'oggetto lavoro originale
+        $work = $this->matrix[$licenseKey]['worksMap'][$slotIndex];
         
-        $this->unassignedWorks[] = $this->matrix[$licenseKey]['worksMap'][$slotIndex];
+        // 2. Recuperiamo il numero di licenza di questa riga
+        $originalLicense = $this->matrix[$licenseKey]['user']['license_number'] ?? '—';
+
+        // 3. SOLID: Aggiungiamo il metadato "prev_license_number" al lavoro
+        // In questo modo, quando lo riassegnerai, il dato sarà già dentro il lavoro
+        $work['prev_license_number'] = $originalLicense;
+
+        //4. Assegno il lavoro a unassigned works e lo tolgo alla matrice
+        $this->unassignedWorks[] = $work;
         $this->matrix[$licenseKey]['worksMap'][$slotIndex] = null;
 
         $this->dispatch('notify-success', ['message' => 'Lavoro rimosso correttamente']);
@@ -234,7 +245,7 @@ public function printSplitTable(): void
         // Uniamo i dati identificativi E la mappa dei lavori
         return array_merge($params, [
             'license_number' => $l['user']['license_number'] ?? '—',
-            'worksMap'       => $l['worksMap'], // <--- SENZA QUESTO IL PDF NON VEDE I LAVORI
+            'worksMap'       => $l['worksMap'], 
         ]);
     })->values()->toArray();
 

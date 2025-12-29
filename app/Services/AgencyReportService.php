@@ -1,7 +1,29 @@
-<?php 
+<?php
 namespace App\Services;
 
 use Carbon\Carbon;
+
+/**
+ * Class AgencyReportService
+ *
+ * @package App\Services
+ *
+ * Servizio di aggregazione e trasformazione per la reportistica agenzie.
+ * Converte la matrice operativa delle licenze in una lista cronologica di servizi
+ * raggruppati, ideale per la generazione di PDF o estratti conto.
+ *
+ * RESPONSABILITÀ (SOLID):
+ * 1. Data Transformation: Converte una struttura orientata alle licenze (Row-based)
+ * in una struttura orientata ai servizi (Service-based).
+ * 2. Smart Grouping: Implementa una logica di raggruppamento basata su Voucher o Timestamp
+ * per identificare servizi condivisi tra più conducenti.
+ * 3. Sorting Logic: Garantisce l'ordine cronologico dei servizi per una lettura
+ * professionale del documento finale.
+ *
+ * LOGICA DI RAGGRUPPAMENTO:
+ * - Se è presente un Voucher: raggruppa tutti i lavori con lo stesso codice e agenzia.
+ * - Se il Voucher è assente: utilizza l'orario (timestamp) come discriminante.
+ */
 
 class AgencyReportService
 {
@@ -24,8 +46,8 @@ class AgencyReportService
                 $timeObj = Carbon::parse($work['timestamp'] ?? now());
 
                 // Chiave di raggruppamento: stessa agenzia e stesso voucher (o stessa ora)
-                $key = ($voucher !== '–') 
-                    ? $agencyName . '|V:' . $voucher 
+                $key = ($voucher !== '–')
+                    ? $agencyName . '|V:' . $voucher
                     : $agencyName . '|T:' . $timeObj->format('H:i');
 
                 if (!isset($services[$key])) {

@@ -7,9 +7,29 @@ use Livewire\Attributes\On;
 use Illuminate\View\View;
 
 /**
- * Componente UI generico per la gestione di modali di conferma.
- * Utilizza un sistema ad eventi per comunicare con i componenti chiamanti.
+ * Class ModalConfirm
+ *
+ * @package App\Livewire\Ui
+ *
+ * Componente di utilità globale per la gestione dei dialoghi di conferma (Confirmation Dialogs).
+ * Implementa un pattern "Promise-like" basato sugli eventi, permettendo di disaccoppiare
+ * la richiesta di un'operazione pericolosa dalla sua esecuzione effettiva.
+ *
+ * RESPONSABILITÀ (SOLID):
+ * 1. Single Responsibility: Gestisce esclusivamente lo stato visivo e l'instradamento
+ * della conferma, senza conoscere la logica di business dell'operazione.
+ * 2. Event-Driven Feedback: Utilizza il sistema di dispatch di Livewire per
+ * restituire il controllo al componente chiamante insieme al contesto (payload).
+ * 3. State Sanitization: Implementa un reset rigoroso dello stato ad ogni apertura
+ * e chiusura, prevenendo l'esecuzione accidentale di eventi residui.
+ * 4. Contextual Flexibility: Grazie al payload generico (mixed), può supportare
+ * eliminazioni singole, massive o operazioni di sistema complesse.
+ *
+ * FLUSSO DI LAVORO:
+ * [Componente Operativo] --(openConfirmModal)--> [ModalConfirm] --(User Click)-->
+ * --(confirmEvent + payload)--> [Componente Operativo]
  */
+
 class ModalConfirm extends Component
 {
     /** @var bool Visibilità della modale */
@@ -87,7 +107,7 @@ class ModalConfirm extends Component
     public function close(): void
     {
         $this->show = false;
-        $this->reset(); 
+        $this->reset();
     }
 
     /**

@@ -6,6 +6,36 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Enums\WorkType;
 
+/**
+ * Class WorkAssignment
+ *
+ * @package App\Models
+ *
+ * Rappresenta la singola unità di lavoro assegnata a una licenza in uno slot specifico.
+ * Gestisce la logica di occupazione spaziale (multi-slot) e i vincoli di business
+ * legati alle tipologie di servizio (Agenzia, Contanti, Nolo).
+ *
+ * RESPONSABILITÀ (SOLID):
+ * 1. Business Logic Enforcement: Utilizza l'hook 'saving' per impedire stati incoerenti
+ * (es. flag di esclusione su tipi di lavoro non validi).
+ * 2. Spatial Constraint Management: Valida che la somma degli slot occupati non
+ * superi mai il limite fisico definito nella configurazione di sistema (es. 25 slot).
+ * 3. Data Integrity & Mapping: Assicura tramite Mutators che il campo 'value'
+ * appartenga sempre ai casi validi dell'Enum WorkType.
+ * 4. Contextual Information: Fornisce accessors per risolvere rapidamente i dati
+ * dell'agenzia collegata, ottimizzando il rendering delle viste tabellari.
+ *
+ * LOGICA DI INTEGRITÀ:
+ * - Un lavoro 'A' (Agenzia) può essere 'excluded' (non conta nel bilancio) o
+ * 'shared_from_first' (condivisione costi).
+ * - Un lavoro multi-slot incrementa il contatore 'usedSlots' della licenza padre.
+ *
+ * @property int $license_table_id
+ * @property string $value (A, X, N, P)
+ * @property int $slots_occupied
+ * @property float $amount
+ */
+
 class WorkAssignment extends Model
 {
     use HasFactory;

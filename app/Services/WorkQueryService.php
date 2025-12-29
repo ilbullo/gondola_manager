@@ -10,6 +10,25 @@ use DateTimeInterface;
 use Illuminate\Support\Collection;
 use App\Contracts\WorkQueryInterface;
 
+/**
+ * Class WorkQueryService
+ *
+ * @package App\Services
+ *
+ * Specialista nella segmentazione e filtraggio dei carichi di lavoro.
+ * Analizza lo stato attuale delle licenze per estrarre code di lavoro prioritarie,
+ * applicando regole di business basate su orari, tipologie e flag fiscali.
+ *
+ * RESPONSABILITÀ (SOLID):
+ * 1. Data Aggregation: Estrae e deduplica i lavori dai singoli slot delle licenze.
+ * 2. Temporal Logic: Classifica i lavori in fasce orarie (Morning/Afternoon)
+ * interfacciandosi con i file di configurazione.
+ * 3. Matrix Scaffolding: Crea la struttura dati iniziale (Map) necessaria
+ * per le operazioni di scrittura del MatrixEngine.
+ * 4. Business Rules Segmentation: Isola i lavori 'Shared from First' per
+ * garantire la corretta ripartizione dei costi tra i conducenti.
+ */
+
 class WorkQueryService implements WorkQueryInterface
 {
     /**
@@ -64,7 +83,7 @@ class WorkQueryService implements WorkQueryInterface
     }
 
     /** Lavori condivisibili obbligatori nel primo slot di tipo X */
-    public function sharableFirstCashWorks(Collection|array $licenseTable): Collection 
+    public function sharableFirstCashWorks(Collection|array $licenseTable): Collection
     {
         return $this->sharableFirstWorks($licenseTable)
             ->where('value','X');
@@ -106,7 +125,7 @@ class WorkQueryService implements WorkQueryInterface
     public function prepareMatrix(Collection|array $licenseTable): Collection
     {
         $totalSlots = config('app_settings.matrix.total_slots', 25);
-        
+
         return collect($licenseTable)->map(function ($license) use ($totalSlots) {
             return [
                 'id'                => $license['id'] ?? null,

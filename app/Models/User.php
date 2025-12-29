@@ -7,6 +7,34 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use App\Enums\{UserRole, LicenseType};
 
+/**
+ * Class User
+ *
+ * @package App\Models
+ *
+ * Rappresenta l'utente autenticabile e il detentore della licenza operativa.
+ * Gestisce i permessi tramite ruoli (RBAC) e funge da perno per tutte le
+ * transazioni lavorative giornaliere e storiche.
+ *
+ * RESPONSABILITÀ (SOLID):
+ * 1. Authentication & Security: Gestisce l'accesso al sistema, l'hashing delle password
+ * e il tracciamento delle sessioni (last_login_at).
+ * 2. Role-Based Access Control (RBAC): Centralizza la logica di autorizzazione tramite
+ * helper semantici (isAdmin, isBancale) basati sull'Enum UserRole.
+ * 3. Operational Identity: Collega l'utente fisico al numero di licenza e alla
+ * tipologia di disponibilità lavorativa (LicenseType).
+ * 4. Relational Hub: Aggrega lo storico dei lavori consolidati (AgencyWork) e lo
+ * stato operativo corrente (LicenseTable).
+ *
+ * LOGICA DI SISTEMA:
+ * - 'atWork': Definisce se l'utente è attualmente inserito nell'ordine di servizio odierno.
+ * - 'license_number': Chiave di riferimento utilizzata nella reportistica e nei PDF.
+ *
+ * @property UserRole $role
+ * @property LicenseType $type
+ * @property \Carbon\Carbon|null $last_login_at
+ */
+
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */

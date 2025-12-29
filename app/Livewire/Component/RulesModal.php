@@ -7,13 +7,26 @@ use Livewire\Component;
 /**
  * Class RulesModal
  *
- * Componente Livewire semplice e riutilizzabile che gestisce
- * l'apertura e la chiusura di una finestra modale.
+ * @package App\Livewire\Component
  *
- * Il modale viene controllato tramite la proprietà pubblica $isOpen,
- * modificata attraverso i metodi openModal() e closeModal().
- * La view associata contiene layout e contenuto del modale.
+ * Gestisce lo stato e la logica di visualizzazione della finestra modale dedicata alle regole.
+ * Questo componente funge da contenitore informativo (Stateless UI Component) che interagisce
+ * con l'utente senza modificare direttamente i dati del database.
+ *
+ * RESPONSABILITÀ (SOLID):
+ * 1. Interface Segregation: Isola il contenuto informativo pesante (testi, regole, legende)
+ * dalla vista principale, migliorando le performance di rendering della dashboard.
+ * 2. State Encapsulation: Gestisce internamente la proprietà booleana $isOpen, fornendo
+ * metodi espliciti per la mutazione dello stato.
+ * 3. Reusability: Può essere integrato in qualsiasi pagina del sistema semplicemente
+ * richiamando il tag livewire, garantendo coerenza visiva.
+ *
+ * FLUSSO DI INTERAZIONE:
+ * - L'utente clicca su un pulsante di aiuto/info.
+ * - Il metodo openModal() viene invocato via wire:click.
+ * - Il DOM si aggiorna reattivamente mostrando l'overlay del modale.
  */
+
 class RulesModal extends Component
 {
     /**

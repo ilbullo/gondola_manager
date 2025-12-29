@@ -5,6 +5,31 @@ namespace App\Helpers;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
 
+/**
+ * Class Format
+ *
+ * @package App\Helpers
+ *
+ * Classe Helper statica dedicata alla formattazione standardizzata dei dati in tutta l'applicazione.
+ * Centralizza la logica di visualizzazione per valute, numeri, date e stringhe, garantendo
+ * un'esperienza utente (UX) coerente tra Web UI, Report PDF e interfacce di stampa.
+ *
+ * RESPONSABILITÀ (SOLID):
+ * 1. Standardization: Assicura che ogni valore economico o temporale segua le convenzioni italiane (es. virgola per decimali).
+ * 2. Robustness: Gestisce input non validi, stringhe sporche o date malformate senza interrompere l'esecuzione (Graceful Degradation).
+ * 3. Utility: Fornisce metodi rapidi per manipolazioni comuni come il trimming di testi lunghi o il parsing di date multi-formato.
+ * 4. Decoupling: Separa la logica di visualizzazione dai Modelli e dai Controller, permettendo modifiche globali al formato dati in un unico punto.
+ *
+ * PRINCIPI DI PARSING:
+ * - Currency: Gestisce la conversione automatica da formati stringa (italiani) a float prima della formattazione.
+ * - Dates: Utilizza un motore di parsing intelligente capace di riconoscere formati ISO e formati italiani (d/m/Y).
+ *
+ * ESEMPIO DI UTILIZZO:
+ * Format::currency(1250.5); // "€ 1.250,50"
+ * Format::date('2025-12-27'); // "27/12/2025"
+ */
+
+
 class Format
 {
     /**
@@ -17,10 +42,10 @@ class Format
     }
 
     $value = is_numeric($value) ? (float) $value : 0.0;
-    
+
     // Decidiamo quanti decimali mostrare
     $precision = $showDecimals ? 2 : 0;
-    
+
     $formatted = number_format($value, $precision, ',', '.');
     return $symbol ? '€ ' . $formatted : $formatted;
 }
@@ -64,7 +89,7 @@ class Format
                 $format = str_contains($value, ':') ? 'd/m/Y H:i' : 'd/m/Y';
                 // Se ha anche i secondi
                 if (substr_count($value, ':') == 2) $format .= ':s';
-                
+
                 return \Carbon\Carbon::createFromFormat($format, $value);
             }
 

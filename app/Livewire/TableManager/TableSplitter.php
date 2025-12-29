@@ -13,6 +13,33 @@ use App\DataObjects\LiquidationResult;
 use Carbon\Carbon;
 use App\Helpers\Format;
 
+/**
+ * Class TableSplitter
+ *
+ * @package App\Livewire\TableManager
+ *
+ * Motore di liquidazione e redistribuzione lavori (Matrix Engine).
+ * Questo componente gestisce la fase finale del turno, calcolando i conguagli economici,
+ * permettendo lo spostamento manuale dei lavori "fuori quota" e generando la reportistica PDF.
+ *
+ * RESPONSABILITÀ (SOLID):
+ * 1. Final Liquidation: Integra il LiquidationService per calcolare importi, trattenute bancale
+ * e saldi netti per ogni licenza basandosi sul costo operativo inserito.
+ * 2. Manual Redistribution: Gestisce il parco "lavori non assegnati" (Unassigned Pool),
+ * permettendo all'operatore di bilanciare manualmente la matrice tramite drag-and-drop logico.
+ * 3. Data Transformation: Utilizza LicenseResource e MatrixSplitterService per convertire
+ * il modello relazionale del DB in una struttura a matrice (N x Slot) ottimizzata per la UI.
+ * 4. Reporting Bridge: Centralizza la preparazione dei dati per l'esportazione PDF,
+ * aggregando i totali tramite il DTO LiquidationResult.
+ *
+ * FLUSSO OPERATIVO:
+ * Inserimento Costo Bancale -> Esecuzione MatrixSplitter -> Rendering Matrice ->
+ * (Opzionale) Spostamento Lavori -> Stampa Report.
+ *
+ * @property array $matrix Rappresentazione strutturata [License][Slot] dei dati di turno.
+ * @property float|null $bancaleCost Costo operativo del servizio da ripartire tra i partecipanti.
+ */
+
 class TableSplitter extends Component
 {
     /**
@@ -103,10 +130,10 @@ class TableSplitter extends Component
 
         // 4. SOLID & DRY: Popoliamo la matrice usando il metodo di calcolo centralizzato
         $this->matrix = $service->matrix->map(function ($license) {
-            
+
             // Usiamo il factory method già presente nel componente
             $license['liquidation'] = $this->calculateLiquidation($license);
-            
+
             // Calcoliamo l'occupazione degli slot
             $license['slots_occupied'] = collect($license['worksMap'])->filter()->count();
 
@@ -164,13 +191,13 @@ class TableSplitter extends Component
     protected function calculateLiquidation(array $license): LiquidationResult
     {
         $defaultAmount = (float) config('app_settings.works.default_amount', 90.0);
-        
+
         $nCount = collect($license['worksMap'])->where('value', 'N')->count();
         $walletDiff = ($nCount * $defaultAmount) - (float)($license['wallet'] ?? 0);
 
         return LiquidationService::calculate(
-            $license['worksMap'], 
-            $walletDiff, 
+            $license['worksMap'],
+            $walletDiff,
             (float) $this->bancaleCost
         );
     }
@@ -203,7 +230,7 @@ class TableSplitter extends Component
 
         // 1. Recuperiamo l'oggetto lavoro originale
         $work = $this->matrix[$licenseKey]['worksMap'][$slotIndex];
-        
+
         // 2. Recuperiamo il numero di licenza di questa riga
         $originalLicense = $this->matrix[$licenseKey]['user']['license_number'] ?? '—';
 
@@ -253,7 +280,7 @@ class TableSplitter extends Component
 
         /**
          * Forziamo il ricalcolo.
-         * Poiché abbiamo modificato un indice annidato, Livewire potrebbe non sentire 
+         * Poiché abbiamo modificato un indice annidato, Livewire potrebbe non sentire
          * il cambiamento per l'hook updated(). Chiamiamo il refresh manualmente.
          */
         $this->refreshAllLiquidations();
@@ -284,11 +311,11 @@ class TableSplitter extends Component
         $matrixData = collect($this->matrix)->map(function($l) {
             // Estraiamo i parametri dal DTO
             $params = $l['liquidation']->toPrintParams();
-            
+
             // Uniamo i dati identificativi E la mappa dei lavori
             return array_merge($params, [
                 'license_number' => $l['user']['license_number'] ?? '—',
-                'worksMap'       => $l['worksMap'], 
+                'worksMap'       => $l['worksMap'],
             ]);
         })->values()->toArray();
 
@@ -327,7 +354,7 @@ class TableSplitter extends Component
         ]);
 
         $this->redirectRoute('generate.pdf');
-    }  
+    }
 
     public function render()
     {

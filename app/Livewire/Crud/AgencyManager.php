@@ -8,6 +8,31 @@ use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
 use Livewire\WithPagination;
 
+/**
+ * Class AgencyManager
+ *
+ * @package App\Livewire\Crud
+ *
+ * Gestisce l'interfaccia amministrativa per l'anagrafica delle agenzie.
+ * Implementa operazioni di creazione, lettura, aggiornamento e cancellazione (CRUD)
+ * con supporto integrato per il ripristino dei record eliminati (Soft Deletes).
+ *
+ * RESPONSABILITÀ (SOLID):
+ * 1. State Persistence: Utilizza l'attributo #[Url] per mantenere i filtri di ricerca sincronizzati
+ * con la barra degli indirizzi, migliorando l'accessibilità e la navigazione.
+ * 2. Data Validation: Implementa regole rigorose (Regex) per garantire la coerenza dei codici agenzia
+ * e dei nomi, prevenendo errori di inserimento.
+ * 3. Cache Management: Gestisce l'invalidazione della cache ('agencies_list') dopo ogni modifica,
+ * assicurando che la Sidebar e gli altri componenti siano sempre aggiornati.
+ * 4. User Feedback: Interagisce con componenti Alpine.js tramite dispatch di eventi ('notify')
+ * per fornire notifiche push non bloccanti all'operatore.
+ * 5. Soft Delete Management: Permette la visualizzazione e il ripristino selettivo delle agenzie
+ * eliminate, garantendo la sicurezza del dato storico.
+ *
+ * FLUSSO DI LAVORO:
+ * - Ricerca/Filtro -> Aggiornamento Query (Paginata) -> Rendering View.
+ * - Mutazione (Create/Update/Delete) -> Invalidazione Cache -> Notifica UI -> Reset Form.
+ */
 class AgencyManager extends Component
 {
     use WithPagination;
@@ -15,7 +40,7 @@ class AgencyManager extends Component
     // Persistiamo la ricerca nell'URL per permettere il refresh della pagina
     #[Url(history: true)]
     public string $search = '';
-    
+
     public bool $showCreateForm = false;
     public bool $showEditForm = false;
     public bool $showDeleted = false;
@@ -79,7 +104,7 @@ class AgencyManager extends Component
         $this->editingId = $id;
         $this->name = $agency->name;
         $this->code = $agency->code;
-        
+
         $this->showEditForm = true;
         $this->showCreateForm = false;
     }
@@ -144,9 +169,9 @@ class AgencyManager extends Component
     private function notify(string $message, string $title = 'SUCCESSO'): void
     {
         // Usiamo l'invio parametri esplicito per Alpine.js
-       $this->dispatch('notify', 
-            message: $message, 
-            title: $title, 
+       $this->dispatch('notify',
+            message: $message,
+            title: $title,
             type: 'success'
         );
     }
@@ -155,7 +180,7 @@ class AgencyManager extends Component
     {
         $agencies = Agency::query()
             ->when($this->search, function ($q) {
-                $q->where(fn($sub) => 
+                $q->where(fn($sub) =>
                     $sub->where('name', 'like', "%{$this->search}%")
                         ->orWhere('code', 'like', "%{$this->search}%")
                 );

@@ -4,24 +4,50 @@ namespace App\Livewire\Crud;
 
 use App\Models\User;
 use App\Enums\{UserRole, LicenseType};
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
 use Illuminate\Validation\Rule as ValidationRule;
 
+
+/* Class UserManager
+ *
+ * @package App\Livewire\Crud
+ *
+ * Gestore centralizzato dell'anagrafica utenti e delle credenziali di accesso.
+ * Implementa logiche di creazione, modifica e ordinamento dinamico, integrando
+ * il controllo dei ruoli e le specifiche delle licenze.
+ *
+ * RESPONSABILITÀ (SOLID):
+ * 1. Identity Management: Gestisce il ciclo di vita degli account, inclusa la cifratura
+ * sicura delle password (bcrypt) e la validazione univoca delle email.
+ * 2. Dynamic Sorting: Implementa un sistema di ordinamento bidirezionale sulle colonne della tabella,
+ * migliorando l'usabilità per database con elevato numero di record.
+ * 3. UI State Orchestration: Coordina la transizione tra la vista elenco e la modalità
+ * di editing senza ricaricamento della pagina, utilizzando proprietà reattive.
+ * 4. Enum Injection: Inserisce automaticamente le casistiche degli Enum (UserRole, LicenseType)
+ * nella view per popolare dropdown coerenti con la logica di dominio.
+ * 5. Event-Driven Deletion: Utilizza un sistema di conferma asincrono per prevenire
+ * cancellazioni accidentali di profili utente.
+ *
+ * SICUREZZA:
+ * - Password Handling: Gestisce la password in modo opzionale durante l'update,
+ * aggiornandola solo se effettivamente digitata dall'amministratore.
+ */
 class UserManager extends Component
 {
     use WithPagination;
 
     #[Url(history: true)]
     public string $search = '';
-    
+
     public string $sortField = 'name';
     public string $sortDirection = 'asc';
-    
+
     // UI State
-    public bool $editing = false; 
+    public bool $editing = false;
     public int $userId = 0;
 
     // Form fields
@@ -37,9 +63,9 @@ class UserManager extends Component
      */
     private function notify(string $message, string $title = 'SUCCESSO'): void
     {
-        $this->dispatch('notify', 
-            message: $message, 
-            title: $title, 
+        $this->dispatch('notify',
+            message: $message,
+            title: $title,
             type: 'success'
         );
     }
@@ -121,6 +147,12 @@ class UserManager extends Component
     {
         $id = is_array($payload) ? ($payload['id'] ?? null) : $payload;
 
+        //impedisco di autoeliminarmi (solo per sicurezza! il mio ID non appare nella lista)
+        if ($id === Auth::user()->id) {
+            $this->dispatch('notify', message: 'Non puoi eliminare il tuo stesso account!', type: 'error');
+            return;
+        }
+
         if ($id) {
             User::findOrFail($id)->delete();
             $this->notify('Utente eliminato.', 'SISTEMA');
@@ -142,7 +174,7 @@ class UserManager extends Component
     {
         $users = User::query()
             ->when($this->search, function ($query) {
-                $query->where(fn($q) => 
+                $query->where(fn($q) =>
                     $q->where('name', 'like', '%'.$this->search.'%')
                       ->orWhere('email', 'like', '%'.$this->search.'%')
                 );

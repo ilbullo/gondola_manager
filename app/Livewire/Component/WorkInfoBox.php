@@ -3,12 +3,31 @@
 namespace App\Livewire\Component;
 
 use Livewire\Component;
-use Livewire\Attributes\On;   
+use Livewire\Attributes\On;
 
 /**
- * Componente Livewire che rappresenta un box informativo per un lavoro (work).
- * Mostra informazioni come tipo di lavoro, agenzia, voucher, importo, slot occupati e stato condiviso.
+ * Class WorkInfoBox
+ *
+ * @package App\Livewire\Component
+ *
+ * Rappresenta lo strato di anteprima reattiva (Preview Layer) del sistema di assegnazione.
+ * Questo componente "ascolta" le selezioni effettuate nella sidebar e visualizza in tempo reale
+ * i dettagli del lavoro che sta per essere inserito in tabella.
+ *
+ * RESPONSABILITÀ (SOLID):
+ * 1. Reactive Feedback: Riduce gli errori di inserimento fornendo all'utente un riepilogo
+ * visivo (tipo, agenzia, importo) prima del salvataggio fisico.
+ * 2. Event-Driven Communication: Utilizza l'attributo #[On] per reagire a eventi cross-component
+ * ('workSelected'), mantenendo il sistema altamente disaccoppiato.
+ * 3. Default Configuration Management: Integra la logica di fallback caricando i valori
+ * di default dai file di configurazione nel caso di dati mancanti.
+ * 4. Conditional UI Logic: Gestisce internamente la propria visibilità in base allo stato
+ * del dato selezionato (es. scompare se viene selezionata l'azione di "pulizia").
+ *
+ * FLUSSO DATI:
+ * [Sidebar] -> Dispatch('workSelected', $data) -> [WorkInfoBox] -> Rerender Anteprima
  */
+
 class WorkInfoBox extends Component
 {
     // Tipo di lavoro selezionato
@@ -50,7 +69,7 @@ class WorkInfoBox extends Component
      *
      * @param array $data Dati del lavoro selezionato
      */
-    #[On('workSelected')]   
+    #[On('workSelected')]
     public function updateFromSidebar(array $data)
     {
         $this->workType = $data['value'] ?? '';

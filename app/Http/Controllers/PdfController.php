@@ -6,11 +6,29 @@ use Barryvdh\DomPDF\Facade\Pdf; // Facade per generare PDF con DomPDF
 use Illuminate\Http\Request;
 
 /**
- * PdfController
- * 
- * Controller per la generazione e il download di PDF.
- * Recupera i dati dalla sessione e crea un file PDF utilizzando una view Blade.
+ * Class PdfController
+ *
+ * @package App\Http\Controllers
+ *
+ * Gestisce il rendering finale e il download dei documenti PDF del sistema.
+ * Utilizza un pattern a "consegna differita": i dati vengono preparati dai Services,
+ * parcheggiati temporaneamente in sessione e infine consumati da questo controller.
+ *
+ * RESPONSABILITÀ (SOLID):
+ * 1. Rendering: Trasforma i template Blade e i dati dinamici in documenti PDF tramite DomPDF.
+ * 2. Session Orchestration: Gestisce il recupero e la pulizia automatica (pull) dei dati di stampa,
+ * garantendo che le informazioni sensibili non rimangano in memoria oltre il necessario.
+ * 3. Configuration Management: Applica dinamicamente impostazioni di pagina (A4, A2) e
+ * orientamento (Portrait, Landscape) in base alle necessità del report specifico.
+ * 4. User Experience: Gestisce il download forzato con nomi file dinamici e coerenti.
+ *
+ * FLUSSO DI LAVORO:
+ * 1. Un componente Livewire prepara i dati tramite un Service.
+ * 2. Il componente esegue un `Session::flash('pdf_generate', $config)`.
+ * 3. Il componente reindirizza alla rotta gestita da questo controller.
+ * 4. Il controller genera il PDF e pulisce la sessione.
  */
+
 class PdfController extends Controller
 {
     /**

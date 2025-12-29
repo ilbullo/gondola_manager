@@ -9,6 +9,25 @@ use App\Enums\WorkType;
 use Illuminate\Support\Collection;
 use App\Contracts\{WorkQueryInterface, MatrixSplitterInterface, MatrixEngineInterface};
 
+/**
+ * Class MatrixSplitterService
+ *
+ * @package App\Services
+ *
+ * Direttore d'orchestra per la redistribuzione dei carichi di lavoro.
+ * Coordina l'estrazione dei dati (QueryService) e l'allocazione spaziale (EngineService)
+ * seguendo una gerarchia di priorità definita dal regolamento operativo.
+ *
+ * RESPONSABILITÀ (SOLID):
+ * 1. Workflow Orchestration: Gestisce la sequenza di distribuzione (Agenzie -> Cash -> Nolo).
+ * 2. Unassigned Management: Traccia e arricchisce i lavori che non trovano posto
+ * nella matrice per permetterne la gestione manuale del "Bancale".
+ * 3. Special Logic Handling: Gestisce casi eccezionali come i lavori 'P' (Perdi Volta)
+ * che richiedono una logica di inserimento forzato.
+ * 4. Data Compaction: Ottimizza la resa estetica della matrice per la UI,
+ * eliminando i "buchi" tra gli slot dopo il calcolo.
+ */
+
 class MatrixSplitterService implements MatrixSplitterInterface
 {
     public Collection $matrix;
@@ -16,8 +35,8 @@ class MatrixSplitterService implements MatrixSplitterInterface
     private Collection $licenseTable;
 
     public function __construct(
-        private WorkQueryInterface $queryService,    
-        private MatrixEngineInterface $engineService 
+        private WorkQueryInterface $queryService,
+        private MatrixEngineInterface $engineService
     ) {
         $this->unassignedWorks = collect();
     }
@@ -31,7 +50,7 @@ class MatrixSplitterService implements MatrixSplitterInterface
         $this->licenseTable = collect($licenseTable);
         //tutti i lavori
         $allWorks = $this->queryService->allWorks($this->licenseTable);
-        
+
         // 1. Preparazione della matrice base (prepareMatrix)
         $this->matrix = $this->queryService->prepareMatrix($this->licenseTable);
 
@@ -108,7 +127,7 @@ class MatrixSplitterService implements MatrixSplitterInterface
         if ($this->unassignedWorks->isNotEmpty()) {
             $worksToTry = $this->unassignedWorks->values();
             $this->engineService->distribute($worksToTry, $this->matrix, $this->unassignedWorks, $allWorks);
-            
+
             // Aggiorna con i soli non assegnati (escludendo i P che gestiamo dopo)
             $this->unassignedWorks = $worksToTry->filter(fn ($work) => ($work['value'] ?? '') !== 'P')->values();
         }
@@ -187,7 +206,7 @@ class MatrixSplitterService implements MatrixSplitterInterface
             foreach ($works as $index => $work) {
                 $compacted[$index + 1] = $work;
             }
-            
+
             $license['worksMap'] = $compacted;
             return $license;
         });

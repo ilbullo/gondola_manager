@@ -8,11 +8,31 @@ use Symfony\Component\HttpFoundation\Response;
 use App\Enums\UserRole;
 
 /**
- * Middleware CheckRole
+ * Class CheckRole
  *
- * Verifica che l’utente autenticato abbia uno dei ruoli autorizzati
- * per accedere alla rotta richiesta.
+ * @package App\Http\Middleware
+ *
+ * Middleware di autorizzazione basato sui ruoli (RBAC).
+ * Filtra l'accesso alle rotte verificando che l'utente autenticato possieda
+ * uno dei ruoli specificati nella definizione della rotta stessa.
+ *
+ * RESPONSABILITÀ (SOLID):
+ * 1. Perimeter Security: Impedisce l'accesso a intere sezioni dell'app (es. area Admin)
+ * ad utenti non autorizzati prima ancora che la richiesta raggiunga i controller.
+ * 2. Enum Integration: Sfrutta l'Enum UserRole per validare i permessi, eliminando
+ * il rischio di errori tipografici nel controllo delle stringhe.
+ * 3. Flexibility: Supporta il controllo multi-ruolo (OR logic), permettendo di
+ * definire rotte accessibili a diversi livelli gerarchici contemporaneamente.
+ * 4. Graceful Rejection: Gestisce automaticamente il redirect per utenti non loggati
+ * e l'abort (HTTP 403) per utenti loggati ma non autorizzati.
+ *
+ * CONFIGURAZIONE (bootstrap/app.php o Kernel):
+ * ->alias(['role' => \App\Http\Middleware\CheckRole::class])
+ *
+ * ESEMPIO DI UTILIZZO NELLE ROTTE:
+ * Route::middleware('role:admin,bancale')->group(function () { ... });
  */
+
 class CheckRole
 {
     /**

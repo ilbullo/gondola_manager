@@ -4,6 +4,29 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * Class LicenseResource
+ *
+ * @package App\Http\Resources
+ *
+ * Questa risorsa agisce come strato di trasformazione (API Transformation Layer) tra i modelli Eloquent
+ * e l'interfaccia utente. Centralizza la struttura dei dati inviati al frontend, garantendo
+ * che la tabella delle assegnazioni riceva una mappa degli slot consistente e performante.
+ *
+ * RESPONSABILITÀ (SOLID):
+ * 1. Data Normalization: Converte i tipi di dato del database (es. date, booleani) in formati
+ * standard per il frontend (stringhe ISO, integer).
+ * 2. Relationship Management: Utilizza il caricamento condizionale (whenLoaded) per prevenire
+ * l'invio di dati non necessari e ottimizzare il consumo di memoria.
+ * 3. Business Logic Exposure: Espone calcoli complessi definiti nel modello (Accessor) come
+ * proprietà semplici ('target_capacity', 'wallet', 'worksMap').
+ * 4. Graceful Fallback: Fornisce una struttura di default per la mappa degli slot (worksMap)
+ * anche in assenza di relazioni caricate, evitando errori di rendering in tabella.
+ *
+ * ESEMPIO DI UTILIZZO NEL SERVICE:
+ * return LicenseResource::collection($licenses)->resolve();
+ */
+
 class LicenseResource extends JsonResource
 {
     /**

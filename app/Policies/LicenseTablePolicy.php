@@ -7,6 +7,29 @@ use App\Models\User;
 use App\Enums\UserRole;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
+/**
+ * Class LicenseTablePolicy
+ *
+ * @package App\Policies
+ *
+ * Disciplina l'accesso alla struttura portante della tabella giornaliera (Ordine di Servizio).
+ * Impedisce la manipolazione dei turni e dell'ordinamento delle licenze da parte
+ * di utenti non autorizzati, garantendo la stabilità della matrice operativa.
+ *
+ * RESPONSABILITÀ (SOLID):
+ * 1. Operational Structure Protection: Protegge le entità che definiscono il perimetro
+ * lavorativo giornaliero.
+ * 2. Sequence Integrity: Assicura che solo i ruoli di coordinamento (Bancale/Admin)
+ * possano eseguire lo 'swap' o la modifica dei turni.
+ * 3. Scope Restriction: Inibisce agli utenti standard (User) la visualizzazione
+ * analitica dei dati delle altre licenze, se non previsto dalla dashboard aggregata.
+ *
+ * REGOLE DI BUSINESS:
+ * - ADMIN/BANCALE: Gestione totale dell'ordine di servizio.
+ * - USER: Escluso dalla gestione strutturale. Nota: L'accesso ai propri lavori
+ * è solitamente gestito tramite WorkAssignmentPolicy o logiche di ownership.
+ */
+
 class LicenseTablePolicy
 {
     use HandlesAuthorization;

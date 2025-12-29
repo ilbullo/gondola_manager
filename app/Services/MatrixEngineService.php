@@ -10,6 +10,25 @@ use Illuminate\Support\Collection;
 use DateTimeInterface;
 use App\Contracts\MatrixEngineInterface;
 
+/**
+ * Class MatrixEngineService
+ *
+ * @package App\Services
+ *
+ * Motore di allocazione spaziale e calcolo della saturazione.
+ * Risolve il posizionamento dei lavori sulla matrice temporale, gestendo
+ * collisioni, vincoli di turno e priorità di ordinamento.
+ *
+ * RESPONSABILITÀ (SOLID):
+ * 1. Spatial Logic: Calcola la disponibilità di blocchi contigui per lavori multi-slot.
+ * 2. Capacity Management: Monitora la saturazione reale vs target, sottraendo
+ * correttamente i lavori tecnici (P) che non occupano spazio "commerciale".
+ * 3. Distribution Strategies: Implementa sia la distribuzione orizzontale (Round-robin)
+ * che quella verticale (Shared blocks).
+ * 4. Temporal Constraints: Valida l'inserimento dei lavori in base alla fascia
+ * oraria del turno (Mattina/Pomeriggio).
+ */
+
 class MatrixEngineService implements MatrixEngineInterface
 {
     private int $totalSlots;
@@ -30,7 +49,7 @@ class MatrixEngineService implements MatrixEngineInterface
 
         foreach ($worksToAssign as $work) {
             $licenseId = $work['license_table_id'] ?? null;
-            
+
             if (!$licenseId || !$matrixById->has($licenseId)) {
                 $unassigned->push($work);
                 continue;
@@ -69,10 +88,10 @@ class MatrixEngineService implements MatrixEngineInterface
      * Utilizza $allWorks per calcolare correttamente i 'P' pendenti.
      */
     public function distribute(
-        Collection $worksToAssign, 
-        Collection &$matrix, 
-        Collection &$unassigned, 
-        Collection $allWorks, 
+        Collection $worksToAssign,
+        Collection &$matrix,
+        Collection &$unassigned,
+        Collection $allWorks,
         bool $useFirstSlotOnly = false
     ): void {
         if ($worksToAssign->isEmpty()) return;
@@ -108,10 +127,10 @@ class MatrixEngineService implements MatrixEngineInterface
                         for ($i = 0; $i < $slotsNeeded; $i++) {
                             $license['worksMap'][$currentSlot + $i] = $nextWork;
                         }
-                        
+
                         $license['slots_occupied'] = collect($license['worksMap'])->filter()->count();
                         $matrix[$index] = $license;
-                        
+
                         $worksToAssign->shift();
                         $assignedInThisRound = true;
                         break 2; // Passa al prossimo lavoro
@@ -164,7 +183,7 @@ class MatrixEngineService implements MatrixEngineInterface
                     for ($i = 0; $i < $slotsNeeded; $i++) {
                         $license['worksMap'][$currentFixedSlot + $i] = $nextWork;
                     }
-                    
+
                     $license['slots_occupied'] = collect($license['worksMap'])->filter()->count();
                     $matrix[$index] = $license;
                     $worksToAssign->shift();

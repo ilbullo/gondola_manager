@@ -8,15 +8,30 @@ use Livewire\Component;
 use App\Enums\WorkType;
 
 /**
- * Componente Sidebar responsabile della selezione e configurazione
- * dei lavori all’interno della Tabella.
+ * Class Sidebar
  *
- * Gestisce:
- * - Tipo lavoro selezionato
- * - Dettagli (voucher, importo, caselle occupate, ecc.)
- * - Selezione agenzia
- * - Eventi UI e comunicazione con altri componenti (TableManager)
+ * @package App\Livewire\Layout
+ *
+ * Orchestratore dell'input utente per la configurazione dei lavori in tabella.
+ * Gestisce la selezione dei tipi di lavoro, l'integrazione con l'anagrafica agenzie
+ * e i parametri di assegnazione (voucher, slot, importi).
+ *
+ * RESPONSABILITÀ (SOLID):
+ * 1. UI State Routing: Dirige il flusso dell'interfaccia in base al tipo di lavoro
+ * selezionato (es. apre il modal agenzie se viene selezionato WorkType::AGENCY).
+ * 2. Cross-Component Synchronization: Notifica costantemente il sistema tramite l'evento
+ * 'workSelected', permettendo l'aggiornamento dell'anteprima (WorkInfoBox) e della tabella.
+ * 3. Business Rule Enforcement: Gestisce la mutua esclusione tra stati (es. un lavoro
+ * non può essere contemporaneamente 'Escluso' e 'Condiviso').
+ * 4. Configuration Bridge: Carica i valori predefiniti dai file di sistema (config)
+ * assicurando che la UI rifletta sempre le tariffe e i parametri correnti.
+ *
+ * FLUSSO DATI:
+ * User Click -> setWorkType() -> resolveWorkTypeAction() -> [Modal/Update] -> emitWorkSelected()
+ *
+ * @property bool $isRedistributionMode Controlla se l'utente sta visualizzando la tabella definitiva o provvisoria.
  */
+
 class Sidebar extends Component
 {
     // ===================================================================
@@ -99,7 +114,7 @@ class Sidebar extends Component
         if ($agency) {
             $this->agencyId = $agency->id;
             $this->agencyName = $agency->name;
-            
+
             // Sincronizzazione stato Enum
             $this->applyWorkTypeState(WorkType::AGENCY);
 
@@ -200,7 +215,7 @@ class Sidebar extends Component
     }
 
     /**
-     * Aggiorna il metodo updated esistente per gestire la mutua esclusione 
+     * Aggiorna il metodo updated esistente per gestire la mutua esclusione
      * anche se i dati arrivano da input diretti o altre interazioni.
      */
     public function updated($property, $value): void

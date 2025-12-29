@@ -6,6 +6,33 @@ use App\Models\{LicenseTable, User};
 use Livewire\Component;
 use Livewire\Attributes\{On, Computed};
 
+/**
+ * Class LicenseManager
+ *
+ * @package App\Livewire\TableManager
+ *
+ * Gestisce l'allestimento dell'Ordine di Servizio giornaliero.
+ * Permette la selezione dei conducenti disponibili, la definizione dell'ordine di uscita
+ * e il riordino dinamico delle licenze prima dell'inizio delle attività operative.
+ *
+ * RESPONSABILITÀ (SOLID):
+ * 1. State Orchestration: Gestisce due flussi di dati paralleli (utenti disponibili vs utenti selezionati)
+ * utilizzando Computed Properties per garantire performance elevate e dati sempre sincronizzati.
+ * 2. Order Management: Implementa la logica di ordinamento sequenziale e lo swapping delle posizioni
+ * per riflettere la gerarchia dei turni nel database.
+ * 3. Double-Booking Prevention: Integra controlli di integrità per evitare che un utente
+ * venga assegnato più volte nella stessa data operativa.
+ * 4. Workflow Transition: Funge da "Gatekeeper" per il passaggio dalla fase di configurazione
+ * alla fase di assegnazione lavori tramite l'azione di conferma definitiva.
+ *
+ * OTTIMIZZAZIONE:
+ * - L'uso di #[Computed] riduce il carico sul server memorizzando i risultati delle query
+ * all'interno dello stesso ciclo di richiesta (request lifecycle).
+ *
+ * @property-read \Illuminate\Support\Collection $availableUsers Utenti non ancora assegnati al turno.
+ * @property-read \Illuminate\Support\Collection $selectedUsers Utenti attualmente inseriti nell'ordine di servizio.
+ */
+
 class LicenseManager extends Component
 {
     public string $search = '';
@@ -96,13 +123,13 @@ class LicenseManager extends Component
 
         // Qui puoi inserire la logica di business per "iniziare il lavoro"
         // Esempio: Cambiare lo stato della giornata, loggare l'inizio, etc.
-        
+
         // Inviamo l'evento al sistema (utile per altri componenti)
         $this->dispatch('licensesConfirmed');
 
         // Notifica di successo
         $this->notify("Ordine di servizio confermato. Buon lavoro!", 'success', 'TURNO AVVIATO');
-        
+
         // Opzionale: reindirizza alla dashboard o a una visualizzazione di sola lettura
         // return redirect()->route('dashboard');
     }

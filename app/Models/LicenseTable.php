@@ -10,6 +10,36 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
+/**
+ * Class LicenseTable
+ *
+ * @package App\Models
+ *
+ * Rappresenta la partecipazione di un conducente al turno giornaliero (Ordine di Servizio).
+ * Agisce come coordinatore per gli slot orari e gestisce la logica di ordinamento
+ * e integrità spaziale dei lavori assegnati.
+ *
+ * RESPONSABILITÀ (SOLID):
+ * 1. Spatial Integrity: Attraverso l'accessor 'works_map', valida che non esistano
+ * sovrapposizioni fisiche tra lavori diversi negli stessi slot temporali.
+ * 2. Order Management: Implementa lo swapping atomico tramite transazioni database
+ * per permettere il riordino delle licenze senza violare i vincoli di unicità.
+ * 3. Financial Aggregation: Calcola dinamicamente il 'Wallet' (incassato diretto)
+ * e la saturazione degli slot per alimentare la dashboard in tempo reale.
+ * 4. State Classification: Fornisce helper semantici per determinare la tipologia
+ * di disponibilità (Full Day, Morning, Afternoon) basata sull'Enums DayType.
+ *
+ * LOGICA MATRICIALE:
+ * Il modello trasforma una relazione One-to-Many piana (works) in una struttura
+ * vettoriale (1..25) utilizzata dal TableSplitter per il calcolo dei conguagli.
+ *
+ * @property int $user_id
+ * @property int $order
+ * @property string $turn
+ * @property bool $only_cash_works
+ * @property \Carbon\Carbon $date
+ */
+
 class LicenseTable extends Model
 {
     use HasFactory;

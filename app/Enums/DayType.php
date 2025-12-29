@@ -4,14 +4,21 @@ namespace App\Enums;
 
 /**
  * Enum DayType
- * 
- * Rappresenta i tipi di giornata lavorativa.
- * 
- * Valori possibili:
- * - FULL: giornata intera
- * - MORNING: solo mattina
- * - AFTERNOON: solo pomeriggio
+ * * @package App\Enums
+ * * Questa classe definisce i tipi di turno/giornata lavorativa disponibili nel sistema.
+ * Implementa la logica di visualizzazione e branding per i diversi stati della licenza.
+ * * RESPONSABILITÀ:
+ * 1. Domain Definition: Centralizza gli unici stati validi per una giornata (Full, Morning, Afternoon).
+ * 2. Translation/UI Labeling: Fornisce etichette descrittive per l'utente finale.
+ * 3. Branding & Styling: Gestisce la coerenza cromatica (Tailwind CSS) e la simbologia (Badge)
+ * attraverso i diversi componenti dell'applicazione (Tabella, Sidebar, Modali).
+ * 4. Safety: Garantisce che nel database o negli scambi di dati vengano salvati solo valori validi,
+ * prevenendo errori derivanti da stringhe digitate manualmente.
+ * * UTILIZZO NELLE VIEW:
+ * $license->turn->label();  // "Tutto il giorno"
+ * $license->turn->colour(); // "bg-indigo-100 text-indigo-900"
  */
+
 enum DayType: string
 {
     // Giornata intera

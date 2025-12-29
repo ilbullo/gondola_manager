@@ -7,6 +7,28 @@ use App\Models\User;
 use App\Enums\UserRole;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
+
+/**
+ * Class AgencyWorkPolicy
+ *
+ * @package App\Policies
+ *
+ * Gestisce i criteri di autorizzazione per le transazioni consolidate (AgencyWork).
+ * Questa policy protegge i dati finanziari storici, garantendo che le righe di
+ * fatturazione e i voucher registrati non siano manipolabili dagli utenti standard.
+ *
+ * RESPONSABILITÀ (SOLID):
+ * 1. Financial Data Guard: Protegge l'integrità dei record di lavoro che formano
+ * la base per i pagamenti e i report delle agenzie.
+ * 2. Administrative Lockdown: Restringe l'accesso CRUD esclusivamente ai ruoli
+ * gestionali (Admin, Bancale), escludendo i conducenti dalla gestione dei propri crediti.
+ * 3. Scope Management: Definisce la visibilità dei dati storici a livello di sistema.
+ *
+ * REGOLE DI BUSINESS:
+ * - Le transazioni di agenzia sono considerate dati "Audit-sensitive": solo il
+ * personale amministrativo può correggere importi o eliminare record dopo il consolidamento.
+ */
+
 class AgencyWorkPolicy
 {
     use HandlesAuthorization;

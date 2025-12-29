@@ -6,6 +6,30 @@ use App\Models\LicenseTable;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
+/**
+ * Class EditLicenseModal
+ *
+ * @package App\Livewire\Ui
+ *
+ * Gestisce la configurazione granulare delle impostazioni di una licenza in tabella.
+ * Permette di modificare parametri critici come la tipologia di turno (Full/Mattina/Pomeriggio)
+ * e i vincoli operativi (es. Only Cash) tramite un'interfaccia modale isolata.
+ *
+ * RESPONSABILITÀ (SOLID):
+ * 1. Targeted Mutation: Isola la logica di aggiornamento delle proprietà della licenza,
+ * evitando di appesantire il componente principale della tabella.
+ * 2. State Mapping: Converte lo stato del database in proprietà reattive del componente
+ * per permettere l'editing immediato.
+ * 3. Event-Driven Lifecycle: Utilizza un sistema di trigger ('openEditLicense') per
+ * attivarsi contestualmente al click sulla riga della tabella.
+ * 4. Indirect UI Refresh: Dopo il salvataggio, comunica con il sistema tramite
+ * 'refreshTableBoard' per garantire che i cambiamenti visivi siano propagati globalmente.
+ *
+ * FLUSSO OPERATIVO:
+ * [WorkAssignmentTable] -> dispatch('openEditLicense', id) -> [EditLicenseModal] ->
+ * Update Record -> dispatch('refreshTableBoard') -> [Table Refresh]
+ */
+
 class EditLicenseModal extends Component
 {
     /**

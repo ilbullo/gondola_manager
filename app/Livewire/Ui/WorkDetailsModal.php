@@ -5,6 +5,31 @@ namespace App\Livewire\Ui;
 use Livewire\Component;
 use Livewire\Attributes\On;
 
+/**
+ * Class WorkDetailsModal
+ *
+ * @package App\Livewire\Ui
+ *
+ * Gestore della configurazione granulare dei parametri di un lavoro.
+ * Permette la definizione di importi personalizzati, l'estensione degli slot occupati
+ * e l'applicazione di logiche di esclusione o condivisione fiscale/operativa.
+ *
+ * RESPONSABILITÀ (SOLID):
+ * 1. Targeted Parameterization: Isola la modifica dei parametri tecnici (amount, slots)
+ * per evitare di sovraccaricare l'interfaccia principale della Sidebar.
+ * 2. Input Validation: Implementa regole rigorose (rules()) per garantire che i dati
+ * finanziari e gli indici di occupazione (1-4) siano coerenti prima del salvataggio.
+ * 3. Business Rule Enforcement: Gestisce programmaticamente la mutua esclusione
+ * tra gli stati 'Escluso' e 'Condiviso' tramite hook reattivi (updated*).
+ * 4. Bi-directional Synchronization: Riceve lo stato attuale tramite 'workSelected'
+ * e restituisce le modifiche validate tramite 'updateWorkDetails'.
+ *
+ * LOGICA DI BUSINESS:
+ * - SlotsOccupied: Determina quante celle consecutive verranno bloccate in tabella.
+ * - Excluded/Shared: Definisce come il LiquidationService dovrà trattare il lavoro
+ * nel calcolo dei totali e delle quote bancale.
+ */
+
 class WorkDetailsModal extends Component
 {
     // === Stato del modale ===

@@ -7,8 +7,27 @@ use Livewire\Attributes\On;
 use Livewire\Component;
 
 /**
- * Componente Livewire che riassume il numero di assegnazioni di lavoro per tipo.
- * Tiene traccia dei conteggi giornalieri per ciascun tipo di lavoro: N, X, A, P.
+ * Class WorkSummary
+ *
+ * @package App\Livewire\Component
+ *
+ * Gestisce la logica di aggregazione e visualizzazione delle statistiche giornaliere.
+ * Questo componente funge da monitor globale per i carichi di lavoro, fornendo un riepilogo
+ * quantitativo suddiviso per tipologia (N, X, A, P).
+ *
+ * RESPONSABILITÀ (SOLID):
+ * 1. Real-time Aggregation: Calcola dinamicamente i totali dal database senza necessità
+ * di ricaricare la pagina, grazie all'integrazione con gli eventi di sistema.
+ * 2. Multi-Event Reactivity: Centralizza la logica di aggiornamento ascoltando molteplici
+ * trigger (creazione, rimozione, reset), garantendo l'integrità del dato visualizzato.
+ * 3. Data Integrity: Assicura che i conteggi siano sempre riferiti alla data odierna,
+ * agendo come filtro temporale per le metriche di business.
+ * 4. UX Feedback: Fornisce all'amministratore una visione d'insieme immediata sul totale
+ * delle operazioni effettuate, facilitando il controllo a fine turno.
+ *
+ * LOGICA DI QUERY:
+ * Utilizza raggruppamenti SQL (GroupBy) per massimizzare le performance, evitando di
+ * caricare i modelli completi e limitando il carico sulla memoria.
  */
 class WorkSummary extends Component
 {

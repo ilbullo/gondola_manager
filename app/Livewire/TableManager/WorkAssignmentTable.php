@@ -10,6 +10,32 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Livewire\Component;
 
+/**
+ * Class WorkAssignmentTable
+ *
+ * @package App\Livewire\TableManager
+ *
+ * Gestore della matrice operativa di assegnazione lavori.
+ * Questo componente funge da interfaccia principale per l'utente, permettendo di
+ * incrociare i conducenti presenti (LicenseTable) con i lavori selezionati dalla sidebar.
+ *
+ * RESPONSABILITÀ (SOLID):
+ * 1. Interaction Orchestration: Gestisce gli input dell'utente sulle celle della tabella,
+ * delegando la logica di persistenza e validazione al WorkAssignmentService.
+ * 2. Real-time Synchronization: Reagisce istantaneamente alle selezioni della sidebar
+ * ('workSelected') e aggiorna la visualizzazione dopo ogni mutazione del database.
+ * 3. Exception Handling: Cattura gli errori di business (es. slot già occupati,
+ * conflitti di orario) e li traduce in feedback visivi per l'operatore.
+ * 4. Reporting Bridge: Prepara il dataset per la generazione del PDF operativo,
+ * garantendo la continuità tra la vista digitale e il documento cartaceo.
+ *
+ * FLUSSO DATI:
+ * Click Cella -> assignWork() -> [Service Validation] -> Refresh Matrix -> Dispatch Events.
+ *
+ * @property array $licenses Struttura dati trasformata (via Resource) che rappresenta le righe della tabella.
+ * @property array|null $selectedWork Snapshot del lavoro attualmente "caricato" sul cursore dell'utente.
+ */
+
 class WorkAssignmentTable extends Component
 {
     /**

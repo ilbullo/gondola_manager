@@ -5,6 +5,30 @@ namespace App\Services;
 use App\Models\{WorkAssignment, Agency, LicenseTable};
 use App\Http\Resources\LicenseResource;
 use Illuminate\Support\Facades\Config;
+use App\Enums\DayType;
+
+/**
+ * Class WorkAssignmentService
+ *
+ * @package App\Services
+ *
+ * Gestore delle operazioni CRUD e dello stato operativo delle licenze.
+ * Coordina la scrittura sicura dei lavori sul database, garantendo l'assenza
+ * di collisioni temporali e la corretta rotazione dei turni.
+ *
+ * RESPONSABILITÀ (SOLID):
+ * 1. Transactional Integrity: Protegge il database da sovrapposizioni di slot
+ * tramite controlli preventivi in fase di salvataggio.
+ * 2. State Management: Gestisce il ciclo di vita operativo della licenza (turni e flag cash-only).
+ * 3. Data Transformation: Prepara i dati per la visualizzazione tramite Resource
+ * o per la generazione di documenti (PDF).
+ * 4. Relationship Resolution: Risolve dinamicamente le dipendenze tra i lavori
+ * e le anagrafiche agenzia.
+ *
+ * LOGICA DI CONFLITTO:
+ * - Un lavoro non può essere salvato se lo spazio [slot -> slot + occupazione]
+ * interseca un record già esistente per la stessa licenza nella data odierna.
+ */
 
 class WorkAssignmentService
 {
@@ -87,16 +111,15 @@ class WorkAssignmentService
     {
         $license = LicenseTable::findOrFail($licenseId);
 
+        // Usiamo direttamente i casi dell'Enum
         $nextTurn = match($license->turn) {
-            'full'      => 'morning',
-            'morning'   => 'afternoon',
-            'afternoon' => 'full',
-            default     => 'full',
+            DayType::FULL      => DayType::MORNING,
+            DayType::MORNING   => DayType::AFTERNOON,
+            DayType::AFTERNOON => DayType::FULL,
+            default            => DayType::FULL,
         };
 
         $license->update(['turn' => $nextTurn]);
-
-        return $nextTurn;
     }
 
     /**

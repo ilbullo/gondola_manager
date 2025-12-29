@@ -5,16 +5,27 @@ namespace App\Enums;
 /**
  * Enum WorkType
  *
- * Rappresenta i diversi tipi di lavoro gestiti dall'applicazione.
+ * @package App\Enums
  *
- * Valori possibili:
- * - CASH: lavoro pagato in contanti
- * - AGENCY: lavoro tramite agenzia
- * - NOLO: lavoro a noleggio
- * - PERDI_VOLTA: lavoro a “perdi volta”
- * - EXCLUDED: lavoro escluso
- * - FIXED: lavoro fisso
+ * Definisce le tipologie di servizio gestite dal sistema e i relativi identificativi tecnici.
+ * Questa classe è il fulcro della logica di ripartizione, influenzando i calcoli della liquidazione,
+ * la generazione dei report agenzie e la tematizzazione dell'interfaccia utente.
+ *
+ * RESPONSABILITÀ (SOLID):
+ * 1. Domain Mapping: Lega i codici storici/tecnici (es. 'X', 'A') a concetti di business chiari.
+ * 2. Financial Logic: Agisce come discriminante per il calcolo dei compensi nel LiquidationService.
+ * 3. Visual Identity: Centralizza il sistema di colori per badge e pulsanti, garantendo che un lavoro
+ * di tipo "Agenzia" abbia lo stesso aspetto in ogni parte dell'applicazione.
+ * 4. Helper Provider: Offre metodi statici (values, options) per popolare dinamicamente componenti
+ * UI come select, filtri o sidebar di assegnazione.
+ *
+ * ESEMPIO DI UTILIZZO:
+ * // Nella Blade per un badge colorato:
+ * <span class="{{ $work->type->colourClass() }}">{{ $work->type->label() }}</span>
+ * * // Nel Service per filtrare solo i noli:
+ * if ($work->type === WorkType::NOLO) { ... }
  */
+
 enum WorkType: string
 {
     // Lavoro pagato in contanti

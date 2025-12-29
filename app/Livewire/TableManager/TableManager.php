@@ -7,15 +7,40 @@ use Livewire\Component;
 use Livewire\Attributes\On;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Class TableManager
+ *
+ * @package App\Livewire\TableManager
+ *
+ * Orchestratore di stato per il modulo operativo della tabella licenze e lavori.
+ * Agisce come una macchina a stati (Finite State Machine) che coordina la transizione
+ * tra la fase di configurazione, la fase operativa e la fase di redistribuzione.
+ *
+ * RESPONSABILITÀ (SOLID):
+ * 1. State Management: Centralizza i flag booleani ($tableConfirmed, $isRedistributed)
+ * che determinano la logica di visualizzazione dell'intera dashboard.
+ * 2. Event Routing: Canalizza gli eventi provenienti dai componenti figli (Sidebar,
+ * LicenseManager) per sincronizzare il comportamento globale del sistema.
+ * 3. Atomic Operations: Gestisce la pulizia dei dati giornalieri tramite transazioni
+ * database, garantendo la coerenza tra cancellazione licenze e notifiche di sistema.
+ * 4. Workflow Continuity: Assicura che l'utente mantenga il progresso corretto,
+ * bloccando o sbloccando le funzionalità in base alla conferma della tabella.
+ *
+ * LOGICA DI STATO:
+ * - [!tableConfirmed]: Fase di allestimento (LicenseManager).
+ * - [tableConfirmed && !isRedistributed]: Fase operativa di assegnazione (TableBoard).
+ * - [tableConfirmed && isRedistributed]: Fase di calcolo e ripartizione (TableSplitter).
+ */
+
 class TableManager extends Component
 {
-    /** 
+    /**
      * Indica se esistono licenze registrate per la data odierna.
      * Controllato automaticamente al mount.
      */
     public bool $hasLicenses = false;
 
-    /** 
+    /**
      * Indica se la tabella delle licenze è stata confermata.
      * Quando true, la tabella non è più modificabile.
      */
@@ -115,7 +140,7 @@ class TableManager extends Component
         $this->dispatch('performRefreshLicenseBoard');
         //$this->dispatch('refreshLicenseBoard');
         $this->refreshLicenseStatus();
-        
+
     }
 
     // ===================================================================

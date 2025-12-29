@@ -8,6 +8,33 @@ use Carbon\Carbon;
 use Livewire\Attributes\{On, Computed};
 use Livewire\Component;
 
+/**
+ * Class WorkLiveInfoModal
+ *
+ * @package App\Livewire\Ui
+ *
+ * Gestore dell'ispezione dettagliata e della modifica "live" di un lavoro assegnato.
+ * Il componente permette di visualizzare i metadati temporali (tempo trascorso, orario
+ * di partenza) e di aggiornare i parametri economici o identificativi di un'assegnazione.
+ *
+ * RESPONSABILITÀ (SOLID):
+ * 1. Data Transformation: Utilizza le Computed Properties per formattare i dati grezzi
+ * del DB in informazioni leggibili per l'operatore (es. diffForHumans per il tempo trascorso).
+ * 2. Bi-modal Interface: Supporta sia la visualizzazione informativa che la modifica
+ * attiva (Editing) tramite il mapping esplicito dei campi del form.
+ * 3. Atomic Updates: Centralizza la logica di salvataggio assicurando che la
+ * sincronizzazione tra codici agenzia e ID agenzia sia gestita correttamente.
+ * 4. Indirect Deletion: Facilita il processo di rimozione delegando l'azione distruttiva
+ * al sistema di conferma globale (ModalConfirm).
+ *
+ * FLUSSO DATI:
+ * [TableBoard] -> showWorkInfo(id) -> [WorkLiveInfoModal] -> Update ->
+ * -> [refreshTableBoard] -> [WorkAssignmentTable]
+ *
+ * @property-read WorkAssignment|null $work Istanza del modello caricata via Computed.
+ * @property-read array $workData Array formattato per il rendering della View.
+ */
+
 class WorkLiveInfoModal extends Component
 {
     public bool $open = false;
@@ -31,7 +58,7 @@ class WorkLiveInfoModal extends Component
     }
 
     /**
-     * SRP: Preparazione dati per la View. 
+     * SRP: Preparazione dati per la View.
      * Il componente si occupa solo di "passare" i dati pronti.
      */
     #[Computed]
@@ -45,7 +72,7 @@ class WorkLiveInfoModal extends Component
         return [
             'id'                => $work->id,
             'value'             => $work->value,
-            'agency'            => $work->agency?->name, 
+            'agency'            => $work->agency?->name,
             'agency_code'       => $work->agency_code,
             'amount'            => (float) $work->amount,
             'voucher'           => $work->voucher ?? $work->note ?? '',
@@ -59,7 +86,7 @@ class WorkLiveInfoModal extends Component
     public function openModal(int $workId): void
     {
         $this->workId = $workId;
-        
+
         if ($work = $this->work) {
             // Mapping esplicito: il componente dichiara cosa gli serve.
             // Questo isola la UI dalla struttura del Database.
@@ -71,7 +98,7 @@ class WorkLiveInfoModal extends Component
                 'shared_from_first' => (bool) $work->shared_from_first,
                 'voucher'           => $work->voucher ?? $work->note ?? '',
             ]);
-            
+
             $this->open = true;
         }
     }
@@ -109,7 +136,7 @@ class WorkLiveInfoModal extends Component
         $this->dispatch('flip-to-front');
         $this->dispatch('work-updated');
         $this->dispatch('refreshTableBoard');
-        
+
         session()->flash('message', "Lavoro aggiornato.");
     }
 

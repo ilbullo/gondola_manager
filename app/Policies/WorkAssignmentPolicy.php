@@ -7,6 +7,29 @@ use App\Models\User;
 use App\Enums\UserRole;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
+/**
+ * Class WorkAssignmentPolicy
+ *
+ * @package App\Policies
+ *
+ * Disciplina l'autorizzazione per la gestione operativa dei lavori (Assegnazioni).
+ * Assicura che la manipolazione della matrice dei carichi di lavoro sia riservata
+ * esclusivamente al personale di coordinamento e agli amministratori.
+ *
+ * RESPONSABILITÀ (SOLID):
+ * 1. Operational Integrity: Protegge il flusso di inserimento dati orari e finanziari
+ * da modifiche non autorizzate durante il turno.
+ * 2. Financial Safety: Impedisce che gli importi (amount) e i flag di esclusione
+ * possano essere alterati da chi non ha responsabilità di cassa.
+ * 3. Matrix Consistency: Garantisce che solo i ruoli Admin e Bancale possano
+ * occupare o liberare slot nella tabella operativa.
+ *
+ * REGOLE DI BUSINESS:
+ * - ADMIN/BANCALE: Hanno il controllo granulare su ogni singola cella della matrice.
+ * - USER: Può solo subire l'assegnazione dei lavori (tramite visualizzazione passiva
+ * della propria licenza), ma non può inserire, modificare o eliminare record.
+ */
+
 class WorkAssignmentPolicy
 {
     use HandlesAuthorization;

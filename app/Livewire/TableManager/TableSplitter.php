@@ -98,28 +98,16 @@ class TableSplitter extends Component
         // 2. Risolviamo il Service tramite il Container
         $service = app(\App\Services\MatrixSplitterService::class);
 
-        // 3. Eseguiamo la logica passando i dati al metodo execute
+        // 3. Eseguiamo la logica di smistamento
         $service->execute($licenseTable);
 
-        // 4. SOLID: Integriamo i dati di liquidazione nella matrice
-        $defaultAmount = (float) config('app_settings.works.default_amount', 90.0);
-
-        $this->matrix = $service->matrix->map(function ($license) use ($defaultAmount) {
-            // Calcolo Wallet (Logica di Business)
-            $nCount = collect($license['worksMap'])->where('value', 'N')->count();
-            $theoreticalFromN = $nCount * $defaultAmount;
-            $currentWallet = (float) ($license['wallet'] ?? 0);
-            $walletDiff = $theoreticalFromN - $currentWallet;
-
-            // Generiamo il DTO
-            $liq = LiquidationService::calculate(
-                $license['worksMap'], 
-                $walletDiff, 
-                $this->bancaleCost
-            );
-
-            // Per compatibilità con Livewire array state, aggiungiamo i dati calcolati
-            $license['liquidation'] = $liq; // Se implementi Wireable nel DTO
+        // 4. SOLID & DRY: Popoliamo la matrice usando il metodo di calcolo centralizzato
+        $this->matrix = $service->matrix->map(function ($license) {
+            
+            // Usiamo il factory method già presente nel componente
+            $license['liquidation'] = $this->calculateLiquidation($license);
+            
+            // Calcoliamo l'occupazione degli slot
             $license['slots_occupied'] = collect($license['worksMap'])->filter()->count();
 
             return $license;

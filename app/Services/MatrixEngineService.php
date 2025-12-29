@@ -9,6 +9,8 @@ use App\Enums\WorkType;
 use Illuminate\Support\Collection;
 use DateTimeInterface;
 use App\Contracts\MatrixEngineInterface;
+use App\Specifications\TurnConstraintSpecification;
+use App\Specifications\CashOnlySpecification;
 
 /**
  * Class MatrixEngineService
@@ -32,10 +34,17 @@ use App\Contracts\MatrixEngineInterface;
 class MatrixEngineService implements MatrixEngineInterface
 {
     private int $totalSlots;
+    protected array $rules = [];
 
     public function __construct()
     {
         $this->totalSlots = (int) config('app_settings.matrix.total_slots', 25);
+
+        // Registro le regole attive
+        $this->rules = [
+            new TurnConstraintSpecification(),
+            new CashOnlySpecification(),
+        ];
     }
 
     /**
@@ -275,22 +284,26 @@ class MatrixEngineService implements MatrixEngineInterface
         // Ritorna almeno 0 (evita valori negativi se la licenza è sovraccarica)
         return (int) max(0, $capacityLeft);
     }
+
     /**
-     * HELPER: Permesso inserimento (Stesso nome e logica)
+     * Valida l'assegnabilità di un lavoro a una licenza applicando il set di regole dinamiche.
+     * * Implementa il principio Open/Closed (SOLID): il metodo è "chiuso" alle modifiche 
+     * ma "aperto" all'estensione. Per aggiungere nuovi vincoli di business (es. limiti orari, 
+     * esclusive agenzie, etc.), è sufficiente iniettare una nuova classe nel set $rules 
+     * senza dover modificare la logica interna di questo motore.
+     *
+     * @param array $license Dati della licenza (conducente, turno, vincoli fiscali).
+     * @param array $work    Dati del lavoro da validare (tipo, timestamp, valore).
+     * @return bool True se il lavoro soddisfa TUTTE le specifiche attive.
      */
+
     private function isAllowedToBeAdded(array $license, array $work): bool
     {
-        $turn = $license['turn'] ?? DayType::FULL->value;
-        $onlyCash = $license['only_cash_works'] ?? false;
-
-        if ($turn !== DayType::FULL->value) {
-            $workTime = $this->extractWorkTime($work);
-            if ($turn === DayType::MORNING->value && $workTime > config('app_settings.matrix.morning_end')) return false;
-            if ($turn === DayType::AFTERNOON->value && $workTime < config('app_settings.matrix.afternoon_start')) return false;
+        foreach ($this->rules as $rule) {
+            if (!$rule->isSatisfiedBy($license, $work)) {
+                return false;
+            }
         }
-
-        if ($onlyCash && ($work['value'] ?? '') === WorkType::AGENCY->value) return false;
-
         return true;
     }
 

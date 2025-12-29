@@ -140,6 +140,7 @@ class LicenseManager extends Component
     }
 
     public function render() {
+//        usleep(1000000);
         return view('livewire.table-manager.license-manager');
     }
 }

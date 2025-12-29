@@ -47,7 +47,7 @@ class LicenseTablePolicy
     public function viewAny(User $user): bool
     {
         // Solo amministratori o utenti con ruolo BANCALE possono vedere tutti i record
-        return in_array($user->role, [UserRole::ADMIN, UserRole::BANCALE]);
+        return $user->isManager();
     }
 
     /**
@@ -60,7 +60,7 @@ class LicenseTablePolicy
     public function view(User $user, LicenseTable $licenseTable): bool
     {
         // Permessi identici a viewAny
-        return in_array($user->role, [UserRole::ADMIN, UserRole::BANCALE]);
+        return $user->isManager();
     }
 
     /**
@@ -71,7 +71,7 @@ class LicenseTablePolicy
      */
     public function create(User $user): bool
     {
-        return in_array($user->role, [UserRole::ADMIN, UserRole::BANCALE]);
+        return $user->isManager();
     }
 
     /**
@@ -83,7 +83,7 @@ class LicenseTablePolicy
      */
     public function update(User $user, LicenseTable $licenseTable): bool
     {
-        return in_array($user->role, [UserRole::ADMIN, UserRole::BANCALE]);
+        return $user->isManager();
     }
 
     /**
@@ -95,7 +95,7 @@ class LicenseTablePolicy
      */
     public function delete(User $user, LicenseTable $licenseTable): bool
     {
-        return in_array($user->role, [UserRole::ADMIN, UserRole::BANCALE]);
+        return $user->isManager();
     }
 
     /**
@@ -107,7 +107,7 @@ class LicenseTablePolicy
      */
     public function restore(User $user, LicenseTable $licenseTable): bool
     {
-        return in_array($user->role, [UserRole::ADMIN, UserRole::BANCALE]);
+        return $user->isManager();
     }
 
     /**
@@ -119,6 +119,6 @@ class LicenseTablePolicy
      */
     public function forceDelete(User $user, LicenseTable $licenseTable): bool
     {
-        return in_array($user->role, [UserRole::ADMIN, UserRole::BANCALE]);
+        return $user->isManager();
     }
 }

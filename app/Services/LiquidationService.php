@@ -44,7 +44,7 @@ class LiquidationService
         $valoreX = $cashXStandard->sum('amount');
 
         // Netto = (X oggi) + (Conguaglio Wallet) - (Costo Bancale)
-        $nettoOggi = $valoreX + $walletDifference - $bancaleCost;
+        $nettoOggi = round( ($valoreX + $walletDifference - $bancaleCost), 2);
 
         return new LiquidationResult(
             counts: [

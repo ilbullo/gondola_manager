@@ -148,4 +148,13 @@ class User extends Authenticatable
     {
         return $this->role === UserRole::USER;
     }
+
+    /**
+     * Verifica se l'utente ha privilegi gestionali.
+     * Combina i ruoli Admin e Bancale.
+     */
+    public function isManager(): bool
+    {
+        return $this->isAdmin() || $this->isBancale();
+    }
 }

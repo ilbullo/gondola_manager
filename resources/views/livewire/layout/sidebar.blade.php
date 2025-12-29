@@ -48,13 +48,13 @@
 
 {{-- TOGGLES (Fisso / Condiviso) --}}
     <div class="flex gap-1 bg-white/5 p-1 rounded-xl border border-white/10 shrink-0 h-[50px]">
-        <button type="button" wire:click="toggleExcluded" 
+        <button type="button" wire:click="toggleExcluded"
             class="h-full px-3 lg:px-4 rounded-lg text-[10px] font-black uppercase transition-all {{ $excluded ? 'bg-red-600 text-white shadow-lg' : 'text-slate-500 hover:bg-white/5' }}">
             <span class="lg:hidden">F</span>
             <span class="hidden lg:inline whitespace-nowrap">Lavoro Fisso</span>
         </button>
 
-        <button type="button" wire:click="toggleShared" 
+        <button type="button" wire:click="toggleShared"
             class="h-full px-3 lg:px-4 rounded-lg text-[10px] font-black uppercase transition-all {{ $sharedFromFirst ? 'bg-yellow-300 text-black shadow-lg' : 'text-slate-500 hover:bg-white/5' }}">
             <span class="lg:hidden">1°</span>
             <span class="hidden lg:inline whitespace-nowrap">Condiviso 1°</span>
@@ -84,20 +84,20 @@
 </header>
 
 @push('modals')
-    <div x-data="{ open: false }" 
-     x-on:open-info-modal.window="open = true" 
-     x-show="open" 
-     class="fixed inset-0 z-[100] overflow-y-auto" 
+    <div x-data="{ open: false }"
+     x-on:open-info-modal.window="open = true"
+     x-show="open"
+     class="fixed inset-0 z-[100] overflow-y-auto"
      style="display: none;">
-    
+
     {{-- Overlay Sfondo --}}
     <div class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm transition-opacity"></div>
 
     {{-- Contenitore Modale --}}
     <div class="flex min-h-full items-center justify-center p-4">
-        <div @click.away="open = false" 
+        <div @click.away="open = false"
              class="relative transform overflow-hidden rounded-[2rem] bg-slate-900 border border-white/10 shadow-2xl transition-all w-full max-w-lg p-8">
-            
+
             {{-- Header Modale --}}
             <div class="flex justify-between items-center mb-6">
                 <div class="flex items-center gap-3">
@@ -118,7 +118,7 @@
 
             {{-- Contenuto --}}
             <div class="space-y-6">
-                
+
                 {{-- UFFICIO --}}
                 <div class="bg-white/5 rounded-2xl p-5 border border-white/5">
                     <div class="flex items-center gap-2 mb-2">
@@ -145,7 +145,7 @@
                         <span class="px-2 py-0.5 bg-emerald-500 text-[9px] font-black rounded uppercase text-slate-900">Multi-Slot</span>
                     </div>
                     <p class="text-slate-300 text-sm leading-relaxed">
-                        In caso di servizi da più di uno slot (es. orarie). Imposta gli slot occupati. Decidi se deve essere <span class="text-rose-500 font-bold italic">Fisso</span>, <span class="text-yellow-300 font-bold italic">Ripartito dal 1°</span> o <span class="text-emerald-400 font-bold italic">Libero</span>. 
+                        In caso di servizi da più di uno slot (es. orarie). Imposta gli slot occupati. Decidi se deve essere <span class="text-rose-500 font-bold italic">Fisso</span>, <span class="text-yellow-300 font-bold italic">Ripartito dal 1°</span> o <span class="text-emerald-400 font-bold italic">Libero</span>.
                         <br>
                         <span class="text-[11px] text-amber-400 font-bold uppercase mt-2 block italic">⚠️ Attenzione: Se lasciato libero, il lavoro seguirà la ripartizione automatica.</span>
                     </p>

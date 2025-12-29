@@ -27,7 +27,7 @@
                                 <span class="w-7 h-7 flex-shrink-0 flex items-center justify-center bg-slate-800 text-white rounded-lg font-black text-[10px]">
                                     {{ $license['user']['license_number'] }}
                                 </span>
-                                
+
                                 {{-- Nome (Abbreviato o Nascosto su schermi piccoli se necessario) --}}
                                 <p class="font-black text-slate-700 text-[10px] uppercase truncate w-16">
                                     {{ Str::limit($license['user']['name'], 10, '...') }}
@@ -45,7 +45,7 @@
                                     ];
                                     $currentStyle = $shiftStyles[$shift];
                                 @endphp
-                                <button wire:click="cycleTurn({{ $license['id'] }})" 
+                                <button wire:click="cycleTurn({{ $license['id'] }})"
                                         class="w-5 h-5 flex items-center justify-center rounded-md {{ $currentStyle['bg'] }} {{ $currentStyle['text'] }} text-[9px] font-black border border-black/5 shadow-sm active:scale-90 transition-all">
                                     {{ $currentStyle['label'] }}
                                 </button>
@@ -101,4 +101,7 @@
             </div>
         </div>
     </main>
+    <div wire:loading.delay.longer wire:target="assignWork">
+        <livewire:ui.spinner/>
+    </div>
 </div>

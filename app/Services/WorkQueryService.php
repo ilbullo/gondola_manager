@@ -32,23 +32,43 @@ use App\Contracts\WorkQueryInterface;
 class WorkQueryService implements WorkQueryInterface
 {
     /**
+     * Cache locale dei lavori per il ciclo di esecuzione corrente.
+     */
+    protected ?Collection $cachedWorks = null;
+
+    /**
      * Estrae e deduplica tutti i lavori da una collezione di licenze.
+     * Implementa la memoizzazione per evitare ricalcoli costosi.
      */
     public function allWorks(Collection|array $licenseTable): Collection
     {
-        // Raccogli tutti i lavori non nulli dalle worksMap
+        // Se i lavori sono già stati calcolati, restituisci la cache
+        if ($this->cachedWorks !== null) {
+            return $this->cachedWorks;
+        }
+
+        // Calcolo originale
         $works = collect($licenseTable)
             ->flatMap(fn ($license) => $license['worksMap'] ?? [])
             ->filter();
 
-        // Raggruppa per ID, deduplica e ordina
-        return $works->groupBy('id')
+        $this->cachedWorks = $works->groupBy('id')
             ->map(fn (Collection $group) => $group->first())
             ->sortBy([
                 ['slots_occupied', 'desc'],
                 ['timestamp', 'asc'],
             ])
             ->values();
+
+        return $this->cachedWorks;
+    }
+
+    /**
+     * Importante: Metodo per svuotare la cache se i dati sorgente cambiano.
+     */
+    public function flushCache(): void
+    {
+        $this->cachedWorks = null;
     }
 
     /** Lavori condivisibili e non esclusi */

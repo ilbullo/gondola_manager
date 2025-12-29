@@ -46,7 +46,7 @@ class AgencyWorkPolicy
     public function viewAny(User $user): bool
     {
         // Solo amministratori o utenti con ruolo BANCALE possono vedere tutti i record
-        return in_array($user->role, [UserRole::ADMIN, UserRole::BANCALE]);
+        return $user->isManager();
     }
 
     /**
@@ -59,7 +59,7 @@ class AgencyWorkPolicy
     public function view(User $user, AgencyWork $agencyWork): bool
     {
         // Permessi identici a viewAny
-        return in_array($user->role, [UserRole::ADMIN, UserRole::BANCALE]);
+        return $user->isManager();
     }
 
     /**
@@ -70,7 +70,7 @@ class AgencyWorkPolicy
      */
     public function create(User $user): bool
     {
-        return in_array($user->role, [UserRole::ADMIN, UserRole::BANCALE]);
+        return $user->isManager();
     }
 
     /**
@@ -82,7 +82,7 @@ class AgencyWorkPolicy
      */
     public function update(User $user, AgencyWork $agencyWork): bool
     {
-        return in_array($user->role, [UserRole::ADMIN, UserRole::BANCALE]);
+        return $user->isManager();
     }
 
     /**
@@ -94,7 +94,7 @@ class AgencyWorkPolicy
      */
     public function delete(User $user, AgencyWork $agencyWork): bool
     {
-        return in_array($user->role, [UserRole::ADMIN, UserRole::BANCALE]);
+        return $user->isManager();
     }
 
     /**
@@ -106,7 +106,7 @@ class AgencyWorkPolicy
      */
     public function restore(User $user, AgencyWork $agencyWork): bool
     {
-        return in_array($user->role, [UserRole::ADMIN, UserRole::BANCALE]);
+        return $user->isManager();
     }
 
     /**
@@ -118,6 +118,6 @@ class AgencyWorkPolicy
      */
     public function forceDelete(User $user, AgencyWork $agencyWork): bool
     {
-        return in_array($user->role, [UserRole::ADMIN, UserRole::BANCALE]);
+        return $user->isManager();
     }
 }

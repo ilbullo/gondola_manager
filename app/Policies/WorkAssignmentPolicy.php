@@ -47,7 +47,7 @@ class WorkAssignmentPolicy
      */
     public function viewAny(User $user): bool
     {
-        return in_array($user->role, [UserRole::ADMIN, UserRole::BANCALE]);
+        return $user->isManager();
     }
 
     /**
@@ -60,7 +60,7 @@ class WorkAssignmentPolicy
      */
     public function view(User $user, WorkAssignment $workAssignment): bool
     {
-        return in_array($user->role, [UserRole::ADMIN, UserRole::BANCALE]);
+        return $user->isManager();
     }
 
     /**
@@ -72,7 +72,7 @@ class WorkAssignmentPolicy
      */
     public function create(User $user): bool
     {
-        return in_array($user->role, [UserRole::ADMIN, UserRole::BANCALE]);
+        return $user->isManager();
     }
 
     /**
@@ -85,7 +85,7 @@ class WorkAssignmentPolicy
      */
     public function update(User $user, WorkAssignment $workAssignment): bool
     {
-        return in_array($user->role, [UserRole::ADMIN, UserRole::BANCALE]);
+        return $user->isManager();
     }
 
     /**
@@ -98,7 +98,7 @@ class WorkAssignmentPolicy
      */
     public function delete(User $user, WorkAssignment $workAssignment): bool
     {
-        return in_array($user->role, [UserRole::ADMIN, UserRole::BANCALE]);
+        return $user->isManager();
     }
 
     /**
@@ -111,7 +111,7 @@ class WorkAssignmentPolicy
      */
     public function restore(User $user, WorkAssignment $workAssignment): bool
     {
-        return in_array($user->role, [UserRole::ADMIN, UserRole::BANCALE]);
+        return $user->isManager();
     }
 
     /**
@@ -124,6 +124,6 @@ class WorkAssignmentPolicy
      */
     public function forceDelete(User $user, WorkAssignment $workAssignment): bool
     {
-        return in_array($user->role, [UserRole::ADMIN, UserRole::BANCALE]);
+        return $user->isManager();
     }
 }

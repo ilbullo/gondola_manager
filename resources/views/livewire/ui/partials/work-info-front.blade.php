@@ -49,7 +49,7 @@
 
         <div class="flex justify-between items-center bg-emerald-50 p-4 rounded-2xl border border-emerald-100">
             <span class="text-xs font-black text-emerald-700 uppercase">Totale</span>
-            <span class="text-2xl font-black text-emerald-600">€{{ number_format($work['amount'] ?? 0, 2) }}</span>
+            <span class="text-2xl font-black text-emerald-600">{{ \App\Helpers\Format::currency($work['amount'] ?? 0,true, true) }}</span>
         </div>
     </div>
 

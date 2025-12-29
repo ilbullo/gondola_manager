@@ -4,16 +4,16 @@
     <meta charset="UTF-8">
     <title>Scontrino Licenza {{ request('license') }}</title>
     <style>
-        @page { 
-            margin: 0; 
-        }
-        body { 
-            font-family: 'Courier New', Courier, monospace; 
-            width: 72mm; 
-            padding: 5mm 4mm; 
+        @page {
             margin: 0;
-            font-size: 12px; 
-            line-height: 1.4; 
+        }
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            width: 72mm;
+            padding: 5mm 4mm;
+            margin: 0;
+            font-size: 12px;
+            line-height: 1.4;
             color: #000;
             background-color: #fff;
         }
@@ -22,21 +22,21 @@
         .bold { font-weight: bold; }
         .italic { font-style: italic; }
         .uppercase { text-transform: uppercase; }
-        
+
         /* Divider tratteggiato tipico delle stampanti termiche */
-        .divider { 
-            border-bottom: 1px dashed #000; 
-            margin: 8px 0; 
+        .divider {
+            border-bottom: 1px dashed #000;
+            margin: 8px 0;
             width: 100%;
         }
-        
-        .flex { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: flex-start; 
+
+        .flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
             gap: 4px;
         }
-        
+
         .header-title {
             font-size: 16px;
             line-height: 1.2;
@@ -51,16 +51,16 @@
             margin-bottom: 3px;
         }
 
-        .total-box { 
-            font-size: 16px; 
-            margin-top: 12px; 
-            border-top: 1px solid #000; 
+        .total-box {
+            font-size: 16px;
+            margin-top: 12px;
+            border-top: 1px solid #000;
             border-bottom: 1px solid #000;
-            padding: 8px 0; 
+            padding: 8px 0;
         }
 
         .small { font-size: 10px; line-height: 1.2; }
-        
+
         /* Gestione nomi agenzia lunghi */
         .item-name {
             flex: 1;
@@ -69,8 +69,8 @@
             white-space: nowrap;
         }
 
-        @media print { 
-            .no-print { display: none; } 
+        @media print {
+            .no-print { display: none; }
         }
     </style>
 </head>
@@ -82,10 +82,10 @@
     </div>
 
     <div class="divider"></div>
-    
+
     <div class="flex"><span>DATA:</span> <span class="bold">{{ request('date') }}</span></div>
     <div class="flex"><span>OPERATORE:</span> <span class="bold">{{ request('op') }}</span></div>
-    
+
     <div class="divider"></div>
 
     {{-- VOLUMI --}}
@@ -96,7 +96,7 @@
     @if(request('shared_ff') > 0)
         <div class="divider"></div>
         <div class="flex bold uppercase">
-            <span>{{ config('app_settings.labels.shared_from_first') }}:</span> 
+            <span>{{ config('app_settings.labels.shared_from_first') }}:</span>
             <span>{{ request('shared_ff') }}</span>
         </div>
         <div class="small italic" style="margin-top: 2px;">
@@ -120,24 +120,24 @@
 
     {{-- DETTAGLIO CASSA --}}
     <div class="flex">
-        <span>TOTALE LAVORI CASH:</span> 
-        <span class="bold">{{ number_format((float)str_replace(',', '.', request('x_amount')), 2, ',', '.') }} €</span>
+        <span>TOTALE LAVORI CASH:</span>
+        <span class="bold">{{ \App\Helpers\Format::currency(request('x_amount'),true,true)}}</span>
     </div>
     <div class="flex">
-        <span>CONGUAGLIO PORTAFOGLIO:</span> 
-        <span class="bold">{{ number_format((float)str_replace(',', '.', request('wallet_diff')), 2, ',', '.') }} €</span>
+        <span>CONGUAGLIO PORTAFOGLIO:</span>
+        <span class="bold">{{ \App\Helpers\Format::currency(request('wallet_diff'),true,true) }}</span>
     </div>
 
     @if(request('bancale') && request('bancale') != '0' && request('bancale') != '0,00')
         <div class="flex">
-            <span>BANCALE:</span> 
-            <span class="bold">-{{ request('bancale') }} €</span>
+            <span>BANCALE:</span>
+            <span class="bold">-{{\App\Helpers\Format::currency(request('bancale'),true,true)}}</span>
         </div>
     @endif
 
     <div class="flex total-box bold">
         <span>NETTO PAGATO:</span>
-        <span>{{ request('final') }} €</span>
+        <span>{{ \App\Helpers\Format::currency(request('final'),true,true) }}</span>
     </div>
 
     <div style="margin-top: 20px;"></div>

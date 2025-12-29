@@ -34,17 +34,12 @@ class AgencyPolicy
 {
     use HandlesAuthorization;
 
-    private function isManager(User $user): bool
-    {
-        return in_array($user->role, [UserRole::ADMIN, UserRole::BANCALE]);
-    }
-
     /**
      * Determine whether the user can view any models.
      */
     public function viewAny(User $user): bool
     {
-        return $this->isManager($user);
+        return $user->isManager();
     }
 
     /**
@@ -52,7 +47,7 @@ class AgencyPolicy
      */
     public function view(User $user, Agency $agency): bool
     {
-        return $this->isManager($user);
+        return $user->isManager();
     }
 
     /**
@@ -60,7 +55,7 @@ class AgencyPolicy
      */
     public function create(User $user): bool
     {
-        return $this->isManager($user);
+        return $user->isManager();
     }
 
     /**
@@ -68,7 +63,7 @@ class AgencyPolicy
      */
     public function update(User $user, Agency $agency): bool
     {
-        return $this->isManager($user);
+        return $user->isManager();
     }
 
     /**
@@ -76,7 +71,7 @@ class AgencyPolicy
      */
     public function delete(User $user, Agency $agency): bool
     {
-        return $this->isManager($user);
+        return $user->isManager();
     }
 
     /**
@@ -84,7 +79,7 @@ class AgencyPolicy
      */
     public function restore(User $user, Agency $agency): bool
     {
-        return $this->isManager($user);
+        return $user->isManager();
     }
 
     /**
@@ -92,6 +87,6 @@ class AgencyPolicy
      */
     public function forceDelete(User $user, Agency $agency): bool
     {
-        return $this->isManager($user);
+        return $user->isAdmin();
     }
 }

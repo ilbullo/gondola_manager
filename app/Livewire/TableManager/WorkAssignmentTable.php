@@ -4,6 +4,7 @@ namespace App\Livewire\TableManager;
 
 use App\Http\Resources\LicenseResource;
 use App\Models\{Agency, LicenseTable, WorkAssignment};
+use App\Services\WorkAssignmentService;
 use Livewire\Attributes\On;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
@@ -40,10 +41,12 @@ class WorkAssignmentTable extends Component
      * Inizializzazione del componente.
      * Al mount viene popolata la tabella completa delle licenze e dei loro lavori.
      * Livewire gestisce automaticamente il wire:loading, evitando stati incoerenti.
+     * Usiamo il Service per popolare i dati al mount.
      */
-    public function mount(): void
+
+    public function mount(WorkAssignmentService $service): void
     {
-        $this->refreshTable();
+        $this->licenses = $service->refreshTable();
     }
 
     // ===================================================================
@@ -53,20 +56,10 @@ class WorkAssignmentTable extends Component
     /**
      * Evento: cicla il turno di una licenza tra full, morning e afternoon.
      */
-    public function cycleTurn(int $licenseId): void
+    public function cycleTurn(int $licenseId, WorkAssignmentService $service): void
     {
-        $license = \App\Models\LicenseTable::findOrFail($licenseId);
-        
-        // Logica di rotazione: Full -> Morning -> Afternoon -> Full
-        $nextTurn = match($license->turn) {
-            'full'      => 'morning',
-            'morning'   => 'afternoon',
-            'afternoon' => 'full',
-            default     => 'full',
-        };
-
-        $license->update(['turn' => $nextTurn]);
-        $this->dispatch('refreshTableBoard');
+        $service->cycleLicenseTurn($licenseId);
+        $this->refreshTable($service);
     }
 
 
@@ -74,15 +67,10 @@ class WorkAssignmentTable extends Component
      * Attiva disattiva il valore di only_cash_works
      */
 
-    public function toggleOnlyCash($licenseId)
+    public function toggleOnlyCash(int $licenseId, WorkAssignmentService $service): void
     {
-        // Recupera la licenza (o il record della tabella licenze) e inverti il valore
-        $license = LicenseTable::findOrFail($licenseId);
-        $license->only_cash_works = !$license->only_cash_works;
-        $license->save();
-
-        // Opzionale: invia un feedback visivo o aggiorna la board
-        $this->dispatch('refreshTableBoard');
+        $service->toggleLicenseCashOnly($licenseId);
+        $this->refreshTable($service);
     }
 
     /**
@@ -107,175 +95,114 @@ class WorkAssignmentTable extends Component
 
     /**
      * Evento: rimuove un lavoro assegnato a una licenza, dopo conferma dell’utente.
-     * Utilizza destroy() per maggiore sicurezza (gestione soft delete e primary key).
      */
     #[On('confirmRemoveAssignment')]
-    public function removeAssignment(array $payload): void
+    public function removeAssignment(array $payload, WorkAssignmentService $service): void
     {
-        $licenseTableId = $payload['licenseTableId'] ?? null;
+        $id = $payload['licenseTableId'] ?? null;
 
-        if (!$licenseTableId) {
-            $this->errorMessage = 'Dati mancanti per rimuovere l\'assegnazione.';
+        if (!$id) {
+            $this->errorMessage = 'ID assegnazione mancante.';
             return;
         }
 
-        $this->dispatch('closeWorkInfoModal');
-
         try {
-            $deleted = WorkAssignment::destroy($licenseTableId);
+            $service->deleteAssignment($id);
 
-            if ($deleted > 0) {
-                $this->refreshTable();
-                $this->errorMessage = '';
-            } else {
-                $this->errorMessage = 'Lavoro già rimosso o ID non trovato.';
-            }
-        } catch (\Throwable $e) {
-            report($e);
-            $this->errorMessage = 'Errore durante la rimozione del lavoro: ' . $e->getMessage();
+            $this->refreshTable($service);
+            $this->errorMessage = '';
+            // Opzionale: notifica di successo
+            $this->dispatch('notify-success', ['message' => 'Lavoro rimosso correttamente']);
+
+        } catch (\Exception $e) {
+            $this->errorMessage = $e->getMessage();
         }
     }
 
     /**
-     * Assegna un lavoro selezionato a uno slot della licenza indicata.
-     * Esegue una validazione preliminare prima di delegare la logica al metodo saveAssignment().
+     * Metodo pubblico che delega al service il salvataggio.
      */
-    public function assignWork(int $licenseTableId, int $slot): void
-    {
-        if (!$this->selectedWork || empty($this->selectedWork['value'])) {
-            $this->errorMessage = 'Seleziona un lavoro valido dalla sidebar.';
-            return;
-        }
 
-        $this->saveAssignment($licenseTableId, $slot, $this->selectedWork['slotsOccupied'] ?? 1);
-    }
-
-    /**
-     * Apre la finestra informativa dettagliata su un lavoro presente in tabella.
-     */
-    public function openInfoBox($workId)
-    {
-        $this->dispatch('showWorkInfo', $workId);
-    }
-
-    /**
-     * Salva fisicamente l'assegnazione di un lavoro a uno slot.
-     * Include:
-     * - Controllo conflitti (sovrapposizioni slot)
-     * - Associazione agenzia (se applicabile)
-     * - Creazione WorkAssignment
-     * - Rinfresco della tabella
-     */
-    private function saveAssignment(int $licenseTableId, int $slot, int $slotsOccupied): void
-    {
-        try {
-            // Associa l'agenzia se il lavoro è di tipo 'A'
-            $agencyId = null;
-            if ($this->selectedWork['value'] === 'A' && !empty($this->selectedWork['agencyName'])) {
-                $agency = Agency::where('name', $this->selectedWork['agencyName'])->first();
-                $agencyId = $agency?->id;
-            }
-
-            // Controllo sovrapposizioni slot
-            $conflict = WorkAssignment::where('license_table_id', $licenseTableId)
-                ->whereDate('timestamp', today())
-                ->where(function ($q) use ($slot, $slotsOccupied) {
-                    $q->where('slot', '<=', $slot + $slotsOccupied - 1)
-                        ->whereRaw('slot + slots_occupied - 1 >= ?', [$slot]);
-                })
-                ->exists();
-
-            if ($conflict) {
-                $this->errorMessage = 'Lo slot è già occupato o si sovrappone.';
+    public function assignWork(int $licenseTableId, int $slot, WorkAssignmentService $service): void
+        {
+            if (!$this->selectedWork || empty($this->selectedWork['value'])) {
+                $this->errorMessage = 'Seleziona un lavoro valido dalla sidebar.';
                 return;
             }
 
-            // I lavori multi-slot diventano automaticamente esclusi
-            //$excluded = $slotsOccupied > 1 ? true : ($this->selectedWork['excluded'] ?? false);
+            try {
+                // Chiamata al service mantenendo lo stesso nome metodo
+                $service->saveAssignment(
+                    $licenseTableId,
+                    $slot,
+                    $this->selectedWork['slotsOccupied'] ?? 1,
+                    $this->selectedWork
+                );
 
-            // Creazione record
-            WorkAssignment::create([
-                'license_table_id'  => $licenseTableId,
-                'agency_id'         => $agencyId,
-                'slot'              => $slot,
-                'value'             => $this->selectedWork['value'],
-                'amount'            => $this->selectedWork['amount'] ?? config('app_settings.works.default_amount'),
-                'voucher'           => $this->selectedWork['voucher'] ?? null,
-                'slots_occupied'    => $slotsOccupied,
-                'excluded'          => $this->selectedWork['excluded'] ?? false,
-                'shared_from_first' => $this->selectedWork['sharedFromFirst'] ?? false,
-                'timestamp'         => now(),
+                $this->refreshTable($service);
+                $this->errorMessage = '';
+                $this->dispatch('workAssigned');
+                $this->dispatch('notify-success', ['message' => 'Lavoro assegnato con successo']);
+
+            } catch (\Exception $e) {
+                $this->errorMessage = $e->getMessage();
+            }
+        }
+
+        /**
+         * Apre la finestra informativa dettagliata su un lavoro presente in tabella.
+         */
+        public function openInfoBox($workId)
+        {
+            $this->dispatch('showWorkInfo', $workId);
+        }
+
+        /**
+         * Evento: rigenera la tabella completa delle licenze.
+         * Utilizza LicenseResource per restituire una struttura uniforme lato Livewire.
+         */
+        #[On('refreshTableBoard')]
+        public function refreshTable(WorkAssignmentService $service): void
+        {
+            $this->licenses = $service->refreshTable();
+        }
+
+
+        /**
+         * Genera il PDF della tabella delle assegnazioni.
+         * I dati vengono inviati via Session alla PdfController@generate.
+         */
+        #[On('printWorksTable')]
+        public function printTable(WorkAssignmentService $service): void
+        {
+            // Delega la preparazione dei dati al service
+            $matrixData = $service->preparePdfData($this->licenses);
+
+            Session::flash('pdf_generate', [
+                'view'        => 'pdf.work-assignment-table',
+                'data'        => [
+                    'matrix'      => $matrixData,
+                    'generatedBy' => Auth::user()->name ?? 'Sistema',
+                    'generatedAt' => now()->format('d/m/Y H:i'),
+                    'date'        => today()->format('d/m/Y'),
+                ],
+                'filename'    => 'tabella_assegnazione_' . today()->format('Ymd') . '.pdf',
+                'orientation' => 'landscape',
+                'paper'       => 'a2',
             ]);
 
-            $this->refreshTable();
-            $this->errorMessage = '';
-            $this->dispatch('workAssigned');
+            $this->redirectRoute('generate.pdf');
+        }
 
-        } catch (\Throwable $e) {
-            report($e);
-            $this->errorMessage = 'Errore durante l\'assegnazione del lavoro: ' . $e->getMessage();
+        // ===================================================================
+        // Render
+        // ===================================================================
+
+        /**
+         * Rende la vista principale della tabella delle assegnazioni.
+         */
+        public function render()
+        {
+            return view('livewire.table-manager.work-assignment-table');
         }
     }
-
-    /**
-     * Evento: rigenera la tabella completa delle licenze.
-     * Utilizza LicenseResource per restituire una struttura uniforme lato Livewire.
-     */
-    #[On('refreshTableBoard')]
-    public function refreshTable(): void
-    {
-        $licenses = LicenseTable::with([
-            'user:id,name,license_number',
-            'works' => fn($q) => $q->whereDate('timestamp', today())
-                ->orderBy('slot')
-                ->with('agency:id,name,code'),
-        ])
-        ->whereDate('date', today())
-        ->orderBy('order')
-        ->get();
-
-        $this->licenses = LicenseResource::collection($licenses)->resolve();
-    }
-
-    /**
-     * Genera il PDF della tabella delle assegnazioni.
-     * I dati vengono inviati via Session alla PdfController@generate.
-     */
-    #[On('printWorksTable')]
-    public function printTable(): void
-    {
-        $matrixData = collect($this->licenses)->map(function ($license) {
-            return [
-                'license_number' => $license['user']['license_number'] ?? '—',
-                'worksMap'       => $license['worksMap'],
-            ];
-        })->sortBy('user.license_number')->values();
-
-        Session::flash('pdf_generate', [
-            'view'        => 'pdf.work-assignment-table',
-            'data'        => [
-                'matrix'      => $matrixData,
-                'generatedBy' => Auth::user()->name ?? 'Sistema',
-                'generatedAt' => now()->format('d/m/Y H:i'),
-                'date'        => today()->format('d/m/Y'),
-            ],
-            'filename'    => 'tabella_assegnazione_' . today()->format('Ymd') . '.pdf',
-            'orientation' => 'landscape',
-            'paper'       => 'a2',
-        ]);
-
-        $this->redirectRoute('generate.pdf');
-    }
-
-    // ===================================================================
-    // Render
-    // ===================================================================
-
-    /**
-     * Rende la vista principale della tabella delle assegnazioni.
-     */
-    public function render()
-    {
-        return view('livewire.table-manager.work-assignment-table');
-    }
-}

@@ -251,6 +251,13 @@ class TableSplitter extends Component
         $this->unassignedWorks = array_filter($this->unassignedWorks, fn ($w) => !$this->areWorksEqual($w, $this->selectedWork));
         $this->selectedWork = null;
 
+        /**
+         * Forziamo il ricalcolo.
+         * Poiché abbiamo modificato un indice annidato, Livewire potrebbe non sentire 
+         * il cambiamento per l'hook updated(). Chiamiamo il refresh manualmente.
+         */
+        $this->refreshAllLiquidations();
+
         //$this->dispatch('matrix-updated');
         //$this->dispatch('work-deselected');
     }

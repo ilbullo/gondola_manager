@@ -8,12 +8,17 @@ use App\Contracts\WorkQueryInterface;
 use App\Contracts\MatrixEngineInterface;
 use Illuminate\Support\Collection;
 use Mockery;
+use App\Models\LicenseTable;
+use App\Models\WorkAssignment;
 use Mockery\MockInterface;
 use PHPUnit\Framework\Attributes\Test;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
 
 class MatrixSplitterTest extends TestCase
 {
+    use RefreshDatabase;
+
     /** @var \App\Contracts\WorkQueryInterface&\Mockery\MockInterface */
     private MockInterface $queryServiceMock;
     /** @var \App\Contracts\MatrixEngineInterface&\Mockery\MockInterface */
@@ -118,5 +123,84 @@ class MatrixSplitterTest extends TestCase
     {
         Mockery::close();
         parent::tearDown();
+    }
+
+    #[Test]
+    public function it_guarantees_total_mass_conservation_during_splitting()
+    {
+        // 1. SETUP
+        $date = today();
+        $licenses = collect();
+        
+        // Creiamo 10 licenze con ordini da 1 a 10
+        for ($i = 1; $i <= 10; $i++) {
+            $licenses->push(LicenseTable::factory()->create([
+                'date' => $date,
+                'order' => $i,
+                'turn' => 'full'
+            ]));
+        }
+        
+        $works = collect();
+        $types = ['A', 'X', 'N', 'P'];
+        
+        // Contatori per gli slot di ogni licenza per evitare sovrapposizioni
+        $slotCounters = [];
+        foreach ($licenses as $lic) {
+            $slotCounters[$lic->id] = 1;
+        }
+
+        // 2. CREAZIONE LAVORI (10 per tipo = 40 totali)
+        foreach ($types as $type) {
+            for ($j = 0; $j < 10; $j++) {
+                $targetLicense = $licenses[$j % 10];
+                $currentSlot = $slotCounters[$targetLicense->id];
+                $slotCounters[$targetLicense->id]++;
+
+                // Creiamo il lavoro associandolo alla licenza
+                $works->push(WorkAssignment::factory()->create([
+                    'license_table_id' => $targetLicense->id, 
+                    'value' => $type,
+                    'timestamp' => $date->copy()->setHour(rand(8, 18)),
+                    'amount' => 50.00,
+                    'slot' => $currentSlot,
+                    'slots_occupied' => 1,
+                    'excluded' => false
+                ]));
+            }
+        }
+
+        $totalInitialCount = $works->count();
+        $totalInitialAmount = (float) $works->sum('amount');
+
+        // 3. ESECUZIONE SPLITTER
+        $splitter = app(MatrixSplitterService::class);
+        $matrixResult = $splitter->execute($licenses);
+        
+        // 4. VERIFICA QUANTITÀ (Record totali)
+        $worksInMatrix = $matrixResult->pluck('worksMap')
+            ->flatMap(fn($map) => collect($map)->filter())
+            ->count();
+        
+        $worksInUnassigned = $splitter->unassignedWorks->count();
+        
+        $this->assertEquals(
+            $totalInitialCount, 
+            $worksInMatrix + $worksInUnassigned, 
+            "Massa record persa! Iniziali: $totalInitialCount, Finali: " . ($worksInMatrix + $worksInUnassigned)
+        );
+
+        // 5. VERIFICA ECONOMICA (Somma euro)
+        $amountInMatrix = (float) $matrixResult->pluck('worksMap')
+            ->flatMap(fn($map) => collect($map)->filter())
+            ->sum('amount');
+            
+        $amountInUnassigned = (float) $splitter->unassignedWorks->sum('amount');
+
+        $this->assertEquals(
+            $totalInitialAmount, 
+            $amountInMatrix + $amountInUnassigned, 
+            "Massa economica persa! Attesa: {$totalInitialAmount}, Ottenuta: " . ($amountInMatrix + $amountInUnassigned)
+        );
     }
 }

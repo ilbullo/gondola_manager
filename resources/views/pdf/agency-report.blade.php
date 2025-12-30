@@ -18,6 +18,7 @@
             margin: 0 0 4mm 0;
             padding-bottom: 3mm;
             border-bottom: 1pt solid #000;
+            text-transform: uppercase;
         }
         .header {
             text-align: center;
@@ -36,65 +37,76 @@
         }
         th {
             border-bottom: 1.4pt solid #000;
-            padding: 5px 6px;
+            padding: 6px;
             text-align: left;
             font-weight: bold;
-            font-size: 10.8pt;
-            background: transparent;
+            font-size: 10pt;
+            background: #f9f9f9;
+            text-transform: uppercase;
         }
         td {
-            padding: 4.5px 6px;
-            vertical-align: top;
+            padding: 6px;
+            vertical-align: middle;
             border-bottom: 0.5pt solid #ccc;
             border-right: 0.5pt solid #ddd;
         }
         td:last-child { border-right: none; }
         tr:last-child td { border-bottom: none; }
 
-        .agency   { font-weight: normal; font-size: 10.5pt; }
-        .voucher  { font-style: italic; }
-        .time     { text-align: center; font-weight: normal; white-space: nowrap; font-size: 10.5pt; }
+        .time     { text-align: center; font-weight: bold; width: 60px; }
+        .agency   { font-weight: bold; color: #333; }
+        .voucher  { font-style: italic; color: #555; }
         .licenses { 
-            font-weight: normal;
-            font-size: 10.3pt;
-            line-height: 1.38;
+            font-weight: bold;
+            font-size: 11pt;
+            letter-spacing: 0.5px;
         }
 
-        .total {
-            margin-top: 9mm;
-            padding-top: 6mm;
-            border-top: 1.6pt solid #000;
-            text-align: right;
-            font-size: 11.5pt;
-            font-weight: bold;
+        .total-box {
+            margin-top: 8mm;
+            border-top: 1.5pt solid #000;
+            padding-top: 4mm;
         }
+        .total-row {
+            text-align: right;
+            font-size: 11pt;
+            margin-bottom: 2mm;
+        }
+        .total-final {
+            text-align: right;
+            font-size: 13pt;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
         .footer {
-            margin-top: 10mm;
-            padding-top: 5mm;
-            border-top: 0.6pt solid #aaa;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
             text-align: center;
-            font-size: 8.8pt;
-            color: #555;
+            font-size: 8pt;
+            color: #777;
+            border-top: 0.5pt solid #ccc;
+            padding-top: 3mm;
         }
     </style>
 </head>
 <body>
 
-    <h1>REPORT SERVIZI AGENZIA</h1>
+    <h1>Report Servizi Agenzia</h1>
 
     <div class="header">
-        <div><strong>Data servizio:</strong> {{ $date }}</div>
-        <div><strong>Bancale:</strong> {{ $generatedBy }}</div>
-        <div><strong>Generato il:</strong> {{ $generatedAt }}</div>
+        <div><strong>Data Servizio:</strong> {{ $date }}</div>
+        <div><strong>Operatore:</strong> {{ $generatedBy }}</div>
     </div>
 
     <table>
         <thead>
             <tr>
-                <th width="11%">Orario</th>
-                <th width="29%">Agenzia</th>
-                <th width="19%">Voucher</th>
-                <th width="41%">Licenze</th>
+                <th width="12%">Orario</th>
+                <th width="30%">Agenzia</th>
+                <th width="23%">Voucher</th>
+                <th width="35%">Licenze impegnate</th>
             </tr>
         </thead>
         <tbody>
@@ -103,12 +115,15 @@
                     <td class="time">{{ $item['time'] }}</td>
                     <td class="agency">{{ $item['agency_name'] }}</td>
                     <td class="voucher">{{ $item['voucher'] === '–' ? '—' : $item['voucher'] }}</td>
-                    <td class="licenses">{{ implode(' - ', $item['licenses'] ?: ['—']) }}</td>
+                    <td class="licenses">
+                        {{-- Uniamo l'array delle licenze con un separatore chiaro --}}
+                        {{ implode(' • ', $item['licenses']) }}
+                    </td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="4" style="text-align:center; padding:12px; font-style:italic; color:#666;">
-                        Nessun servizio agenzia assegnato
+                    <td colspan="4" style="text-align:center; padding:20px; font-style:italic; color:#666;">
+                        Nessun servizio agenzia registrato per la data odierna.
                     </td>
                 </tr>
             @endforelse
@@ -116,14 +131,19 @@
     </table>
 
     @if(!empty($agencyReport))
-        <div class="total">
-            Totale barche impegnate: {{ collect($agencyReport)->sum('count') }}
+        <div class="total-box">
+            <div class="total-row">
+                Numero totale servizi: <strong>{{ count($agencyReport) }}</strong>
+            </div>
+            <div class="total-final">
+                Totale barche impiegate: {{ collect($agencyReport)->sum('count') }}
+            </div>
         </div>
     @endif
 
     <div class="footer">
-        Generato automaticamente dal sistema di ripartizione lavori<br>
-        {{ $generatedBy }} — {{ $generatedAt }}
+        Generato dal sistema gestionale il {{ $generatedAt }}<br>
+        Documento ad uso interno - {{ $generatedBy }}
     </div>
 
 </body>

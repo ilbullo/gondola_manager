@@ -35,7 +35,6 @@
             padding: 4px 1px;
         }
 
-        /* Dimensioni fisse per gli slot per garantire l'allineamento A4 Landscape */
         .slot {
             width: 28px !important;
             height: 24px; 
@@ -54,11 +53,9 @@
         .row-even { background-color: #ffffff; }
         .row-odd { background-color: #f9fafb; }
 
-        /* Indicatori Tipologia Lavoro */
         .excluded { text-decoration: underline; text-decoration-thickness: 1.5pt; }
         .shared   { font-weight: bold; }
 
-        /* Colonne Identificative e Contabili */
         .lic  { width: 50px; font-weight: bold; background-color: #f3f4f6 !important; }
         .cash { width: 75px; font-weight: bold; }
         .np   { width: 28px; font-weight: bold; color: #333; }
@@ -109,33 +106,32 @@
             @endfor
         </tr>
     </thead>
-    <tbody>
+<tbody>
         @foreach($matrix as $row)
             <tr class="{{ $loop->even ? 'row-even' : 'row-odd' }}">
                 <td class="lic">{{ $row['license_number'] }}</td>
                 
-                {{-- Valore Netto: usiamo netto_raw per evitare doppie formattazioni ed errori --}}
-                <td class="cash">@money($row['netto_raw'] ?? 0,true,false)</td>
+                {{-- Usiamo netto_raw che viene passato dal metodo toPrintParams del DTO --}}
+                <td class="cash">@money($row['netto_raw'] ?? 0, true, false)</td>
                 
-                {{-- Conteggi: già formattati dal DTO o tramite direttiva @number --}}
-                <td class="np">@number($row['n_count'])</td>
-                <td class="np">@number($row['x_count'])</td>
+                {{-- Se usi toPrintParams, le chiavi dei conteggi sono piatti (n_count, x_count, etc) --}}
+                <td class="np">@number($row['n_count'] ?? 0)</td>
+                <td class="np">@number($row['x_count'] ?? 0)</td>
                 <td class="np" style="color: #666;">@number($row['shared_ff'] ?? 0)</td>
-                <td class="np">@number($row['p_count'])</td>
+                <td class="np">@number($row['p_count'] ?? 0)</td>
 
-                {{-- Matrice Lavori --}}
                 @for($slot = 1; $slot <= config('app_settings.matrix.total_slots'); $slot++)
                     @php
                         $work = $row['worksMap'][$slot] ?? null;
-                        if ($work) {
-                            $isAgency   = ($work['value'] ?? '') === 'A';
-                            $isExcluded = $work['excluded'] ?? false;
-                            $isShared   = $work['shared_from_first'] ?? false;
-                            $prevLic    = $work['prev_license_number'] ?? null;
-                        }
                     @endphp
                     <td class="slot">
                         @if($work)
+                            @php
+                                $isAgency   = ($work['value'] ?? '') === 'A';
+                                $isExcluded = $work['excluded'] ?? false;
+                                $isShared   = $work['shared_from_first'] ?? false;
+                                $prevLic    = $work['prev_license_number'] ?? null;
+                            @endphp
                             <span class="{{ $isExcluded ? 'excluded' : '' }} {{ $isShared ? 'shared' : '' }}">
                                 @if($isAgency)
                                     @trim($work['agency_code'] ?? 'AG', 4)
@@ -157,7 +153,6 @@
     <tfoot>
         <tr>
             <td class="lic">TOT</td>
-            {{-- Totali calcolati dal metodo statico LiquidationResult::aggregateTotals --}}
             <td class="cash">@money($totals['netto'] ?? 0, true, false)</td>
             <td class="np">@number($totals['n'] ?? 0)</td>
             <td class="np">@number($totals['x'] ?? 0)</td>
@@ -167,8 +162,6 @@
         </tr>
     </tfoot>
 </table>
-
-
 
 <div class="legenda">
     <div style="float: left; width: 75%;">

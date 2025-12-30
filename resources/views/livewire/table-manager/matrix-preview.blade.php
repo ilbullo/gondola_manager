@@ -1,4 +1,4 @@
-{{-- resources/views/livewire/table-manager/table-splitter.blade.php --}}
+{{-- resources/views/livewire/table-manager/matrix-preview.blade.php --}}
 <div class="h-screen flex flex-col bg-slate-100 overflow-hidden">
     
     {{-- MODALE COSTO BANCALE --}}
@@ -47,7 +47,6 @@
             <h1 class="text-2xl font-black uppercase italic tracking-tighter border-r border-white/10 pr-6">Splitter</h1>
             <div class="flex items-center gap-3 bg-white/5 p-2 rounded-xl border border-white/10">
                 <span class="text-[8px] font-black text-slate-500 uppercase">Costo Bancale</span>
-                {{-- Utilizzo di @number per formattare il valore di base se necessario --}}
                 <input type="number" step="1" wire:model.live.debounce.300ms="bancaleCost"
                     class="w-20 bg-transparent border-none text-xl font-black text-emerald-400 p-0 focus:ring-0">
             </div>
@@ -88,14 +87,13 @@
                 </div>
                 <div class="flex flex-wrap gap-2">
                     @foreach ($unassignedWorks as $index => $work)
-                        <button wire:click="selectUnassignedWork({{ $index }})"
+                        <button wire:key="unassigned-{{ $work['id'] ?? $index }}" wire:click="selectUnassignedWork({{ $index }})"
                             class="group relative h-12 w-16 rounded-xl border-2 transition-all hover:scale-105 flex flex-col items-center justify-center
                                 {{ $selectedWork && data_get($selectedWork, 'id') == data_get($work, 'id') ? 'border-indigo-600 bg-indigo-50 shadow-lg ring-2 ring-indigo-200' : 'border-slate-100 bg-slate-50' }}">
                             <span class="text-xs font-black {{ $selectedWork && data_get($selectedWork, 'id') == data_get($work, 'id') ? 'text-indigo-600' : 'text-slate-700' }}">
                                 {{ $work['value'] === 'A' ? $work['agency_code'] ?? 'A' : strtoupper($work['value']) }}
                             </span>
                             <span class="text-[8px] font-bold text-slate-400 uppercase">
-                                {{-- Utilizzo dell'helper Format::dateTime o della direttiva @dateTime per uniformità --}}
                                 {{ \App\Helpers\Format::dateTime($work['timestamp']) }}
                             </span>
                         </button>
@@ -122,53 +120,58 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
-                        @foreach ($matrix as $licenseKey => $license)
-                            @php
-                                $liq = $license['liquidation']; 
-                                $occupied = $license['slots_occupied'] ?? 0;
-                                $maxCapacity = $license['target_capacity'] ?? config('app_settings.matrix.total_slots');
-                            @endphp
-                            <tr class="hover:bg-slate-50 transition-colors group">
+                        @foreach ($matrixTable->rows as $licenseKey => $row)
+                            <tr wire:key="row-{{ $row->id }}" class="hover:bg-slate-50 transition-colors group">
                                 <td class="p-3 sticky left-0 bg-white group-hover:bg-slate-50 z-20 border-r border-slate-100 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
                                     <div class="flex flex-col items-center gap-1">
                                         <div class="flex items-center gap-1">
-                                            <span class="w-8 h-8 flex items-center justify-center bg-slate-800 text-white rounded-lg font-black text-xs">{{ $license['user']['license_number'] }}</span>
-                                            @if($license['only_cash_works']) <span class="text-[8px] bg-emerald-100 text-emerald-700 px-1 rounded font-black">X</span> @endif
+                                            <span class="w-8 h-8 flex items-center justify-center bg-slate-800 text-white rounded-lg font-black text-xs">{{ $row->user['license_number'] }}</span>
+                                            @if($row->only_cash_works) <span class="text-[8px] bg-emerald-100 text-emerald-700 px-1 rounded font-black">X</span> @endif
                                         </div>
-                                        <button wire:click="$dispatch('open-license-receipt', { license: {{ \Illuminate\Support\Js::from($license) }}, bancaleCost: {{ $bancaleCost }} })"
+                                        <button wire:click="$dispatch('open-license-receipt', { license: {{ \Illuminate\Support\Js::from($row) }}, bancaleCost: {{ $bancaleCost }} })"
                                             class="text-[8px] font-black uppercase text-indigo-600 hover:text-indigo-800 transition">Scontrino</button>
                                     </div>
                                 </td>
 
-                                {{-- Utilizzo di @number per i conteggi --}}
-                                <td class="p-3 text-center font-black text-amber-500 bg-amber-50/30">@number($liq->counts['n'])</td>
-                                <td class="p-3 text-center font-black text-emerald-500 bg-emerald-50/30">@number($liq->counts['x'])</td>
-                                <td class="p-3 text-center font-black text-rose-500 bg-rose-50/30">@number($liq->counts['p'])</td>
+                                {{-- Conteggi automatici dal DTO LiquidationResult --}}
+                                <td class="p-3 text-center font-black text-amber-500 bg-amber-50/30">
+                                    @number($row->liquidation->counts['n'] ?? 0)
+                                </td>
+                                <td class="p-3 text-center font-black text-emerald-500 bg-emerald-50/30">
+                                    @number($row->liquidation->counts['x'] ?? 0)
+                                </td>
+                                <td class="p-3 text-center font-black text-rose-500 bg-rose-50/30">
+                                    @number($row->liquidation->counts['p'] ?? 0)
+                                </td>
                                 
                                 <td class="p-3 text-center">
                                     <div class="flex flex-col">
-                                        <span class="text-xs font-black {{ $maxCapacity > 0 && $occupied >= $maxCapacity ? 'text-rose-600' : 'text-slate-700' }}">{{ $occupied }}/{{ $maxCapacity }}</span>
-                                        @if ($maxCapacity > 0 && $occupied >= $maxCapacity) <span class="text-[7px] font-black text-rose-400 uppercase">Piena</span> @endif
+                                        <span class="text-xs font-black {{ $row->slots_occupied >= $row->target_capacity ? 'text-rose-600' : 'text-slate-700' }}">
+                                            {{ $row->slots_occupied }}/{{ $row->target_capacity }}
+                                        </span>
+                                        @if ($row->slots_occupied >= $row->target_capacity) 
+                                            <span class="text-[7px] font-black text-rose-400 uppercase">Piena</span> 
+                                        @endif
                                     </div>
                                 </td>
                                 
-                                {{-- NETTO DERIVATO DAL DTO - Utilizzo del nuovo metodo presenter --}}
+                                {{-- Metodo netto() ripristinato grazie alla corretta Hydration --}}
                                 <td class="p-3 text-center font-black text-emerald-600 italic">
-                                    {{ $liq->netto() }}
+                                    {{ $row->liquidation->netto() }}
                                 </td>
 
                                 @for ($slotIndex = 1; $slotIndex <= config('app_settings.matrix.total_slots'); $slotIndex++)
                                     @php
-                                        $work = $license['worksMap'][$slotIndex] ?? null;
-                                        $prevLic    = $work['prev_license_number'] ?? null;
+                                        $work = $row->worksMap[$slotIndex] ?? null;
                                         $isEmpty = is_null($work);
                                     @endphp
                                     <td class="p-1 border-r border-slate-50 transition-all {{ $isEmpty ? 'hover:bg-slate-100' : '' }}"
                                         wire:click="{{ $isEmpty ? 'assignToSlot(' . $licenseKey . ', ' . $slotIndex . ')' : 'removeWork(' . $licenseKey . ', ' . $slotIndex . ')' }}">
                                         
                                         @if ($work)
-                                            <div class="relative h-12 w-full rounded-lg flex flex-col items-center justify-center shadow-sm transition-transform active:scale-90 {{ \App\Enums\WorkType::tryFrom($work['value'])?->colourButtonsClass() }} text-white">
-                                                {{-- Utilizzo di @trim per i codici agenzia lunghi --}}
+                                            <div wire:key="work-{{ $row->id }}-{{ $slotIndex }}"
+                                                class="relative h-12 w-full rounded-lg flex flex-col items-center justify-center shadow-sm transition-transform active:scale-90 {{ \App\Enums\WorkType::tryFrom($work['value'])?->colourButtonsClass() }} text-white">
+                                                
                                                 <span class="text-[10px] font-black leading-none">
                                                     @if($work['value'] === 'A')
                                                         {{ \App\Helpers\Format::trim($work['agency_code'] ?? 'A', 4) }}
@@ -177,15 +180,15 @@
                                                     @endif
                                                 </span>
                                                 
-                                                @if($prevLic)
+                                                @if($work['prev_license_number'] ?? null)
                                                     <span class="text-[6px] font-bold opacity-70 italic">DA: {{ $work['prev_license_number'] }}</span>
                                                 @endif
 
                                                 @if ($work['excluded'] ?? false)
-                                                    <x-badge name="excluded" title="Escluso dalla ripartizione" />
+                                                    <x-badge name="excluded" title="Escluso" />
                                                 @endif
                                                 @if ($work['shared_from_first'] ?? false)
-                                                    <x-badge name="shared_ff" title="Condiviso dal primo" />
+                                                    <x-badge name="shared_ff" title="Condiviso" />
                                                 @endif
                                             </div>
                                         @else
@@ -209,8 +212,8 @@
                     <div class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-rose-500 shadow-sm"></span><span class="text-[9px] font-black text-slate-500 uppercase">Perdi Volta</span></div>
                     <div class="h-4 w-[1px] bg-slate-200 mx-2"></div>
                     <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-rose-600 border border-white"></span><span class="text-[9px] font-black text-slate-500 uppercase">Fisso</span></div>
-                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-emerald-400 border border-white"></span><span class="text-[9px] font-black text-slate-500 uppercase">{{ config('app_settings.labels.shared_from_first') }}</span></div>
-                    <div class="ml-auto text-[8px] font-bold text-slate-400 uppercase italic">Ultimo aggiornamento: @dateTime(now())</div>
+                    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-emerald-400 border border-white"></span><span class="text-[9px] font-black text-slate-500 uppercase">Condiviso</span></div>
+                    <div class="ml-auto text-[8px] font-bold text-slate-400 uppercase italic">Aggiornato alle @dateTime(now())</div>
                 </div>
             </footer>
         </div>

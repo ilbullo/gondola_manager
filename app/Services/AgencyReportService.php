@@ -1,73 +1,66 @@
 <?php
+
 namespace App\Services;
 
+use Illuminate\Support\Collection;
 use Carbon\Carbon;
-
-/**
- * Class AgencyReportService
- *
- * @package App\Services
- *
- * Servizio di aggregazione e trasformazione per la reportistica agenzie.
- * Converte la matrice operativa delle licenze in una lista cronologica di servizi
- * raggruppati, ideale per la generazione di PDF o estratti conto.
- *
- * RESPONSABILITÀ (SOLID):
- * 1. Data Transformation: Converte una struttura orientata alle licenze (Row-based)
- * in una struttura orientata ai servizi (Service-based).
- * 2. Smart Grouping: Implementa una logica di raggruppamento basata su Voucher o Timestamp
- * per identificare servizi condivisi tra più conducenti.
- * 3. Sorting Logic: Garantisce l'ordine cronologico dei servizi per una lettura
- * professionale del documento finale.
- *
- * LOGICA DI RAGGRUPPAMENTO:
- * - Se è presente un Voucher: raggruppa tutti i lavori con lo stesso codice e agenzia.
- * - Se il Voucher è assente: utilizza l'orario (timestamp) come discriminante.
- */
 
 class AgencyReportService
 {
     /**
      * Trasforma la matrice dei lavori in un report aggregato per agenzie.
+     * * @param array $matrix Array di righe (ogni riga ha 'user' e 'worksMap')
+     * @return array Lista di servizi raggruppati e ordinati
      */
     public function generate(array $matrix): array
     {
-        $services = [];
-
-        foreach ($matrix as $licenseRow) {
-            $licenseNumber = $licenseRow['user']['license_number'] ?? 'N/D';
-
-            foreach ($licenseRow['worksMap'] as $work) {
-                // Filtriamo solo i lavori di tipo Agenzia (A)
-                if (empty($work) || ($work['value'] ?? '') !== 'A') continue;
-
-                $agencyName = $work['agency']['name'] ?? $work['agency'] ?? 'Sconosciuta';
-                $voucher = trim($work['voucher'] ?? '') ?: '–';
-                $timeObj = Carbon::parse($work['timestamp'] ?? now());
-
-                // Chiave di raggruppamento: stessa agenzia e stesso voucher (o stessa ora)
-                $key = ($voucher !== '–')
-                    ? $agencyName . '|V:' . $voucher
-                    : $agencyName . '|T:' . $timeObj->format('H:i');
-
-                if (!isset($services[$key])) {
-                    $services[$key] = [
-                        'agency_name' => $agencyName,
-                        'voucher'     => $voucher,
-                        'time'        => $timeObj->format('H:i'),
-                        'licenses'    => [],
-                        'count'       => 0,
-                    ];
+        return collect($matrix)
+            // 1. Appiattiamo tutti i lavori di tutte le licenze in un'unica collezione
+            ->flatMap(function ($row) {
+                $licenseNumber = $row['user']['license_number'] ?? 'N/D';
+                
+                return collect($row['worksMap'])
+                    // Filtriamo: solo lavori di tipo Agenzia (A) non nulli
+                    ->filter(fn($work) => !empty($work) && ($work['value'] ?? '') === 'A')
+                    // Arricchiamo ogni lavoro con il numero di licenza del conducente
+                    ->map(function ($work) use ($licenseNumber) {
+                        $work['_license'] = $licenseNumber;
+                        return $work;
+                    });
+            })
+            // 2. Raggruppiamo i lavori per identificare i servizi condivisi
+            ->groupBy(function ($work) {
+                $agency = $work['agency']['name'] ?? $work['agency'] ?? 'Sconosciuta';
+                $voucher = trim($work['voucher'] ?? '');
+                
+                // Se c'è il voucher, raggruppiamo per Agenzia + Voucher
+                if ($voucher !== '' && $voucher !== '–') {
+                    return "V_{$agency}_{$voucher}";
                 }
+                
+                // Altrimenti raggruppiamo per Agenzia + Orario (formato H:i)
+                $time = Carbon::parse($work['timestamp'] ?? now())->format('H:i');
+                return "T_{$agency}_{$time}";
+            })
+            // 3. Trasformiamo ogni gruppo in un oggetto "Servizio" sintetico
+            ->map(function (Collection $group) {
+                $first = $group->first();
+                $timeObj = Carbon::parse($first['timestamp'] ?? now());
 
-                $services[$key]['licenses'][] = $licenseNumber;
-                $services[$key]['count']++;
-            }
-        }
-
-        // Ordiniamo per orario
-        uasort($services, fn($a, $b) => strtotime($a['time']) <=> strtotime($b['time']));
-
-        return array_values($services);
+                return [
+                    'agency_name' => $first['agency']['name'] ?? $first['agency'] ?? 'Sconosciuta',
+                    'voucher'     => trim($first['voucher'] ?? '') ?: '–',
+                    'time'        => $timeObj->format('H:i'),
+                    'timestamp'   => $timeObj->timestamp, // Utile per l'ordinamento
+                    // Estraiamo le licenze uniche che hanno partecipato a questo servizio
+                    'licenses'    => $group->pluck('_license')->unique()->sort()->values()->all(),
+                    'count'       => $group->count(),
+                ];
+            })
+            // 4. Ordiniamo cronologicamente
+            ->sortBy('timestamp')
+            // 5. Torniamo a un array semplice per la vista
+            ->values()
+            ->toArray();
     }
 }

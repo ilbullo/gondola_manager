@@ -88,7 +88,11 @@ class WorkSummaryTest extends TestCase
     public function it_resets_to_zero_on_table_reset_event()
     {
         $license = LicenseTable::factory()->create();
-        WorkAssignment::factory()->create(['license_table_id' => $license->id, 'value' => 'P', 'timestamp' => today()]);
+        WorkAssignment::factory()->create([
+            'license_table_id' => $license->id,
+            'slot' => 1,            // Inizia al primo slot
+            'slots_occupied' => 1,  // Occupa solo uno spazio
+        ]);
 
         $component = Livewire::test(WorkSummary::class);
         $component->assertSet('total', 1);

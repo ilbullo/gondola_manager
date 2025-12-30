@@ -155,4 +155,84 @@ class WorkAssignmentServiceTest extends TestCase
         
         $this->assertEquals(100.50, $total);
     }
+
+    #[Test]
+    public function it_prevents_race_conditions_using_atomic_locks()
+    {
+        // 1. Forza l'uso di un driver cache che supporta i lock (array va bene per i test singoli)
+        config(['cache.default' => 'array']);
+        
+        $license = LicenseTable::factory()->create();
+        $service = app(WorkAssignmentService::class);
+        $workData = [
+            'value' => 'A',
+            'amount' => 100,
+            'agencyName' => 'Agency Test'
+        ];
+
+        // 2. Genera la chiave ESATTAMENTE come fa il Service
+        // Nota: Il Service usa "save-assignment-license-..."
+        $lockKey = "save-assignment-license-{$license->id}-" . today()->format('Y-m-d');
+        
+        // 3. Acquisisci il lock PRIMA di chiamare il service
+        $lock = \Illuminate\Support\Facades\Cache::lock($lockKey, 10);
+        $lock->get(); 
+
+        // 4. Verifica che il Service lanci l'eccezione
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('Un altro utente sta aggiornando questa licenza. Riprova tra pochi istanti.');
+
+        // 5. Questa chiamata deve fallire perché il lock è occupato
+        $service->saveAssignment($license->id, 5, 1, $workData);
+    }
+
+    #[Test]
+    public function it_prevents_concurrent_turn_cycling()
+    {
+        config(['cache.default' => 'array']);
+        $license = LicenseTable::factory()->create(['turn' => \App\Enums\DayType::MORNING]);
+        $service = app(WorkAssignmentService::class);
+
+        // Chiave di lock specifica per il cambio turno di QUELLA licenza
+        $lockKey = "cycle-turn-license-{$license->id}";
+        
+        // Simulo che un processo stia già cambiando il turno
+        $lock = \Illuminate\Support\Facades\Cache::lock($lockKey, 5);
+        $lock->get();
+
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('Aggiornamento turno in corso...');
+
+        // Deve fallire perché il lock è occupato
+        $service->cycleLicenseTurn($license->id);
+    }
+
+    #[Test]
+    public function it_prevents_deletion_if_assignment_is_locked()
+    {
+        config(['cache.default' => 'array']);
+        
+        // 1. Creiamo prima la licenza, poi il lavoro associato
+        $license = LicenseTable::factory()->create();
+        $work = WorkAssignment::factory()->create([
+            'license_table_id' => $license->id,
+            'slot' => 1,            // Inizia all'inizio
+            'slots_occupied' => 1,  // Dura solo uno slot
+        ]);
+        
+        $service = app(WorkAssignmentService::class);
+
+        // 2. Usiamo la chiave di lock coerente con l'ID del lavoro
+        $lockKey = "action-assignment-{$work->id}";
+        
+        // 3. Simuliamo un lock attivo
+        $lock = \Illuminate\Support\Facades\Cache::lock($lockKey, 5);
+        $lock->get();
+
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('Impossibile eliminare: operazione in corso su questo lavoro.');
+
+        // 4. Deve fallire
+        $service->deleteAssignment($work->id);
+    }
 }

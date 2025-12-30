@@ -7,52 +7,72 @@ use Livewire\Livewire;
 use Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
 
-
 class ModalConfirmTest extends TestCase
 {
     #[Test]
-    public function it_starts_closed_with_default_message()
+    public function it_is_hidden_by_default()
     {
         Livewire::test(ModalConfirm::class)
             ->assertSet('show', false)
-            ->assertSet('message', 'Sei sicuro?');
+            ->assertDontSee('Attenzione');
     }
 
     #[Test]
     public function it_opens_with_custom_data()
     {
+        $data = [
+            'message' => 'Vuoi resettare la tabella?',
+            'confirmEvent' => 'table-reset-confirmed',
+            'payload' => ['id' => 1]
+        ];
+
         Livewire::test(ModalConfirm::class)
-            ->dispatch('openConfirmModal', [
-                'message' => 'Vuoi davvero eliminare Mario?',
-                'confirmEvent' => 'deleteUser',
-                'payload' => ['id' => 42],
-            ])
+            ->dispatch('openConfirmModal', data: $data)
             ->assertSet('show', true)
-            ->assertSet('message', 'Vuoi davvero eliminare Mario?')
-            ->assertSet('confirmEvent', 'deleteUser')
-            ->assertSet('confirmPayload', ['id' => 42]);
+            ->assertSet('message', 'Vuoi resettare la tabella?')
+            ->assertSet('confirmEvent', 'table-reset-confirmed')
+            ->assertSet('payload', ['id' => 1])
+            ->assertSee('Vuoi resettare la tabella?');
     }
 
     #[Test]
-    public function it_emits_confirm_event_and_closes()
+    public function it_dispatches_confirm_event_with_payload_and_closes()
     {
         Livewire::test(ModalConfirm::class)
-            ->set('confirmEvent', 'userDeleted')
-            ->set('confirmPayload', 123)
-            ->set('show', true)
+            ->dispatch('openConfirmModal', data: [
+                'confirmEvent' => 'delete-action',
+                'payload' => 42
+            ])
             ->call('confirm')
-            ->assertDispatched('userDeleted', payload: 123)
+            ->assertDispatched('delete-action', payload: 42)
+            ->assertSet('show', false)
+            ->assertSet('payload', null); // Verifica il reset()
+    }
+
+    #[Test]
+    public function it_dispatches_cancel_event_if_configured_and_closes()
+    {
+        Livewire::test(ModalConfirm::class)
+            ->dispatch('openConfirmModal', data: [
+                'cancelEvent' => 'action-cancelled',
+                'payload' => 'some-context'
+            ])
+            ->call('cancel')
+            ->assertDispatched('action-cancelled', payload: 'some-context')
             ->assertSet('show', false);
     }
 
     #[Test]
-    public function cancel_just_closes_the_modal()
+    public function it_resets_state_completely_on_close()
     {
         Livewire::test(ModalConfirm::class)
-            ->set('show', true)
-            ->set('confirmEvent', 'something')
-            ->call('cancel')
-            ->assertNotDispatched('something')
-            ->assertSet('show', false);
+            ->dispatch('openConfirmModal', data: [
+                'message' => 'Test message',
+                'confirmEvent' => 'test-event'
+            ])
+            ->call('close')
+            ->assertSet('show', false)
+            ->assertSet('message', 'Sei sicuro?') // Valore di default dopo reset
+            ->assertSet('confirmEvent', null);
     }
 }

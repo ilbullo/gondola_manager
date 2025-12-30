@@ -70,6 +70,7 @@ class LicenseTable extends Model
      * @var array<string, string>
      */
     protected $casts = [
+        'turn' => \App\Enums\DayType::class,
         'date'             => 'date',     // Converte automaticamente in Carbon
         'only_cash_works'  => 'boolean',  // Converte in booleano
     ];

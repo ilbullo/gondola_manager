@@ -1,7 +1,8 @@
 <?php 
-namespace Tests\Feature\Performance;
 
-use App\Models\{Agency, User};
+namespace Tests\Performance;
+
+use App\Models\Agency;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
@@ -14,59 +15,72 @@ class CachingTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        // Puliamo la cache prima di ogni test per evitare interferenze
         Cache::flush();
     }
 
+    /**
+     * Verifica che il sistema di "remember" funzioni.
+     * La prima volta salva, la seconda restituisce il dato senza toccare il DB.
+     */
     #[Test]
     public function it_caches_frequently_accessed_data()
     {
-        Agency::factory()->count(10)->create();
+        Agency::factory()->count(3)->create();
 
-        // Prima chiamata (no cache)
-        $agencies1 = Cache::remember('agencies', 3600, function () {
-            return Agency::orderBy('name')->get();
+        // Simuliamo l'accesso alla lista agenzie (come farebbe la tua Sidebar)
+        $agencies1 = Cache::remember('agencies_list', 3600, function () {
+            return Agency::all();
         });
 
-        // Seconda chiamata (from cache)
-        $agencies2 = Cache::get('agencies');
-
-        $this->assertEquals($agencies1->count(), $agencies2->count());
+        // Verifichiamo che la chiave esista ora in cache
+        $this->assertTrue(Cache::has('agencies_list'));
+        
+        $agencies2 = Cache::get('agencies_list');
+        $this->assertCount(3, $agencies2);
+        $this->assertEquals($agencies1->pluck('id'), $agencies2->pluck('id'));
     }
 
+    /**
+     * Questo è il test più IMPORTANTE per te.
+     * Verifica che la logica boot() del modello Agency pulisca la cache
+     * quando un'agenzia viene modificata o creata.
+     */
     #[Test]
-    public function it_invalidates_cache_on_data_change()
+    public function it_invalidates_cache_automatically_on_model_change()
     {
-        $agency = Agency::factory()->create(['name' => 'Original']);
+        // 1. Prepariamo un'agenzia e mettiamola in cache
+        $agency = Agency::factory()->create(['name' => 'Hotel A']);
+        Cache::put('agencies_list', Agency::all(), 3600);
         
-        Cache::put('agency_' . $agency->id, $agency, 3600);
+        $this->assertTrue(Cache::has('agencies_list'));
 
-        // Modifica l'agenzia
-        $agency->update(['name' => 'Updated']);
+        // 2. Modifichiamo l'agenzia. 
+        // Il metodo boot() di Agency dovrebbe chiamare Cache::forget('agencies_list')
+        $agency->update(['name' => 'Hotel A Updated']);
 
-        // Invalida la cache
-        Cache::forget('agency_' . $agency->id);
-
-        $cached = Cache::get('agency_' . $agency->id);
-        
-        $this->assertNull($cached);
+        // 3. Verifichiamo che la cache sia stata svuotata (Invalidation)
+        $this->assertFalse(Cache::has('agencies_list'), 'La cache non è stata invalidata dopo l\'update del modello!');
     }
 
+    /**
+     * Test sui Tag (Opzionale).
+     * Utile se vuoi svuotare "tutta la cache delle agenzie" in un colpo solo.
+     */
     #[Test]
-    public function it_uses_cache_tags_for_grouped_invalidation()
+    public function it_uses_cache_tags_if_supported()
     {
-        if (config('cache.default') !== 'redis') {
-            $this->markTestSkipped('Cache tags require Redis');
+        // Nota: i tag funzionano solo con driver come Redis o Memcached.
+        // Se usi 'file' o 'database', Laravel salta questa logica.
+        if (in_array(config('cache.default'), ['file', 'database'])) {
+            $this->markTestSkipped('Il driver cache attuale non supporta i tag.');
         }
 
-        Agency::factory()->count(5)->create();
-
-        Cache::tags(['agencies'])->put('all_agencies', Agency::all(), 3600);
+        Cache::tags(['agencies_data'])->put('list', ['agency1', 'agency2'], 3600);
         
-        // Invalida tutto il tag
-        Cache::tags(['agencies'])->flush();
+        // Invalida l'intero gruppo
+        Cache::tags(['agencies_data'])->flush();
 
-        $cached = Cache::tags(['agencies'])->get('all_agencies');
-        
-        $this->assertNull($cached);
+        $this->assertNull(Cache::tags(['agencies_data'])->get('list'));
     }
 }

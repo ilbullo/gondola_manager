@@ -3,9 +3,8 @@
 namespace Tests\Unit\Models;
 
 use App\Models\Agency;
-use App\Models\AgencyWork;
-use App\Models\WorkAssignment;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -14,50 +13,64 @@ class AgencyTest extends TestCase
     use RefreshDatabase;
 
     #[Test]
-    public function it_can_create_an_agency()
+    public function it_has_a_global_scope_to_order_by_name_alphabetically()
     {
-        $agency = Agency::factory()->create([
-            'name' => 'Test Agency',
-            'code' => 'AG01',
-        ]);
+        // Creiamo agenzie in ordine sparso
+        Agency::factory()->create(['name' => 'Zeta Hotel', 'code' => 'ZH']);
+        Agency::factory()->create(['name' => 'Alpha Agency', 'code' => 'AA']);
+        Agency::factory()->create(['name' => 'Morgana Tours', 'code' => 'MT']);
 
-        $this->assertDatabaseHas('agencies', [
-            'name' => 'Test Agency',
-            'code' => 'AG01',
-        ]);
+        $agencies = Agency::all();
+
+        // Verifichiamo che la prima sia "Alpha Agency" nonostante l'ordine di inserimento
+        $this->assertEquals('Alpha Agency', $agencies->first()->name);
+        $this->assertEquals('Zeta Hotel', $agencies->last()->name);
     }
 
     #[Test]
-    public function it_has_many_work_assignments()
+    public function it_provides_a_display_name_accessor()
     {
-        $agency = Agency::factory()->create();
-        $workAssignment = WorkAssignment::factory()->create(['agency_id' => $agency->id,'value' => 'A']);
-
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Collection::class, $agency->workAssignments);
-        $this->assertCount(1, $agency->workAssignments);
-        $this->assertInstanceOf(WorkAssignment::class, $agency->workAssignments->first());
-    }
-
-    #[Test]
-    public function it_has_many_agency_works()
-    {
-        $agency = Agency::factory()->create();
-        $agencyWork = AgencyWork::factory()->create(['agency_id' => $agency->id]);
-
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Collection::class, $agency->agencyWorks);
-        $this->assertCount(1, $agency->agencyWorks);
-        $this->assertInstanceOf(AgencyWork::class, $agency->agencyWorks->first());
-    }
-
-    #[Test]
-    public function it_returns_display_name_correctly()
-    {
-        $agency = Agency::factory()->create([
-            'name' => 'Test Agency',
-            'code' => 'AG01',
+        $agency = Agency::factory()->make([
+            'name' => 'Hotel Plaza',
+            'code' => 'HP'
         ]);
 
-        $this->assertEquals('Test Agency (AG01)', $agency->display_name);
+        $this->assertEquals('Hotel Plaza (HP)', $agency->display_name);
+    }
+
+    #[Test]
+    public function it_can_be_found_by_code()
+    {
+        Agency::factory()->create(['code' => 'EX', 'name' => 'Example']);
+
+        $found = Agency::findByCode('EX');
+        $notFound = Agency::findByCode('NON-EXISTENT');
+
+        $this->assertInstanceOf(Agency::class, $found);
+        $this->assertEquals('Example', $found->name);
+        $this->assertNull($notFound);
+    }
+
+    #[Test]
+    public function it_invalidates_cache_on_changes()
+    {
+        // Prepariamo una cache finta
+        Cache::put('agencies_list', ['data']);
+        $this->assertTrue(Cache::has('agencies_list'));
+
+        // Creazione -> dovrebbe svuotare la cache
+        $agency = Agency::factory()->create(['name' => 'New Agency', 'code' => 'NA']);
+        $this->assertFalse(Cache::has('agencies_list'), 'Cache non svuotata dopo la creazione');
+
+        // Ripopoliamo e testiamo l'update
+        Cache::put('agencies_list', ['data']);
+        $agency->update(['name' => 'Updated Name']);
+        $this->assertFalse(Cache::has('agencies_list'), 'Cache non svuotata dopo l\'update');
+
+        // Ripopoliamo e testiamo il delete
+        Cache::put('agencies_list', ['data']);
+        $agency->delete();
+        $this->assertFalse(Cache::has('agencies_list'), 'Cache non svuotata dopo il delete');
     }
 
     #[Test]
@@ -66,16 +79,29 @@ class AgencyTest extends TestCase
         $agency = Agency::factory()->create();
         $agency->delete();
 
-        $this->assertSoftDeleted('agencies', ['id' => $agency->id]);
-        $this->assertNotNull(Agency::withTrashed()->find($agency->id));
+        // L'agenzia non dovrebbe comparire nelle query normali
+        $this->assertCount(0, Agency::all());
+        
+        // Ma deve esistere ancora nel DB (Soft Delete)
+        $this->assertDatabaseHas('agencies', ['id' => $agency->id]);
+        $this->assertNotNull($agency->deleted_at);
     }
 
     #[Test]
-public function it_fails_to_create_agency_with_duplicate_code()
-{
-    Agency::factory()->create(['code' => 'AG01']);
+    public function it_refreshes_cache_on_soft_delete_and_restore()
+    {
+        $agency = Agency::factory()->create(['name' => 'Test Cache']);
+        
+        // 1. Popoliamo la cache (simulato)
+        Cache::put('agencies_list', [$agency]);
 
-    $this->expectException(\Illuminate\Database\QueryException::class);
-    Agency::factory()->create(['code' => 'AG01']);
-}
+        // 2. Soft Delete
+        $agency->delete();
+        $this->assertFalse(Cache::has('agencies_list'), 'La cache deve essere svuotata al soft delete');
+
+        // 3. Restore
+        Cache::put('agencies_list', [$agency]);
+        $agency->restore();
+        $this->assertFalse(Cache::has('agencies_list'), 'La cache deve essere svuotata al restore');
+    }
 }

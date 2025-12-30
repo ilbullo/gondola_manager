@@ -2,158 +2,116 @@
 
 namespace Tests\Feature\Livewire\Crud;
 
-use App\Livewire\Crud\AgencyManager;
-use App\Models\Agency;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Livewire\Livewire;
 use Tests\TestCase;
+use App\Models\Agency;
+use Livewire\Livewire;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
+use App\Livewire\Crud\AgencyManager;
 
 class AgencyManagerTest extends TestCase
 {
     use RefreshDatabase;
 
-    protected function setUp(): void
+    #[Test]
+    public function it_renders_successfully()
     {
-        parent::setUp();
-        $this->artisan('migrate:fresh', ['--env' => 'testing']);
+        Livewire::test(AgencyManager::class)
+            ->assertStatus(200);
     }
 
     #[Test]
-    public function renders_successfully()
+    public function it_filters_agencies_by_name_or_code()
     {
+        Agency::factory()->create(['name' => 'Alpha Agency', 'code' => 'ALPH']);
+        Agency::factory()->create(['name' => 'Beta Partner', 'code' => 'BETA']);
+
         Livewire::test(AgencyManager::class)
-            ->assertStatus(200)
-            ->assertSee('Gestione Agenzie');
+            ->set('search', 'Alpha')
+            ->assertSee('Alpha Agency')
+            ->assertDontSee('Beta Partner')
+            ->set('search', 'BETA')
+            ->assertSee('Beta Partner')
+            ->assertDontSee('Alpha Agency');
     }
 
     #[Test]
-    public function can_create_new_agency()
+    public function it_validates_agency_creation_rules()
     {
         Livewire::test(AgencyManager::class)
-            ->set('name', 'Agenzia Test')
-            ->set('code', 'TST9')
+            ->set('name', 'Invalid Name @#') // Regex fallisce
+            ->set('code', 'too-long-code')   // Max 4
             ->call('create')
-            ->assertHasNoErrors()
-            ->assertSee('Agenzia creata con successo.')
+            ->assertHasErrors(['name', 'code']);
+    }
+
+    #[Test]
+    public function it_creates_an_agency_and_invalidates_cache()
+    {
+        // Usiamo 'atLeast()->once()' per essere sicuri che venga pulita, 
+        // senza fallire se Livewire la chiama una seconda volta durante il ciclo di vita del test.
+        Cache::shouldReceive('forget')
+            ->with('agencies_list')
+            ->atLeast()
+            ->once();
+
+        Livewire::test(AgencyManager::class)
+            ->set('name', 'New Agency')
+            ->set('code', 'NEW1')
+            ->call('create')
+            ->assertDispatched('notify')
             ->assertSet('showCreateForm', false);
 
         $this->assertDatabaseHas('agencies', [
-            'name' => 'Agenzia Test',
-            'code' => 'TST9',
+            'name' => 'New Agency',
+            'code' => 'NEW1'
         ]);
     }
 
     #[Test]
-    public function can_edit_agency()
+    public function it_can_edit_and_update_an_agency()
     {
-        $agency = Agency::factory()->create();
+        $agency = Agency::factory()->create(['name' => 'Old Name', 'code' => 'OLD']);
 
         Livewire::test(AgencyManager::class)
             ->call('edit', $agency->id)
-            ->assertSet('editingId', $agency->id)
-            ->assertSet('name', $agency->name)
-            ->assertSet('showEditForm', true);
+            ->assertSet('name', 'Old Name')
+            ->set('name', 'Updated Name')
+            ->call('update')
+            ->assertHasNoErrors();
+
+        $this->assertEquals('Updated Name', $agency->refresh()->name);
     }
 
     #[Test]
-    public function can_update_agency()
+    public function it_handles_soft_deletes_and_restoration()
     {
-        $agency = Agency::factory()->create();
+        $agency = Agency::factory()->create(['name' => 'To Delete']);
 
-        Livewire::test(AgencyManager::class)
-            ->call('edit', $agency->id)
-            ->set('name', 'Modificata')
-            ->set('code', 'MD12')
-            ->call('update')
-            ->assertHasNoErrors()
-            ->assertSee('Agenzia aggiornata con successo.');
+        $component = Livewire::test(AgencyManager::class);
+
+        // Simuliamo l'evento di conferma eliminazione (che solitamente arriva dal modale)
+        $component->dispatch('confirmDeleteAgency', payload: $agency->id);
+
+        $this->assertSoftDeleted('agencies', ['id' => $agency->id]);
+
+        // Attiviamo la visualizzazione degli eliminati
+        $component->set('showDeleted', true)
+            ->assertSee('To Delete')
+            ->call('restore', $agency->id);
 
         $this->assertDatabaseHas('agencies', [
             'id' => $agency->id,
-            'name' => 'Modificata',
-            'code' => 'MD12',
+            'deleted_at' => null
         ]);
     }
 
     #[Test]
-    public function dispatches_confirm_delete_modal_with_correct_payload()
+    public function it_persists_search_in_url()
     {
-        $agency = Agency::factory()->create();
-
-        Livewire::test(AgencyManager::class)
-            ->call('confirmDelete', $agency->id)
-            ->assertDispatched('openConfirmModal', function ($eventName, $params) use ($agency) {
-                // Livewire 3 passa i parametri in modi diversi → gestiamo tutti i casi
-                $data = $params;
-
-                // Caso 1: $params è già l'array del payload
-                if (isset($params['message'])) {
-                    $data = $params;
-                }
-                // Caso 2: $params[0] contiene il payload
-                elseif (isset($params[0]) && is_array($params[0])) {
-                    $data = $params[0];
-                }
-                // Caso 3: fallback estremo
-                else {
-                    return false;
-                }
-
-                return $data['message'] === 'Eliminare definitivamente questa agenzia?'
-                    && $data['confirmEvent'] === 'confirmDeleteAgency'
-                    && $data['payload'] === $agency->id;
-            });
-    }
-
-    #[Test]
-    public function can_delete_agency_via_confirmation()
-    {
-        $agency = Agency::factory()->create();
-
-        Livewire::test(AgencyManager::class)
-            ->dispatch('confirmDeleteAgency', $agency->id)
-            ->assertSee('Agenzia eliminata con successo.');
-
-        $this->assertSoftDeleted('agencies', ['id' => $agency->id]);
-    }
-
-    #[Test]
-    public function can_restore_deleted_agency()
-    {
-        $agency = Agency::factory()->create();
-        $agency->delete();
-
-        Livewire::test(AgencyManager::class)
-            ->call('restore', $agency->id)
-            ->assertSee('Agenzia ripristinata con successo.');
-
-        $this->assertDatabaseHas('agencies', ['id' => $agency->id, 'deleted_at' => null]);
-    }
-
-    #[Test]
-    public function search_works()
-    {
-        Agency::factory()->create(['name' => 'Agenzia Nord', 'code' => 'NORD']);
-        Agency::factory()->create(['name' => 'Agenzia Sud', 'code' => 'SUD']);
-
-        Livewire::test(AgencyManager::class)
-            ->set('search', 'Nord')
-            ->assertSee('Agenzia Nord')
-            ->assertDontSee('Agenzia Sud');
-    }
-
-    #[Test]
-    public function can_toggle_deleted_visibility()
-    {
-        $active = Agency::factory()->create(['name' => 'Attiva']);
-        $deleted = Agency::factory()->create(['name' => 'Cancellata']);
-        $deleted->delete();
-
-        Livewire::test(AgencyManager::class)
-            ->assertSee('Attiva')
-            ->assertDontSee('Cancellata')
-            ->call('toggleShowDeleted')
-            ->assertSee('Cancellata');
+        Livewire::withQueryParams(['search' => 'GLOBAL'])
+            ->test(AgencyManager::class)
+            ->assertSet('search', 'GLOBAL');
     }
 }

@@ -129,19 +129,18 @@ class WorkAssignmentTable extends Component
 
         if (!$id) {
             $this->errorMessage = 'ID assegnazione mancante.';
+            $this->dispatch('notify', message: $this->errorMessage, type: 'error'); // Aggiungi questo
             return;
         }
 
         try {
             $service->deleteAssignment($id);
-
             $this->refreshTable($service);
-            $this->errorMessage = '';
-            // Opzionale: notifica di successo
             $this->dispatch('notify-success', ['message' => 'Lavoro rimosso correttamente']);
-
         } catch (\Exception $e) {
             $this->errorMessage = $e->getMessage();
+            // Assicurati che l'errore venga notificato al browser/test
+            $this->dispatch('notify', message: $e->getMessage(), type: 'error'); 
         }
     }
 
@@ -149,31 +148,39 @@ class WorkAssignmentTable extends Component
      * Metodo pubblico che delega al service il salvataggio.
      */
 
+    // In WorkAssignmentTable.php
+
     public function assignWork(int $licenseTableId, int $slot, WorkAssignmentService $service): void
-        {
-            if (!$this->selectedWork || empty($this->selectedWork['value'])) {
-                $this->errorMessage = 'Seleziona un lavoro valido dalla sidebar.';
-                return;
-            }
-
-            try {
-                // Chiamata al service mantenendo lo stesso nome metodo
-                $service->saveAssignment(
-                    $licenseTableId,
-                    $slot,
-                    $this->selectedWork['slotsOccupied'] ?? 1,
-                    $this->selectedWork
-                );
-
-                $this->refreshTable($service);
-                $this->errorMessage = '';
-                $this->dispatch('workAssigned');
-                $this->dispatch('notify-success', ['message' => 'Lavoro assegnato con successo']);
-
-            } catch (\Exception $e) {
-                $this->errorMessage = $e->getMessage();
-            }
+    {
+        if (!$this->selectedWork || empty($this->selectedWork['value'])) {
+            $this->dispatch('notify', ['message' => 'Seleziona un lavoro dalla sidebar', 'type' => 'error']);
+            return;
         }
+
+        try {
+            // Il service si occupa della persistenza su DB
+            $service->saveAssignment(
+                $licenseTableId,
+                $slot,
+                $this->selectedWork['slotsOccupied'] ?? 1,
+                $this->selectedWork
+            );
+
+            $this->refreshTable($service);
+            
+            // Reset dello stato locale
+            $this->errorMessage = '';
+            
+            // Notifichiamo alla sidebar che il lavoro è stato usato (se necessario)
+            $this->dispatch('workAssigned'); 
+            $this->dispatch('notify-success', ['message' => 'Lavoro assegnato con successo']);
+
+        } catch (\Exception $e) {
+            // Gestione errori centralizzata
+            $this->errorMessage = $e->getMessage();
+            $this->dispatch('notify', ['message' => $e->getMessage(), 'type' => 'error']);
+        }
+    }
 
         /**
          * Apre la finestra informativa dettagliata su un lavoro presente in tabella.

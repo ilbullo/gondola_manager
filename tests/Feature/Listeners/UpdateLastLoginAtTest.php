@@ -1,50 +1,67 @@
 <?php
-// tests/Feature/Listeners/UpdateLastLoginAtTest.php
+
 namespace Tests\Feature\Listeners;
 
-use App\Listeners\UpdateLastLoginAt;
 use App\Models\User;
+use App\Listeners\UpdateLastLoginAt;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
+use Illuminate\Support\Facades\Auth;
 
 class UpdateLastLoginAtTest extends TestCase
 {
     use RefreshDatabase;
 
     #[Test]
-    public function it_updates_last_login_at_on_login()
+    public function it_updates_last_login_at_timestamp_on_login_event()
     {
-        $user = User::factory()->create(['last_login_at' => null]);
-        
-        $this->assertNull($user->last_login_at);
+        // 1. Prepariamo i dati
+        $user = User::factory()->create([
+            'last_login_at' => null,
+        ]);
 
-        // Simula il login
-        event(new Login('web', $user, false));
+        // "Congeliamo" il tempo a un secondo specifico per evitare discrepanze di millisecondi
+        $knownDate = Carbon::create(2025, 12, 30, 15, 0, 0);
+        Carbon::setTestNow($knownDate);
 
-        $user->refresh();
+        // 2. Simuliamo l'evento
+        // Creiamo l'evento di login (Laravel passa l'utente e la guard)
+        $event = new Login('web', $user, false);
         
+        $listener = new UpdateLastLoginAt();
+        $listener->handle($event);
+
+        // 3. Verifiche
+        $user->refresh(); // Ricarichiamo i dati dal database
+
         $this->assertNotNull($user->last_login_at);
-        $this->assertInstanceOf(\Carbon\Carbon::class, $user->last_login_at);
+        $this->assertTrue($user->last_login_at->eq($knownDate), "Il timestamp registrato non corrisponde a quello atteso.");
+        
+        // Puliamo il tempo simulato
+        Carbon::setTestNow();
     }
 
     #[Test]
-    public function it_updates_last_login_at_on_subsequent_logins()
+    public function it_is_actually_attached_to_the_login_event()
     {
-        $user = User::factory()->create([
-            'last_login_at' => now()->subDays(5)
-        ]);
+        $user = User::factory()->create(['last_login_at' => null]);
         
-        $oldLoginAt = $user->last_login_at;
+        // Usiamo una data fissa senza millisecondi
+        $knownDate = Carbon::now()->addDay()->startOfSecond();
+        Carbon::setTestNow($knownDate);
 
-        // Simula un nuovo login
-        sleep(1); // Assicura che il timestamp sia diverso
-        event(new Login('web', $user, false));
+        // Effettua il login: questo DEVE scatenare l'evento
+        Auth::login($user);
 
-        $user->refresh();
-        
-        $this->assertNotEquals($oldLoginAt, $user->last_login_at);
-        $this->assertTrue($user->last_login_at->greaterThan($oldLoginAt));
+        $this->assertNotNull($user->refresh()->last_login_at, "Il Listener non è stato attivato.");
+        $this->assertTrue(
+            $user->last_login_at->eq($knownDate), 
+            "Data in DB ({$user->last_login_at}) diversa da quella attesa ({$knownDate})"
+        );
+
+        Carbon::setTestNow();
     }
 }

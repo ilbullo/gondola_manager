@@ -71,59 +71,60 @@ class WorkAssignment extends Model
     // Booted: logica di salvataggio globale
     // ===================================================================
     /**
-     * Impone regole di validazione aggiuntive al momento del saving:
-     * - solo lavori tipo 'A' possono avere shared_from_first o excluded true
-     * - non si possono superare i 25 lavori per license_table_id
+     * Boot del modello: implementa le guardie di integrità del database.
+     * * Questo metodo agisce come un firewall, impedendo il salvataggio di dati
+     * che violerebbero le regole di business o la coerenza fisica della matrice.
      */
-protected static function booted(): void
-{
-    static::saving(function ($work) {
-        $value = $work->value;
+    protected static function booted(): void
+    {
+        static::saving(function ($work) {
+            $value = $work->value;
 
-        // -----------------------------------------------------------------
-        // REGOLE RIGIDE DI VALIDAZIONE CAMPI BOOLEANI
-        // -----------------------------------------------------------------
-
-        // 1. shared_from_first può essere TRUE **SOLO** per lavori di tipo A
-        // if ($work->shared_from_first && $value !== WorkType::AGENCY->value) {
-        //     throw new \Exception(
-        //         "Il campo 'shared_from_first' può essere abilitato solo per lavori di tipo 'A'. " .
-        //         "Valore attuale del lavoro: '{$value}'."
-        //     );
-        // }
-
-        // 2. excluded e shared_from_first possono essere TRUE solo per:
-        //    - lavori di tipo A (agenzia esclusa)
-        //    - lavori di tipo X (cash escluso manualmente)
-        if ($work->excluded || $work->shared_from_first) {
-            if (!in_array($value, [WorkType::AGENCY->value, WorkType::CASH->value])) {
-                throw new \Exception(
-                    "Il campo 'excluded' può essere abilitato solo per lavori di tipo 'A' o 'X'. " .
-                    "Valore attuale del lavoro: '{$value}'."
-                );
+            // =================================================================
+            // 1. REGOLE DI VALIDAZIONE BOOLEANI (LOGICA DI BUSINESS)
+            // =================================================================
+            
+            // I campi 'excluded' e 'shared_from_first' hanno senso solo per 
+            // lavori di tipo A (Agenzia) o X (Cash escluso).
+            if ($work->excluded || $work->shared_from_first) {
+                if (!in_array($value, [\App\Enums\WorkType::AGENCY->value, \App\Enums\WorkType::CASH->value])) {
+                    throw new \Exception(
+                        "Integrità violata: il campo 'excluded'/'shared_from_first' può essere " .
+                        "abilitato solo per lavori di tipo 'A' o 'X'. Tipo attuale: '{$value}'."
+                    );
+                }
             }
-        }
 
-        // -----------------------------------------------------------------
-        // CONTROLLO CAPACITÀ SLOT (solo su creazione)
-        // -----------------------------------------------------------------
-        if (! $work->exists) {
-            $totalSlots = config('app_settings.matrix.total_slots', 25);
+            // =================================================================
+            // 2. CONTROLLO CAPACITÀ E CONFINI FISICI (SOLO NUOVI INSERIMENTI)
+            // =================================================================
+            if (! $work->exists) {
+                $totalSlots = config('app_settings.matrix.total_slots', 25);
+                $startSlot  = (int) $work->slot;
+                $newSlots   = (int) ($work->slots_occupied ?? 1);
 
-            $usedSlots = self::where('license_table_id', $work->license_table_id)
-                ->sum('slots_occupied');
+                // A. Boundary Check: verifica che il lavoro non "esca" dal tabellone (es. slot 25 con durata 2)
+                $finalSlot = $startSlot + $newSlots - 1;
+                if ($finalSlot > $totalSlots) {
+                    throw new \Exception(
+                        "Errore Spaziale: la durata del lavoro eccede il limite del tabellone. " .
+                        "Slot finale calcolato: {$finalSlot}, limite massimo: {$totalSlots}."
+                    );
+                }
 
-            $newSlots = $work->slots_occupied ?? 1; // default 1 se non specificato
+                // B. Capacity Check: verifica che la somma degli slot usati non superi 25
+                $usedSlots = self::where('license_table_id', $work->license_table_id)
+                    ->sum('slots_occupied');
 
-            if (($usedSlots + $newSlots) > $totalSlots) {
-                throw new \Exception(
-                    "Impossibile salvare il lavoro: superata la capacità massima di {$totalSlots} slot per questa licenza. " .
-                    "Slot già usati: {$usedSlots}, richiesti: {$newSlots}."
-                );
+                if (($usedSlots + $newSlots) > $totalSlots) {
+                    throw new \Exception(
+                        "Errore Capacità: superata la capacità massima di {$totalSlots} slot per questa licenza. " .
+                        "Già occupati: {$usedSlots}, richiesti: {$newSlots}."
+                    );
+                }
             }
-        }
-    });
-}
+        });
+    }
 
     // ===================================================================
     // Mutators

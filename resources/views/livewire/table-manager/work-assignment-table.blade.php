@@ -37,13 +37,18 @@
                             <div class="flex items-center gap-2">
                                 {{-- SELETTORE TURNO CICLICO (F -> M -> P) --}}
                                 @php
-                                    $shift = $license['turn'] ?? 'full';
+                                    $currentTurn = $license['turn'] ?? $license->turn ?? 'full';
+
+                                    // Gestione Enum: estraiamo il valore stringa
+                                    $shiftKey = $currentTurn instanceof \App\Enums\DayType ? $currentTurn->value : $currentTurn;
+                                    
                                     $shiftStyles = [
                                         'full'      => ['bg' => 'bg-slate-100', 'text' => 'text-slate-600', 'label' => 'F'],
                                         'morning'   => ['bg' => 'bg-amber-100', 'text' => 'text-amber-700', 'label' => 'M'],
                                         'afternoon' => ['bg' => 'bg-indigo-100', 'text' => 'text-indigo-700', 'label' => 'P'],
                                     ];
-                                    $currentStyle = $shiftStyles[$shift];
+
+                                    $currentStyle = $shiftStyles[$shiftKey] ?? $shiftStyles['full'];
                                 @endphp
                                 <button wire:click="cycleTurn({{ $license['id'] }})"
                                         class="w-5 h-5 flex items-center justify-center rounded-md {{ $currentStyle['bg'] }} {{ $currentStyle['text'] }} text-[9px] font-black border border-black/5 shadow-sm active:scale-90 transition-all">

@@ -2,9 +2,10 @@
 
 namespace Tests\Unit\Models;
 
+use App\Models\Agency;
 use App\Models\AgencyWork;
 use App\Models\User;
-use App\Models\Agency;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
@@ -14,45 +15,43 @@ class AgencyWorkTest extends TestCase
     use RefreshDatabase;
 
     #[Test]
-    public function it_can_create_an_agency_work()
+    public function it_casts_date_to_carbon_instance()
     {
         $agencyWork = AgencyWork::factory()->create([
-            'date' => '2023-01-01',
-            'voucher' => 'voucher-789',
+            'date' => '2025-12-30'
         ]);
 
-        $this->assertDatabaseHas('agency_works', [
-            'date' => '2023-01-01 00:00:00', // Formato completo per il database
-            'voucher' => 'voucher-789',
-        ]);
+        $this->assertInstanceOf(Carbon::class, $agencyWork->date);
+        $this->assertEquals(2025, $agencyWork->date->year);
+        $this->assertEquals(12, $agencyWork->date->month);
     }
 
     #[Test]
     public function it_belongs_to_a_user()
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create(['name' => 'Mario Rossi']);
         $agencyWork = AgencyWork::factory()->create(['user_id' => $user->id]);
 
         $this->assertInstanceOf(User::class, $agencyWork->user);
-        $this->assertEquals($user->id, $agencyWork->user->id);
+        $this->assertEquals('Mario Rossi', $agencyWork->user->name);
     }
 
     #[Test]
     public function it_belongs_to_an_agency()
     {
-        $agency = Agency::factory()->create();
+        $agency = Agency::factory()->create(['name' => 'Hotel Excelsior']);
         $agencyWork = AgencyWork::factory()->create(['agency_id' => $agency->id]);
 
         $this->assertInstanceOf(Agency::class, $agencyWork->agency);
-        $this->assertEquals($agency->id, $agencyWork->agency->id);
+        $this->assertEquals('Hotel Excelsior', $agencyWork->agency->name);
     }
 
     #[Test]
-    public function it_casts_date_to_date()
+    public function it_can_handle_floating_point_amounts()
     {
-        $agencyWork = AgencyWork::factory()->create(['date' => '2023-01-01']);
+        // Test per assicurarci che non ci siano arrotondamenti indesiderati a livello di Model
+        $agencyWork = AgencyWork::factory()->create(['amount' => 125.55]);
 
-        $this->assertInstanceOf(\Illuminate\Support\Carbon::class, $agencyWork->date);
-        $this->assertEquals('2023-01-01', $agencyWork->date->toDateString());
+        $this->assertEquals(125.55, $agencyWork->amount);
     }
 }

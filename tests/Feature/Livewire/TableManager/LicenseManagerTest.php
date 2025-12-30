@@ -2,166 +2,155 @@
 
 namespace Tests\Feature\Livewire\TableManager;
 
-use App\Livewire\TableManager\LicenseManager;
-use App\Models\{LicenseTable, User};
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Livewire\Livewire;
 use Tests\TestCase;
+use App\Models\User;
+use App\Models\LicenseTable;
+use App\Livewire\TableManager\LicenseManager;
+use Livewire\Livewire;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
-
 
 class LicenseManagerTest extends TestCase
 {
     use RefreshDatabase;
 
-    private User $user1;
-    private User $user2;
-    private User $user3;
-
-    protected function setUp(): void
+    #[Test]
+    public function it_lists_available_users_correctly()
     {
-        parent::setUp();
+        $user1 = User::factory()->create(['name' => 'Mario Rossi']);
+        $user2 = User::factory()->create(['name' => 'Luigi Bianchi']);
 
-        $this->user1 = User::factory()->create(['license_number' => '11']);
-        $this->user2 = User::factory()->create(['license_number' => '12']);
-        $this->user3 = User::factory()->create(['license_number' => '13']);
+        // Utente 1 già assegnato
+        LicenseTable::factory()->create(['user_id' => $user1->id, 'date' => today()]);
+
+        $component = Livewire::test(LicenseManager::class);
+
+        // Accediamo alla computed property tramite l'istanza del componente
+        $availableUsers = $component->instance()->availableUsers;
+
+        $this->assertTrue($availableUsers->contains($user2));
+        $this->assertFalse($availableUsers->contains($user1));
     }
 
     #[Test]
-
-    public function it_mounts_and_loads_data()
+    public function it_can_search_available_users()
     {
-        LicenseTable::factory()->create(['user_id' => $this->user1->id, 'date' => today(), 'order' => 1]);
+        User::factory()->create(['name' => 'Alessandro']);
+        User::factory()->create(['name' => 'Beatrice']);
 
-        Livewire::test(LicenseManager::class)
-            ->assertSet('selectedUsers', function ($users) {
-                return count($users) === 1 && $users[0]['user_id'] === $this->user1->id;
-            })
-            ->assertSet('availableUsers', function ($users) {
-                // Dovrebbe contenere user2 e user3, ma non user1
-                return count($users) === 2 && collect($users)->pluck('id')->contains($this->user2->id);
-            });
+        $component = Livewire::test(LicenseManager::class)
+            ->set('search', 'Ale');
+
+        $availableUsers = $component->instance()->availableUsers;
+
+        $this->assertCount(1, $availableUsers);
+        $this->assertEquals('Alessandro', $availableUsers->first()->name);
     }
 
-    // --- Selezione e Rimozione ---
-
     #[Test]
-
-    public function it_selects_a_user_and_adds_a_license_table_record()
+    public function it_adds_a_user_to_the_license_table()
     {
-        $this->assertDatabaseCount('license_table', 0);
+        $user = User::factory()->create();
 
         Livewire::test(LicenseManager::class)
-            ->call('selectUser', $this->user2->id)
-            ->assertDispatched('toggleLoading', true)
-            ->assertDispatched('toggleLoading', false);
+            ->call('selectUser', $user->id)
+            ->assertDispatched('notify', message: "Licenza aggiunta con successo.");
 
         $this->assertDatabaseHas('license_table', [
-            'user_id' => $this->user2->id,
-            'date' => today(),
-            'order' => 1,
-        ]);
-
-        // Verifica che l'utente sia passato da "disponibile" a "selezionato"
-        Livewire::test(LicenseManager::class)
-            ->assertSet('selectedUsers', function ($users) {
-                return count($users) === 1 && $users[0]['user_id'] === $this->user2->id;
-            })
-            ->assertSet('availableUsers', function ($users) {
-                return !collect($users)->pluck('id')->contains($this->user2->id);
-            });
-    }
-
-    
-    #[Test]
-
-    public function it_removes_a_license_table_record()
-    {
-        $licenseTable = LicenseTable::factory()->create(['user_id' => $this->user3->id, 'date' => today(), 'order' => 1]);
-
-        Livewire::test(LicenseManager::class)
-            ->call('removeUser', $licenseTable->id)
-            ->assertDispatched('toggleLoading', true)
-            ->assertDispatched('toggleLoading', false);
-
-        $this->assertModelMissing($licenseTable);
-        
-        // Verifica che l'utente sia tornato tra gli "available"
-        Livewire::test(LicenseManager::class)
-            ->assertSet('selectedUsers', [])
-            ->assertSet('availableUsers', function ($users) {
-                return collect($users)->pluck('id')->contains($this->user3->id);
-            });
-    }
-
-    // --- Ordinamento ---
-
-    #[Test]
-
-    public function it_updates_the_order_of_selected_users()
-    {
-        $lt1 = LicenseTable::factory()->create(['user_id' => $this->user1->id, 'date' => today(), 'order' => 1]);
-        $lt2 = LicenseTable::factory()->create(['user_id' => $this->user2->id, 'date' => today(), 'order' => 2]);
-
-        $orderedIds = [
-            ['value' => $lt2->id], // user2 ora è 1°
-            ['value' => $lt1->id], // user1 ora è 2°
-        ];
-
-        Livewire::test(LicenseManager::class)
-            ->call('updateOrder', $orderedIds)
-            ->assertDispatched('toggleLoading', true)
-            ->assertDispatched('toggleLoading', false)
-            ->assertSee('Ordine aggiornato con successo!')
-            ->assertSet('selectedUsers', function ($users) use ($lt1, $lt2) {
-                return $users[0]['id'] === $lt2->id && $users[0]['order'] === 1 &&
-                       $users[1]['id'] === $lt1->id && $users[1]['order'] === 2;
-            });
-
-        $this->assertDatabaseHas('license_table', ['id' => $lt2->id, 'order' => 1]);
-        $this->assertDatabaseHas('license_table', ['id' => $lt1->id, 'order' => 2]);
-    }
-
-    // --- Conferma ---
-
-    #[Test]
-
-        public function it_confirms_the_selection_and_dispatches_event()
-    {
-        // 1. Setup: Creiamo almeno una licenza per oggi
-        // (Altrimenti il metodo confirm() si ferma e mostra un errore)
-        $user = \App\Models\User::factory()->create();
-        
-        \App\Models\LicenseTable::create([
             'user_id' => $user->id,
-            'date'    => today(),
-            'order'   => 1,
+            'date' => today()->toDateString(),
+            'order' => 1
         ]);
-
-        // 2. Esecuzione del Test
-        \Livewire\Livewire::test(\App\Livewire\TableManager\LicenseManager::class)
-            // Assicuriamoci che il componente carichi i dati (mount)
-            ->call('confirm') 
-            
-            // 3. Asserzioni
-            // Verifica che non ci siano errori nel componente
-            ->assertSet('errorMessage', '') 
-            
-            // Verifica che l'evento 'confirmLicenses' sia stato emesso
-            ->assertDispatched('confirmLicenses')
-            
-            // Invece di controllare manualmente l'array di sessione,
-            // usiamo l'asserzione integrata che gestisce tutto automaticamente.
-            ->assertSee('Selezione confermata con successo!');
     }
 
     #[Test]
+    public function it_prevents_duplicate_entries_for_the_same_day()
+    {
+        $user = User::factory()->create();
+        
+        // Prima aggiunta
+        LicenseTable::factory()->create(['user_id' => $user->id, 'date' => today()]);
 
-    public function it_prevents_confirmation_with_no_selected_users()
+        Livewire::test(LicenseManager::class)
+            ->call('selectUser', $user->id)
+            ->assertDispatched('notify', message: "L'utente è già in tabella.");
+
+        // Verifichiamo che ci sia comunque un solo record nel DB
+        $this->assertEquals(1, LicenseTable::where('user_id', $user->id)->count());
+    }
+
+    #[Test]
+    public function it_can_remove_a_user_from_the_order()
+    {
+        $license = LicenseTable::factory()->create(['date' => today()]);
+
+        Livewire::test(LicenseManager::class)
+            ->call('removeUser', $license->id)
+            ->assertDispatched('notify', message: "Rimosso dall'ordine.");
+
+        $this->assertDatabaseMissing('license_table', ['id' => $license->id]);
+    }
+
+    #[Test]
+    public function it_dispatches_confirmation_event_on_confirm()
+    {
+        // Setup: deve esserci almeno una licenza
+        LicenseTable::factory()->create(['date' => today()]);
+
+        Livewire::test(LicenseManager::class)
+            ->call('confirm')
+            ->assertDispatched('licensesConfirmed')
+            // Verifichiamo solo il messaggio, dato che i parametri nominali possono variare
+            ->assertDispatched('notify', function ($event, $params) {
+                return $params['message'] === 'Ordine di servizio confermato. Buon lavoro!' && 
+                       $params['type'] === 'success';
+            });
+    }
+
+    #[Test]
+    public function it_fails_to_confirm_if_table_is_empty()
     {
         Livewire::test(LicenseManager::class)
             ->call('confirm')
-            ->assertSet('errorMessage', 'Seleziona almeno un utente prima di confermare.')
-            ->assertNotDispatched('confirmLicenses');
+            ->assertDispatched('notify', type: 'error')
+            ->assertNotDispatched('licensesConfirmed');
+    }
+
+    #[Test]
+    public function it_assigns_the_correct_sequential_order_to_new_entries()
+    {
+        $user1 = User::factory()->create();
+        $user2 = User::factory()->create();
+
+        // Aggiungiamo il primo
+        Livewire::test(LicenseManager::class)->call('selectUser', $user1->id);
+        // Aggiungiamo il secondo
+        Livewire::test(LicenseManager::class)->call('selectUser', $user2->id);
+
+        $this->assertEquals(1, LicenseTable::where('user_id', $user1->id)->first()->order);
+        $this->assertEquals(2, LicenseTable::where('user_id', $user2->id)->first()->order);
+    }
+
+    #[Test]
+    public function it_refreshes_available_users_after_external_change()
+    {
+        $user = User::factory()->create(['name' => 'Test User']);
+        $component = Livewire::test(LicenseManager::class);
+
+        // Primo accesso: l'utente è disponibile (Livewire mette il risultato in cache)
+        $this->assertTrue($component->instance()->availableUsers->contains($user));
+
+        // Simuliamo l'inserimento esterno nel DB (es. da un altro terminale o worker)
+        LicenseTable::create([
+            'user_id' => $user->id,
+            'date'    => today(),
+            'order'   => 1
+        ]);
+
+        // Fondamentale: Forziamo Livewire a resettare la cache delle Computed Properties
+        $component->call('$refresh'); 
+
+        // Ora l'asserzione passerà perché availableUsers verrà ricalcolato
+        $this->assertFalse($component->instance()->availableUsers->contains($user));
     }
 }

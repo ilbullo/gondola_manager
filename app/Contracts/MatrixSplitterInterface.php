@@ -28,5 +28,15 @@ use Illuminate\Support\Collection;
 
 interface MatrixSplitterInterface
 {
+    /**
+     * Esegue l'algoritmo di redistribuzione dei lavori sulla tabella delle licenze.
+     * * Il metodo analizza lo stato attuale del $licenseTable, identifica i lavori
+     * "spostabili" (sharable) e quelli in sospeso (pending), e li rialloca secondo
+     * le specifiche regole di business del sistema.
+     *
+     * @param array|Collection $licenseTable Set di dati MatrixData (array per compatibilità Livewire o Collection).
+     * * @return Collection La tabella delle licenze aggiornata con la nuova distribuzione dei lavori.
+     * * @throws \App\Exceptions\MatrixSplitterException Se l'algoritmo incontra vincoli impossibili da soddisfare.
+     */
     public function execute(array|Collection $licenseTable): Collection;
 }

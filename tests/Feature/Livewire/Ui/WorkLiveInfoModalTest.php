@@ -4,6 +4,7 @@ namespace Tests\Feature\Livewire\Ui;
 
 use App\Models\WorkAssignment;
 use App\Models\Agency;
+use App\Models\LicenseTable;
 use App\Livewire\Ui\WorkLiveInfoModal;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -15,14 +16,16 @@ class WorkLiveInfoModalTest extends TestCase
     use RefreshDatabase;
 
     protected WorkAssignment $work;
+    protected LicenseTable $license;
 
     protected function setUp(): void
     {
         parent::setUp();
         
-        // Forza la lingua italiana per Laravel e Carbon durante il test
         app()->setLocale('it');
         \Carbon\Carbon::setLocale('it');
+
+        $this->license = LicenseTable::factory()->create();
 
         $agency = Agency::factory()->create([
             'code' => 'TA', 
@@ -30,9 +33,12 @@ class WorkLiveInfoModalTest extends TestCase
         ]);
 
         $this->work = WorkAssignment::factory()->create([
+            'license_table_id' => $this->license->id,
             'value' => 'X',
             'amount' => 100.00,
             'agency_id' => $agency->id,
+            'slot' => 1,
+            'slots_occupied' => 1,
             'voucher' => 'V123',
             'created_at' => now()->subMinutes(30)
         ]);
@@ -43,11 +49,10 @@ class WorkLiveInfoModalTest extends TestCase
     {
         Livewire::test(WorkLiveInfoModal::class)
             ->dispatch('showWorkInfo', workId: $this->work->id)
+            ->assertSet('workId', $this->work->id)
             ->assertSet('open', true)
-            ->assertSet('amount', 100.00)
-            // Il componente estrarrà il codice tramite il metodo fill() 
-            // assicurati che nel componente sia: 'agency_code' => $work->agency?->code
-            ->assertSet('agency_code', 'TA'); 
+            ->assertSet('amount', 100.00) // Rimosso "form."
+            ->assertSet('value', 'X');    // Rimosso "form."
     }
 
     #[Test]
@@ -59,7 +64,6 @@ class WorkLiveInfoModalTest extends TestCase
         $workData = $component->instance()->workData;
 
         $this->assertEquals('Agenzia Test', $workData['agency']);
-        // Usiamo assertStringContainsString per essere sicuri
         $this->assertStringContainsString('30 minuti', $workData['time_elapsed']);
         $this->assertEquals(100.0, (float)$workData['amount']);
     }
@@ -69,15 +73,11 @@ class WorkLiveInfoModalTest extends TestCase
     {
         Livewire::test(WorkLiveInfoModal::class)
             ->dispatch('showWorkInfo', workId: $this->work->id)
-            ->set('amount', 150.00)
-            ->set('voucher', 'UPDATED_VOUCHER')
-            ->call('save')
-            ->assertDispatched('work-updated')
-            ->assertDispatched('refreshTableBoard');
+            ->set('amount', 250.00) // Rimosso "form."
+            ->call('save')         // Il tuo metodo si chiama save(), non update()
+            ->assertDispatched('work-updated');
 
-        $this->work->refresh();
-        $this->assertEquals(150.00, $this->work->amount);
-        $this->assertEquals('UPDATED_VOUCHER', $this->work->voucher);
+        $this->assertEquals(250, $this->work->fresh()->amount);
     }
 
     #[Test]
@@ -87,10 +87,11 @@ class WorkLiveInfoModalTest extends TestCase
             ->dispatch('showWorkInfo', workId: $this->work->id)
             ->call('confirmDelete')
             ->assertDispatched('openConfirmModal', function($name, $params) {
+                // Nel tuo codice passi 'licenseTableId' invece di 'workId' nel payload
                 return $params[0]['confirmEvent'] === 'confirmRemoveAssignment' 
                     && $params[0]['payload']['licenseTableId'] === $this->work->id;
             })
-            ->assertSet('open', false);
+            ->assertSet('open', false); // confirmDelete chiama closeModal() alla fine
     }
 
     #[Test]

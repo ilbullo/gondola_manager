@@ -20,11 +20,12 @@ class WorkAssignmentFactory extends Factory
             : null;
 
         return [
-            'license_table_id'  => LicenseTable::factory(),
+            'license_table_id'  => null,
             'agency_id'         => null,
             'slot'              => $this->faker->numberBetween(1, 25),
             'value'             => $this->faker->randomElement(['N', 'X', 'P']),
             'voucher'           => $this->faker->optional()->word,
+            'amount'            => $this->faker->randomFloat(2, 50, 150),
             'timestamp'         => now(),
             'slots_occupied'    => $this->faker->numberBetween(1, 5),
             'excluded'          => false,

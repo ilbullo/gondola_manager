@@ -22,11 +22,16 @@ class AuthenticationTest extends TestCase
 
     public function test_users_can_authenticate_using_the_login_screen(): void
     {
-        $user = User::factory()->create();
+        // 1. Assicuriamoci che l'utente abbia un license_number
+        $user = User::factory()->create([
+            'license_number' => '12345'
+        ]);
 
         $component = Volt::test('pages.auth.login')
             ->set('form.email', $user->email)
-            ->set('form.password', 'password');
+            ->set('form.password', 'password')
+            // 2. Aggiungiamo il campo mancante richiesto dalla validazione
+            ->set('form.license_number', '12345'); 
 
         $component->call('login');
 
@@ -69,6 +74,7 @@ class AuthenticationTest extends TestCase
 
     public function test_users_can_logout(): void
     {
+        /** @var \App\Models\User $user */
         $user = User::factory()->create();
 
         $this->actingAs($user);

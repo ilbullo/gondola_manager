@@ -26,6 +26,7 @@ class EmailVerificationTest extends TestCase
 
     public function test_email_can_be_verified(): void
     {
+        /** @var \App\Models\User $user */
         $user = User::factory()->unverified()->create();
 
         Event::fake();

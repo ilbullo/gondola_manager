@@ -99,15 +99,28 @@ class WorkAssignmentServiceTest extends TestCase
     }
 
     #[Test]
-    public function it_successfully_deletes_an_assignment(): void
+    public function it_successfully_deletes_a_work_assignment()
     {
-        $assignment = WorkAssignment::factory()->create();
+        // 1. Setup con data odierna (coerente con i filtri del Service)
+        $today = now()->format('Y-m-d');
+        $license = LicenseTable::factory()->create(['date' => $today]);
 
-        $this->service->deleteAssignment($assignment->id);
-
-        $this->assertDatabaseMissing('work_assignments', [
-            'id' => $assignment->id
+        // 2. Creiamo il lavoro in uno slot "sicuro"
+        $work = WorkAssignment::factory()->create([
+            'license_table_id' => $license->id,
+            'slot' => 1,
+            'slots_occupied' => 1,
+            'timestamp' => now(), // Necessario perché il service filtra per whereDate('timestamp', today())
         ]);
+
+        $service = app(WorkAssignmentService::class);
+
+        // 3. Chiamiamo il metodo corretto: deleteAssignment()
+        $result = $service->deleteAssignment($work->id);
+
+        // 4. Verifiche
+        $this->assertTrue($result);
+        $this->assertDatabaseMissing('work_assignments', ['id' => $work->id]);
     }
 
     #[Test]

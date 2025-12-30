@@ -53,7 +53,18 @@ class MatrixSplitterService implements MatrixSplitterInterface
 
         // 1. Preparazione della matrice base (prepareMatrix)
         $this->matrix = $this->queryService->prepareMatrix($this->licenseTable);
-
+        foreach ($this->matrix as $index => $license) {
+            // Calcoliamo il numero di P una sola volta per licenza
+            $pCount = $allWorks->where('value', 'P')
+                            ->where('license_table_id', $license['id'])
+                            ->count();
+            
+            // Lo "iniettiamo" direttamente nell'array della licenza
+            $license['p_count'] = $pCount;
+            
+            // Aggiorniamo la riga nella collection
+            $this->matrix[$index] = $license;
+        }
         // 2. Distribuzione dei lavori "fissi" di agenzia (distributeFixed + fixedAgencyWorks)
         $this->engineService->distributeFixed(
             $this->queryService->unsharableWorks($this->licenseTable)->where('value', 'A'),

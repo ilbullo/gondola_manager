@@ -114,4 +114,5 @@ class MatrixSplitterLoadTest extends TestCase
         // non dovrebbe superare le 40-50 query totali (dipende dai tuoi logger/audit)
         $this->assertLessThan(50, $queryCount, "Troppe query rilevate ($queryCount). Problema N+1!");
     }
+
 }

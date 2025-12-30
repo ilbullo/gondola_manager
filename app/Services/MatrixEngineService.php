@@ -259,10 +259,9 @@ class MatrixEngineService implements MatrixEngineInterface
         // 1. Determina la capacità MASSIMA (il denominatore corretto)
         // Contiamo i lavori 'P' associati a questa licenza nella lista globale dei lavori.
         // Questi lavori riducono il target_capacity disponibile per altri tipi di lavoro.
-        $numberOfPWorks = $allWorks
-            ->where('value', 'P')
-            ->where('license_table_id', $license['id'])
-            ->count();
+        $numberOfPWorks = $license['p_count'] ?? $allWorks->where('value', 'P')
+                                                      ->where('license_table_id', $license['id'])
+                                                      ->count();
 
         $targetCapacity = ($license['target_capacity'] ?? 0) - $numberOfPWorks;
 

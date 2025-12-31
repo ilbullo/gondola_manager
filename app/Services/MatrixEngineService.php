@@ -357,26 +357,42 @@ class MatrixEngineService implements MatrixEngineInterface
         $actualCount = count($actualWorks);
         // 1. Controllo duplicati interni (Opzionale ma utile)
         // Verifica se lo stesso ID lavoro compare più volte (esclusi i lavori che occupano più slot se previsto)
-        $workIds = collect($actualWorks)->pluck('id')->filter();
-        if ($workIds->count() !== $workIds->unique()->count()) {
-            throw new \RuntimeException(
-                "Licenza #{$row['user']['license_number']}: Rilevati ID lavoro duplicati nella stessa riga."
-            );
+        // 1. Controllo duplicati interni (Consapevole dei Multi-Slot)
+        $groups = collect($actualWorks)->groupBy('id');
+
+        foreach ($groups as $workId => $occurrences) {
+            $count = $occurrences->count();
+            $firstWork = $occurrences->first();
+            
+            // Recuperiamo quanti slot dichiara di occupare questo lavoro
+            // Se la proprietà non esiste, assumiamo 1 per sicurezza
+            $declaredSlots = (int)($firstWork['slots_occupied'] ?? 1);
+
+            // ERRORE SE:
+            // Abbiamo più occorrenze di quante ne dichiara il lavoro stesso
+            // Esempio: ID 10 appare 2 volte ma dichiara slots_occupied = 1
+            if ($count > $declaredSlots) {
+                throw new \App\Exceptions\DuplicateWorkIdException(
+                    licenseNumber: (string) $row['user']['license_number']
+                );
+            }
         }
         // 2. Controllo coerenza contatore slots_occupied
         // Nota: Il contatore deve riflettere il numero di slot occupati nella worksMap
         if ((int)$row['slots_occupied'] !== $actualCount) {
-            throw new \RuntimeException(
-                "Licenza #{$row['user']['license_number']}: Slots dichiarati ({$row['slots_occupied']}) " . 
-                "non corrispondono ai lavori presenti ({$actualCount})."
+            throw new \App\Exceptions\SlotsMismatchException(
+                licenseNumber: (string) $row['user']['license_number'],
+                declaredSlots: (int)$row['slots_occupied'],
+                actualCount: $actualCount
             );
         }
 
         // 3. Controllo capacità massima
         if ($actualCount > (int)($row['target_capacity'] ?? 25)) {
-            throw new \RuntimeException(
-                "Licenza #{$row['user']['license_number']}: Overflow! " . 
-                "Assegnati {$actualCount} lavori su una capacità di {$row['target_capacity']}."
+            throw new \App\Exceptions\CapacityOverflowException(
+                licenseNumber: (string) $row['user']['license_number'] ?? '',
+                assigned: $actualCount,
+                capacity: $row['target_capacity']
             );
         }
 

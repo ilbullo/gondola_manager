@@ -10,7 +10,7 @@ use App\Http\Controllers\PdfController;
     ->name('dashboard');
 */
 
-Route::redirect('/', '/login');
+Route::redirect('/', '/login')->name('home');
 
 Route::group(
     [

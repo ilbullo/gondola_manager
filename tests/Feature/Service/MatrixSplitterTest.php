@@ -47,7 +47,7 @@ class MatrixSplitterTest extends TestCase
         // L'engine non deve fare nulla di default
         $this->engineServiceMock->shouldReceive('distributeFixed')->byDefault();
         $this->engineServiceMock->shouldReceive('distribute')->byDefault();
-
+        $this->engineServiceMock->shouldReceive('verifyMatrixIntegrity')->andReturnNull()->byDefault();
         $this->splitter = new MatrixSplitterService(
             $this->queryServiceMock,
             $this->engineServiceMock

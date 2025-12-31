@@ -84,4 +84,7 @@ interface MatrixEngineInterface
      * @return void
      */
     public function sortMatrixRows(Collection &$matrix): void;
+
+    public function verifyMatrixIntegrity(array $matrix): void;
+
 }

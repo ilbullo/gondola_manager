@@ -7,10 +7,10 @@ use Illuminate\Console\Command;
 class GenerateTestData extends Command
 {
     // Costanti per la creazione di dati di test
-    private const MORNING_WORKS = 5;
-    private const AFTERNOON_WORKS = 10;
-    private const TOTAL_WORKS = 15;
-    private const WORKERS = 20;
+    private const MORNING_WORKS = 4;
+    private const AFTERNOON_WORKS = 6;
+    private const TOTAL_WORKS = 10;
+    private const WORKERS = 5;
 
     /**
      * Nome e signature del comando Artisan.

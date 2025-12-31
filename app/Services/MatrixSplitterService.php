@@ -7,7 +7,11 @@ namespace App\Services;
 use App\Models\LicenseTable;
 use App\Enums\WorkType;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use App\Contracts\{WorkQueryInterface, MatrixSplitterInterface, MatrixEngineInterface};
+
+//SOLO PER TEST FORZATI!
+use App\Testing\MatrixIntegrityTester;
 
 /**
  * Class MatrixSplitterService
@@ -148,6 +152,38 @@ class MatrixSplitterService implements MatrixSplitterInterface
 
         // 13. Compattamento finale (Sposta i null alla fine)
         $this->compactMatrix();
+
+        // --- AGGIUNTA SANITY CHECK ---
+        // Verifichiamo l'integrità dei dati prima di restituirli alla UI
+        try {
+            $this->engineService->verifyMatrixIntegrity($this->matrix->toArray());
+        } catch (\RuntimeException $e) {
+            // Logghiamo l'errore per il debugging
+            Log::critical("ERRORE INTEGRITÀ MATRICE: " . $e->getMessage());
+            
+            // In fase di sviluppo è meglio bloccare tutto per accorgersi del bug
+            if (app()->environment('local')) {
+                throw $e;
+            }
+        }
+
+        /************************** CODICE PER TEST SABOTAGGIO *********************** 
+        * Sabotaggio controllato (solo in locale via parametro URL ?test_bug=...)    *
+        ******************************************************************************/
+
+       // --- AGGIUNTA PER IL TEST ---
+        if (app()->isLocal() && app()->bound('bug_temporaneo')) {
+            $scenario = app('bug_temporaneo');
+            $this->matrix = (new \App\Testing\MatrixIntegrityTester())->simulate($scenario, $this->matrix);
+        }
+        // ----------------------------
+
+        // Sanity Check: esploderà se hai scelto un bug nel modale
+        // Esegui il controllo solo se NON siamo durante l'esecuzione dei test
+        if (!app()->runningUnitTests()) {
+            $this->engineService->verifyMatrixIntegrity($this->matrix->toArray());
+        }
+        /************************FINE TEST SABOTAGGIO ********************************/
 
         return $this->matrix;
     }

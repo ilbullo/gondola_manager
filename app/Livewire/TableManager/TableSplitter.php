@@ -20,6 +20,8 @@ class TableSplitter extends Component
     public ?float $bancaleCost = 0.0;
     public bool $showBancaleModal = true;
     
+    public string $testScenario = ''; // Scenario di test scelto nel modale
+
     /**
      * Ora usiamo l'oggetto MatrixTable invece di un array generico.
      */
@@ -43,6 +45,12 @@ class TableSplitter extends Component
             $this->addError('BancaleCost', 'Il costo non può essere negativo.');
             return;
         }
+
+        // --- AGGIUNTA PER IL TEST ---
+        if (!empty($this->testScenario)) {
+            app()->instance('bug_temporaneo', $this->testScenario);
+        }
+        // ----------------------------
 
         $this->bancaleCost = $cost;
         $this->showBancaleModal = false;

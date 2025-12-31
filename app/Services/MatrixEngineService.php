@@ -348,4 +348,39 @@ class MatrixEngineService implements MatrixEngineInterface
         if ($ts instanceof DateTimeInterface) return $ts->format('H:i');
         return (is_string($ts) && strlen($ts) >= 19) ? substr($ts, 11, 5) : '00:00';
     }
+
+    public function verifyMatrixIntegrity(array $matrix): void
+{
+    foreach ($matrix as $row) {
+        // Calcoliamo quanti lavori reali ci sono nella mappa
+        $actualWorks = array_filter($row['worksMap']);
+        $actualCount = count($actualWorks);
+        // 1. Controllo duplicati interni (Opzionale ma utile)
+        // Verifica se lo stesso ID lavoro compare più volte (esclusi i lavori che occupano più slot se previsto)
+        $workIds = collect($actualWorks)->pluck('id')->filter();
+        if ($workIds->count() !== $workIds->unique()->count()) {
+            throw new \RuntimeException(
+                "Licenza #{$row['user']['license_number']}: Rilevati ID lavoro duplicati nella stessa riga."
+            );
+        }
+        // 2. Controllo coerenza contatore slots_occupied
+        // Nota: Il contatore deve riflettere il numero di slot occupati nella worksMap
+        if ((int)$row['slots_occupied'] !== $actualCount) {
+            throw new \RuntimeException(
+                "Licenza #{$row['user']['license_number']}: Slots dichiarati ({$row['slots_occupied']}) " . 
+                "non corrispondono ai lavori presenti ({$actualCount})."
+            );
+        }
+
+        // 3. Controllo capacità massima
+        if ($actualCount > (int)($row['target_capacity'] ?? 25)) {
+            throw new \RuntimeException(
+                "Licenza #{$row['user']['license_number']}: Overflow! " . 
+                "Assegnati {$actualCount} lavori su una capacità di {$row['target_capacity']}."
+            );
+        }
+
+        
+    }
+}
 }

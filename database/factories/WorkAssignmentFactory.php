@@ -25,7 +25,7 @@ class WorkAssignmentFactory extends Factory
             'slot'              => $this->faker->numberBetween(1, 25),
             'value'             => $this->faker->randomElement(['N', 'X', 'P']),
             'voucher'           => $this->faker->optional()->word,
-            'amount'            => $this->faker->randomFloat(2, 50, 150),
+            'amount'            => $this->faker->randomElement([90,110]),
             'timestamp'         => now(),
             'slots_occupied'    => $this->faker->numberBetween(1, 5),
             'excluded'          => false,

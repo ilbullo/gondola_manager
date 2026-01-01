@@ -57,11 +57,16 @@
                                     wire:click="selectUser({{ $user->id }})"
                                     wire:loading.attr="disabled"
                                     wire:target="selectUser({{ $user->id }})"
-                                    class="h-14 rounded-2xl border-2 bg-slate-50 text-slate-700 border-slate-100 font-black text-lg hover:border-indigo-500 hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-200 active:scale-90 shadow-sm flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed">
-
-                                    <span wire:loading.remove wire:target="selectUser({{ $user->id }})">
-                                        {{ $user->license_number }}
-                                    </span>
+                                    class="h-16 rounded-2xl border-2 bg-slate-50 text-slate-700 border-slate-100 hover:border-indigo-500 hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-200 active:scale-90 shadow-sm flex flex-col items-center justify-center leading-none disabled:opacity-50 disabled:cursor-not-allowed group">
+                                    <div wire:loading.remove wire:target="selectUser({{ $user->id }})" class="flex flex-col items-center">
+                                        {{-- Numero Licenza --}}
+                                        <span class="font-black text-lg tracking-tighter">{{ $user->license_number }}</span>
+                                        
+                                        {{-- Nome e Cognome (Sotto) --}}
+                                        <span class="text-[7px] font-black uppercase tracking-widest text-slate-400 group-hover:text-indigo-400 mt-0.5 truncate max-w-[60px]">
+                                            {{ $user->name }}
+                                        </span>
+                                    </div>
 
                                     <span wire:loading wire:target="selectUser({{ $user->id }})">
                                         @livewire('ui.small-spinner')

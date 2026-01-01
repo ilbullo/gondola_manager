@@ -12,9 +12,13 @@ use App\Http\Controllers\PdfController;
 
 Route::redirect('/', '/login')->name('home');
 
+Route::get('/termini-e-condizioni', App\Livewire\Component\LegalTerms::class)
+    ->middleware('auth')
+    ->name('legal.terms');
+
 Route::group(
     [
-        'middleware' => ['auth','verified'],
+        'middleware' => ['auth','verified','legal'],
         'prefix' => '',
     ],
     function () {

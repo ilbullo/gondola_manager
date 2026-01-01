@@ -121,6 +121,15 @@ class User extends Authenticatable
         return $this->hasOne(LicenseTable::class, 'user_id');
     }
 
+    /**
+     * Accettazione termini e condizioni
+     */
+
+    public function legalAcceptances()
+    {
+        return $this->hasMany(LegalAcceptance::class);
+    }
+
     // ===================================================================
     // Metodi di utilità per i ruoli
     // ===================================================================

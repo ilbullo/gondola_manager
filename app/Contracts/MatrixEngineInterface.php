@@ -87,4 +87,6 @@ interface MatrixEngineInterface
 
     public function verifyMatrixIntegrity(array $matrix): void;
 
+    public function verifyShiftIntegrity(array $matrix): void;
+
 }

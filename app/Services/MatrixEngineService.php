@@ -350,53 +350,116 @@ class MatrixEngineService implements MatrixEngineInterface
     }
 
     public function verifyMatrixIntegrity(array $matrix): void
-{
-    foreach ($matrix as $row) {
-        // Calcoliamo quanti lavori reali ci sono nella mappa
-        $actualWorks = array_filter($row['worksMap']);
-        $actualCount = count($actualWorks);
-        // 1. Controllo duplicati interni (Opzionale ma utile)
-        // Verifica se lo stesso ID lavoro compare più volte (esclusi i lavori che occupano più slot se previsto)
-        // 1. Controllo duplicati interni (Consapevole dei Multi-Slot)
-        $groups = collect($actualWorks)->groupBy('id');
+    {
+        foreach ($matrix as $row) {
+            // Calcoliamo quanti lavori reali ci sono nella mappa
+            $actualWorks = array_filter($row['worksMap']);
+            $actualCount = count($actualWorks);
+            // 1. Controllo duplicati interni (Opzionale ma utile)
+            // Verifica se lo stesso ID lavoro compare più volte (esclusi i lavori che occupano più slot se previsto)
+            // 1. Controllo duplicati interni (Consapevole dei Multi-Slot)
+            $groups = collect($actualWorks)->groupBy('id');
 
-        foreach ($groups as $workId => $occurrences) {
-            $count = $occurrences->count();
-            $firstWork = $occurrences->first();
-            
-            // Recuperiamo quanti slot dichiara di occupare questo lavoro
-            // Se la proprietà non esiste, assumiamo 1 per sicurezza
-            $declaredSlots = (int)($firstWork['slots_occupied'] ?? 1);
+            foreach ($groups as $workId => $occurrences) {
+                $count = $occurrences->count();
+                $firstWork = $occurrences->first();
+                
+                // Recuperiamo quanti slot dichiara di occupare questo lavoro
+                // Se la proprietà non esiste, assumiamo 1 per sicurezza
+                $declaredSlots = (int)($firstWork['slots_occupied'] ?? 1);
 
-            // ERRORE SE:
-            // Abbiamo più occorrenze di quante ne dichiara il lavoro stesso
-            // Esempio: ID 10 appare 2 volte ma dichiara slots_occupied = 1
-            if ($count > $declaredSlots) {
-                throw new \App\Exceptions\DuplicateWorkIdException(
-                    licenseNumber: (string) $row['user']['license_number']
+                // ERRORE SE:
+                // Abbiamo più occorrenze di quante ne dichiara il lavoro stesso
+                // Esempio: ID 10 appare 2 volte ma dichiara slots_occupied = 1
+                if ($count > $declaredSlots) {
+                    throw new \App\Exceptions\DuplicateWorkIdException(
+                        licenseNumber: (string) $row['user']['license_number']
+                    );
+                }
+            }
+            // 2. Controllo coerenza contatore slots_occupied
+            // Nota: Il contatore deve riflettere il numero di slot occupati nella worksMap
+            if ((int)$row['slots_occupied'] !== $actualCount) {
+                throw new \App\Exceptions\SlotsMismatchException(
+                    licenseNumber: (string) $row['user']['license_number'],
+                    declaredSlots: (int)$row['slots_occupied'],
+                    actualCount: $actualCount
                 );
             }
-        }
-        // 2. Controllo coerenza contatore slots_occupied
-        // Nota: Il contatore deve riflettere il numero di slot occupati nella worksMap
-        if ((int)$row['slots_occupied'] !== $actualCount) {
-            throw new \App\Exceptions\SlotsMismatchException(
-                licenseNumber: (string) $row['user']['license_number'],
-                declaredSlots: (int)$row['slots_occupied'],
-                actualCount: $actualCount
-            );
-        }
 
-        // 3. Controllo capacità massima
-        if ($actualCount > (int)($row['target_capacity'] ?? 25)) {
-            throw new \App\Exceptions\CapacityOverflowException(
-                licenseNumber: (string) $row['user']['license_number'] ?? '',
-                assigned: $actualCount,
-                capacity: $row['target_capacity']
-            );
+            // 3. Controllo capacità massima
+            if ($actualCount > (int)($row['target_capacity'] ?? 25)) {
+                throw new \App\Exceptions\CapacityOverflowException(
+                    licenseNumber: (string) $row['user']['license_number'] ?? '',
+                    assigned: $actualCount,
+                    capacity: $row['target_capacity']
+                );
+            } 
         }
-
-        
     }
-}
+
+    public function verifyShiftIntegrity(array $matrix): void
+    {
+        $morningEnd = config('app_settings.matrix.morning_end', '13:00');
+        $afternoonStart = config('app_settings.matrix.afternoon_start', '13:00');
+
+        foreach ($matrix as $row) {
+            $actualWorks = array_filter($row['worksMap']);
+            if (empty($actualWorks)) continue;
+
+            // Gestione robusta dell'Enum: estraiamo sempre il valore stringa
+            $turn = $row['turn'] ?? DayType::FULL->value;
+            $turnValue = ($turn instanceof \App\Enums\DayType) ? $turn->value : $turn;
+
+            foreach ($actualWorks as $work) {
+                $workTime = $this->extractWorkTime($work); // "HH:MM"
+                $timestamp = \Carbon\Carbon::parse($work['timestamp']);
+
+                switch ($turnValue) {
+                    case 'morning':
+                        // Se l'orario del lavoro supera il limite mattina
+                        if ($workTime > $morningEnd) {
+                            $this->throwShiftError($row, "Mattina (entro $morningEnd)", "Ora $workTime", $timestamp);
+                        }
+                        break;
+
+                    case 'afternoon':
+                        // Se l'orario del lavoro è precedente all'inizio pomeriggio
+                        if ($workTime < $afternoonStart) {
+                            $this->throwShiftError($row, "Pomeriggio (dopo $afternoonStart)", "Ora $workTime", $timestamp);
+                        }
+                        break;
+
+                    case 'full':
+                        // Per il turno FULL, validiamo solo che la DATA sia coerente per tutta la riga
+                        $firstWork = reset($actualWorks);
+                        $expectedDate = \Carbon\Carbon::parse($firstWork['timestamp'])->format('Y-m-d');
+                        $currentDate = $timestamp->format('Y-m-d');
+
+                        if ($currentDate !== $expectedDate) {
+                            $this->throwShiftError(
+                                $row, 
+                                "Data $expectedDate", 
+                                "Data $currentDate (Turno Full)", 
+                                $timestamp
+                            );
+                        }
+                        break;
+                }
+            }
+        }
+    }
+
+/**
+ * Helper per lanciare l'eccezione personalizzata
+ */
+    private function throwShiftError(array $row, string $expected, string $found, \Carbon\Carbon $time): void
+    {
+        throw new \App\Exceptions\ShiftMismatchException(
+            licenseNumber: (string) ($row['user']['license_number'] ?? 'N/D'),
+            expectedShift: $expected,
+            foundShift: $found,
+            timestamp: $time->format('H:i')
+        );
+    }
 }

@@ -40,6 +40,7 @@
                                 <option value="count">Errore Contatore (Count)</option>
                                 <option value="overflow">Errore Capacità (Overflow)</option>
                                 <option value="duplicate">Errore Duplicati</option>
+                                <option value="wrong_shift">Errore Turno (Incursione Oraria)</option>
                             </select>
                         </div>
                     @endif

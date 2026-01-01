@@ -153,20 +153,6 @@ class MatrixSplitterService implements MatrixSplitterInterface
         // 13. Compattamento finale (Sposta i null alla fine)
         $this->compactMatrix();
 
-        // --- AGGIUNTA SANITY CHECK ---
-        // Verifichiamo l'integrità dei dati prima di restituirli alla UI
-        try {
-            $this->engineService->verifyMatrixIntegrity($this->matrix->toArray());
-        } catch (\RuntimeException $e) {
-            // Logghiamo l'errore per il debugging
-            Log::critical("ERRORE INTEGRITÀ MATRICE: " . $e->getMessage());
-            
-            // In fase di sviluppo è meglio bloccare tutto per accorgersi del bug
-            if (app()->environment('local')) {
-                throw $e;
-            }
-        }
-
         /************************** CODICE PER TEST SABOTAGGIO *********************** 
         * Sabotaggio controllato (solo in locale via parametro URL ?test_bug=...)    *
         ******************************************************************************/
@@ -178,10 +164,12 @@ class MatrixSplitterService implements MatrixSplitterInterface
         }
         // ----------------------------
 
-        // Sanity Check: esploderà se hai scelto un bug nel modale
+        // MatrixIntegrity: esploderà se hai scelto un bug nel modale
+        // MatrixIntegrity: esploderà se hai scelto un errore turno nel modale
         // Esegui il controllo solo se NON siamo durante l'esecuzione dei test
         if (!app()->runningUnitTests()) {
             $this->engineService->verifyMatrixIntegrity($this->matrix->toArray());
+            $this->engineService->verifyShiftIntegrity($this->matrix->toArray());
         }
         /************************FINE TEST SABOTAGGIO ********************************/
 

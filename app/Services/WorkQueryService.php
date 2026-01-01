@@ -156,7 +156,7 @@ class WorkQueryService implements WorkQueryInterface
                 'target_capacity'   => $license['target_capacity'] ?? 0,
                 'slots_occupied'    => $license['slots_occupied'] ?? 0,
                 'wallet'            => $license['wallet'] ?? 0,
-                'worksMap'          => array_fill(0, $totalSlots, null),
+                'worksMap'          => array_fill(1, $totalSlots, null),
             ];
         })->values();
     }

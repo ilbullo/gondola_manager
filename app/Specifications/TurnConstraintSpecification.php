@@ -7,22 +7,29 @@ use App\Enums\DayType;
 class TurnConstraintSpecification implements MatrixSpecificationInterface
 {
     public function isSatisfiedBy(array $license, array $work): bool
-    {
-        $turn = $license['turn'] ?? DayType::FULL->value;
-        if ($turn === DayType::FULL->value) return true;
+{
+    // Forza il valore a stringa per il confronto
+    $turn = $license['turn'];
+    $turnValue = ($turn instanceof DayType) ? $turn->value : $turn;
 
-        $workTime = $this->extractWorkTime($work);
+    if ($turnValue === DayType::FULL->value) return true;
 
-        if ($turn === DayType::MORNING->value) {
-            return $workTime <= config('app_settings.matrix.morning_end');
-        }
+    $workTime = $this->extractWorkTime($work);
+    
+    // Recupera le soglie con dei fallback se la config è vuota
+    $morningEnd = config('app_settings.matrix.morning_end', '13:00');
+    $afternoonStart = config('app_settings.matrix.afternoon_start', '13:00');
 
-        if ($turn === DayType::AFTERNOON->value) {
-            return $workTime >= config('app_settings.matrix.afternoon_start');
-        }
-
-        return true;
+    if ($turnValue === DayType::MORNING->value) {
+        return $workTime <= $morningEnd;
     }
+
+    if ($turnValue === DayType::AFTERNOON->value) {
+        return $workTime >= $afternoonStart;
+    }
+
+    return true;
+}
 
     private function extractWorkTime(array $work): string {
         return substr($work['timestamp'] ?? '00:00:00', 11, 5);

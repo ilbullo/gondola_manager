@@ -1,6 +1,6 @@
 @extends('layouts.exception')
 
-@section('title', 'Capacità superata')
+@section('title', 'Incoerenza Turno')
 
 @section('content')
     <div class="space-y-4">
@@ -17,13 +17,18 @@
             </div>
             
             <div class="bg-white p-3 flex justify-between items-center text-sm">
-                <span class="text-[11px] font-bold uppercase text-slate-400">Capacità Max</span>
-                <span class="font-semibold text-slate-700">{{ $capacity }} slot</span>
+                <span class="text-[11px] font-bold uppercase text-slate-400">Turno Atteso</span>
+                <span class="font-semibold text-slate-700">{{ $expected_shift }}</span>
             </div>
 
             <div class="bg-white p-3 flex justify-between items-center text-sm border-l-2 border-l-rose-500">
-                <span class="text-[11px] font-bold uppercase text-slate-400 italic">Assegnati</span>
-                <span class="font-bold text-rose-600">{{ $assigned }} slot</span>
+                <span class="text-[11px] font-bold uppercase text-slate-400 italic">Rilevato</span>
+                <span class="font-bold text-rose-600">{{ $found_shift }}</span>
+            </div>
+
+            <div class="bg-white p-3 flex justify-between items-center text-sm">
+                <span class="text-[11px] font-bold uppercase text-slate-400">Orario Lavoro</span>
+                <span class="font-medium text-slate-900">{{ $timestamp }}</span>
             </div>
         </div>
 
@@ -33,7 +38,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
                 <p class="text-[11px] text-slate-500 leading-normal">
-                    <strong>Come risolvere:</strong> La licenza ha superato il limite di lavori consentiti. Riduci il numero di lavori assegnati o aumenta la capacità nel profilo della licenza.
+                    <strong>Come risolvere:</strong> Il sistema non permette il mix di lavori mattina/pomeriggio nella stessa riga. Modifica il turno della licenza o sposta il lavoro incoerente.
                 </p>
             </div>
         </div>

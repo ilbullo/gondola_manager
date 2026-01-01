@@ -91,7 +91,10 @@
     {{-- VOLUMI --}}
     <div class="flex"><span>NOLI EFFETTIVI (N):</span> <span class="bold">{{ request('n_count') }}</span></div>
     <div class="flex"><span>CONTANTI (X):</span> <span class="bold">{{ request('x_count') }}</span></div>
-
+    {{-- PERDI VOLTA SE PRESENTI --}}
+    @if(request('p_count')>0)
+        <div class="flex"><span>PERDI VOLTA (P):</span> <span class="bold">{{ request('p_count') }}</span></div>
+    @endif
     {{-- CREDITI FUTURI (Shared FF) --}}
     @if(request('shared_ff') > 0)
         <div class="divider"></div>

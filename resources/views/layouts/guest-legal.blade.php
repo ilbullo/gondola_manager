@@ -12,11 +12,24 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    <style>
+    /* Forza lo scroll su tutti i contenitori radice */
+    html, body {
+        overflow-y: auto !important;
+        height: auto !important;
+        min-height: 100% !important;
+        position: relative !important;
+    }
+</style>
 </head>
-<body class="bg-slate-100 font-sans antialiased">
-    <div class="min-h-screen flex flex-col justify-center py-12">
-        {{-- Qui verrà iniettato il componente LegalTerms --}}
+{{-- overflow-y-auto qui assicura che il body sia sempre scorrevole --}}
+<body class="bg-slate-100 font-sans antialiased overflow-y-auto min-h-screen">
+    
+    {{-- Contenitore semplice senza flex-center --}}
+    <main class="w-full">
         {{ $slot }}
-    </div>
+    </main>
+
 </body>
 </html>

@@ -1,5 +1,5 @@
-<div class="min-h-screen w-full bg-slate-100 py-12 px-4 sm:px-6 lg:px-8 overflow-y-auto">
-    <div class="max-w-4xl mx-auto space-y-6">
+<div class="w-full py-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-4xl mx-auto space-y-6">
         
         {{-- HEADER --}}
         <div class="bg-white p-8 sm:p-12 rounded-[2rem] border border-slate-200 shadow-sm">

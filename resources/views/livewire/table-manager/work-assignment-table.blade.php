@@ -104,12 +104,37 @@
                     </div>
                 @endforeach
             </div>
-            <footer class="bg-slate-50 p-4 border-t border-slate-200">
-
-            </footer>
+            <footer class="sticky bottom-0 z-50 bg-slate-900 text-white p-3 border-t border-slate-800 flex items-center justify-between shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+    <div class="flex items-center gap-6">
+        <div class="flex flex-col">
+            <span class="text-[8px] uppercase font-black text-slate-500 leading-none">Status</span>
+            <span class="text-[10px] font-bold text-emerald-400 uppercase italic tracking-tighter">Matrice Online</span>
+        </div>
+        <div class="h-6 w-px bg-slate-700"></div>
+        <livewire:component.work-summary :licenses="$licenses"/>
+        <div class="h-6 w-px bg-slate-700"></div>
+        <div class="flex gap-3">
+             <div class="flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-slate-100"></span>
+                <span class="text-[9px] font-black uppercase text-slate-300">F: Full</span>
+             </div>
+             <div class="flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                <span class="text-[9px] font-black uppercase text-slate-300">M: Mattino</span>
+             </div>
+             <div class="flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                <span class="text-[9px] font-black uppercase text-slate-300">P: Pomeriggio</span>
+             </div>
+        </div>
+    </div>
+    <div class="flex items-center gap-2">
+        <span class="text-[9px] font-black text-slate-500 uppercase mr-2 italic">Versione {{ config('app_settings.version')}}</span>
+    </div>
+</footer>
         </div>
     </main>
-    <div wire:loading.delay.longer wire:target="assignWork">
+    <div wire:loading.delay.longer wire:target="assignWork" :key="'summary-'.count($licenses).'-'.now()">
         <livewire:ui.spinner/>
     </div>
 </div>

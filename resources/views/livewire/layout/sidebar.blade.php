@@ -6,7 +6,7 @@
     </div>
 
     <div class="flex gap-1 bg-white/10 p-1 rounded-xl h-[50px]">
-        @foreach(\App\Enums\WorkType::values([\App\Enums\WorkType::EXCLUDED, \App\Enums\WorkType::FIXED]) as $type)
+        @foreach(\App\Enums\WorkType::values() as $type)
             @php
                 $colour = \App\Enums\WorkType::tryFrom($type)->colourButtonsClass();
             @endphp

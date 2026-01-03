@@ -41,10 +41,10 @@ enum WorkType: string
     case PERDI_VOLTA = 'P';
 
     // Lavoro escluso
-    case EXCLUDED = 'E';
+    //case EXCLUDED = 'E';
 
     // Lavoro fisso
-    case FIXED    = 'F';
+    //case FIXED    = 'F';
 
     /**
      * Restituisce un array con tutti i valori stringa dell'enum.
@@ -89,8 +89,8 @@ enum WorkType: string
             self::AGENCY      => 'Agenzia',
             self::NOLO        => 'Nolo',
             self::PERDI_VOLTA => 'Perdi Volta',
-            self::EXCLUDED    => 'Escluso',
-            self::FIXED       => 'Fisso',
+//            self::EXCLUDED    => 'Escluso',
+//            self::FIXED       => 'Fisso',
         };
     }
 
@@ -108,8 +108,8 @@ enum WorkType: string
             self::NOLO        => 'bg-yellow-100 text-yellow-900',
             self::CASH        => 'bg-green-100 text-green-900',
             self::PERDI_VOLTA => 'bg-red-100 text-red-900',
-            self::EXCLUDED    => 'bg-teal-100 text-teal-900',
-            self::FIXED       => 'bg-teal-100 text-teal-900',
+//            self::EXCLUDED    => 'bg-teal-100 text-teal-900',
+//            self::FIXED       => 'bg-teal-100 text-teal-900',
             default           => 'bg-gray-100 text-gray-500',
         };
     }

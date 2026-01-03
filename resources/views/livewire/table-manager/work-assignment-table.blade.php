@@ -41,7 +41,7 @@
 
                                     // Gestione Enum: estraiamo il valore stringa
                                     $shiftKey = $currentTurn instanceof \App\Enums\DayType ? $currentTurn->value : $currentTurn;
-                                    
+
                                     $shiftStyles = [
                                         'full'      => ['bg' => 'bg-slate-100', 'text' => 'text-slate-600', 'label' => 'F'],
                                         'morning'   => ['bg' => 'bg-amber-100', 'text' => 'text-amber-700', 'label' => 'M'],
@@ -104,6 +104,9 @@
                     </div>
                 @endforeach
             </div>
+            <footer class="bg-slate-50 p-4 border-t border-slate-200">
+
+            </footer>
         </div>
     </main>
     <div wire:loading.delay.longer wire:target="assignWork">

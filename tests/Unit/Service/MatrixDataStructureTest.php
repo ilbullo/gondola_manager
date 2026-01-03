@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Unit\Services;
+namespace Tests\Unit\Service;
 
 use Tests\TestCase;
 use App\DataObjects\MatrixTable;
@@ -38,7 +38,7 @@ class MatrixDataStructureTest extends TestCase
 
         $this->assertEquals(2, $row->slots_occupied);
         $this->assertInstanceOf(LiquidationResult::class, $row->liquidation);
-        
+
         // Calcolo: X(90) + Diff(-10) - Bancale(5) = 75
         $this->assertEquals(75.0, $row->liquidation->money['netto']);
     }
@@ -48,9 +48,9 @@ class MatrixDataStructureTest extends TestCase
     {
         $row1 = new LicenseRow(['ln' => '1'], 1, 4, false, 0, [['value' => 'X', 'amount' => 90, 'shared_from_first' => 0]]);
         $row2 = new LicenseRow(['ln' => '2'], 2, 4, false, 0, [['value' => 'X', 'amount' => 90, 'shared_from_first' => 0]]);
-        
+
         $table = new MatrixTable(collect([$row1, $row2]));
-        
+
         // Eseguiamo refresh globale con costo bancale 10
         $table->refreshAll(10.0);
 
@@ -64,7 +64,7 @@ class MatrixDataStructureTest extends TestCase
         // Creiamo una struttura completa
         $row = new LicenseRow(['license_number' => 'A1'], 1, 4, false, 0, [['value' => 'X', 'amount' => 90, 'shared_from_first' => 0]]);
         $row->refresh(0); // Genera l'oggetto LiquidationResult interno
-        
+
         $originalTable = new MatrixTable(collect([$row]));
 
         // Simula il "viaggio" verso il browser e ritorno (Dehydration -> Hydration)
@@ -73,10 +73,10 @@ class MatrixDataStructureTest extends TestCase
 
         // Verifiche di integrità
         $this->assertCount(1, $hydratedTable->rows);
-        
+
         $firstRow = $hydratedTable->rows->first();
         $this->assertInstanceOf(LicenseRow::class, $firstRow);
-        
+
         // Verifica la REIDRATAZIONE PROFONDA (l'oggetto più interno)
         $this->assertInstanceOf(LiquidationResult::class, $firstRow->liquidation);
         $this->assertEquals(90.0, $firstRow->liquidation->money['netto']);

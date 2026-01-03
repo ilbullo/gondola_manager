@@ -18,7 +18,7 @@ class AgencyReportService
             // 1. Appiattiamo tutti i lavori di tutte le licenze in un'unica collezione
             ->flatMap(function ($row) {
                 $licenseNumber = $row['user']['license_number'] ?? 'N/D';
-                
+
                 return collect($row['worksMap'])
                     // Filtriamo: solo lavori di tipo Agenzia (A) non nulli
                     ->filter(fn($work) => !empty($work) && ($work['value'] ?? '') === 'A')
@@ -32,12 +32,12 @@ class AgencyReportService
             ->groupBy(function ($work) {
                 $agency = $work['agency']['name'] ?? $work['agency'] ?? 'Sconosciuta';
                 $voucher = trim($work['voucher'] ?? '');
-                
+
                 // Se c'è il voucher, raggruppiamo per Agenzia + Voucher
                 if ($voucher !== '' && $voucher !== '–') {
                     return "V_{$agency}_{$voucher}";
                 }
-                
+
                 // Altrimenti raggruppiamo per Agenzia + Orario (formato H:i)
                 $time = Carbon::parse($work['timestamp'] ?? now())->format('H:i');
                 return "T_{$agency}_{$time}";
@@ -53,7 +53,8 @@ class AgencyReportService
                     'time'        => $timeObj->format('H:i'),
                     'timestamp'   => $timeObj->timestamp, // Utile per l'ordinamento
                     // Estraiamo le licenze uniche che hanno partecipato a questo servizio
-                    'licenses'    => $group->pluck('_license')->unique()->sort()->values()->all(),
+                    //'licenses'    => $group->pluck('_license')->unique()->sort()->values()->all(),
+                    'licenses'    => $group->pluck('_license')->sort()->values()->all(),
                     'count'       => $group->count(),
                 ];
             })

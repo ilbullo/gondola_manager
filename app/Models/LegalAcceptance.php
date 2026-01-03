@@ -4,9 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-
+use Illuminate\Database\Eloquent\Factories\HasFactory; 
 class LegalAcceptance extends Model
 {
+    use HasFactory;
     // Permettiamo il mass assignment per questi campi
     protected $fillable = [
         'user_id',

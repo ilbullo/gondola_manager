@@ -3,7 +3,7 @@
 namespace Tests\Feature\Security;
 
 use App\Enums\UserRole;
-use App\Models\{Agency, User};
+use App\Models\{Agency, User, LegalAcceptance};
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
@@ -13,16 +13,27 @@ class AuthorizationTest extends TestCase
 {
     use RefreshDatabase;
 
-    #[Test]
+   #[Test]
     public function it_prevents_unauthorized_access_to_admin_routes()
     {
-        $user = User::factory()->create(['role' => UserRole::USER]);
+        // 1. Creiamo un utente standard con email verificata
+        $user = User::factory()->create([
+            'role' => UserRole::USER,
+            'email_verified_at' => now(),
+        ]);
 
+        // 2. Soddisfiamo i requisiti legali (Privacy e TOS)
+        LegalAcceptance::factory()->for($user)->create();
+        LegalAcceptance::factory()->for($user)->tos()->create();
+
+        // 3. Eseguiamo la richiesta
         $response = $this->actingAs($user)
             ->get(route('user-manager'));
 
+        // Ora riceveremo 403 (autorizzazione negata dal ruolo) e non 302 (redirect legale)
         $response->assertStatus(403);
     } 
+
 
     #[Test]
     public function it_prevents_sql_injection()

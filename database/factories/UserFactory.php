@@ -37,7 +37,17 @@ class UserFactory extends Factory
     }
 
     /**
-     * Indicate that the model's email address should be unverified.
+     * Stato per utente con email verificata
+     */
+    public function verified(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'email_verified_at' => now(),
+        ]);
+    }
+
+    /**
+     * Indica che l'indirizzo email dell'utente non è verificato.
      */
     public function unverified(): static
     {

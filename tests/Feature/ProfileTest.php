@@ -15,12 +15,16 @@ class ProfileTest extends TestCase
     public function test_profile_page_is_displayed(): void
     {
         /** @var \App\Models\User $user */
-        $user = User::factory()->create();
+        // 1. Creiamo un utente con email verificata
+        $user = User::factory()->verified()->create();
+
+        // 2. Creiamo i record di accettazione legale necessari
+        \App\Models\LegalAcceptance::factory()->for($user)->create(['version' => '1.0']);
 
         $response = $this->actingAs($user)->get('/profile');
 
         $response
-            ->assertOk()
+            ->assertOk() // Ora sarà 200
             ->assertSeeVolt('profile.update-profile-information-form')
             ->assertSeeVolt('profile.update-password-form')
             ->assertSeeVolt('profile.delete-user-form');

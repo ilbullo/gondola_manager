@@ -3,107 +3,100 @@
 namespace Tests\Feature\Livewire;
 
 use App\Livewire\Component\WorkSummary;
-use App\Models\LicenseTable;
-use App\Models\WorkAssignment;
+use App\Enums\WorkType;
+use App\Services\WorkAssignmentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
+use Mockery;
 
 class WorkSummaryTest extends TestCase
 {
     use RefreshDatabase;
 
     #[Test]
-    public function it_calculates_initial_counts_correctly_on_mount()
+    public function it_calculates_initial_counts_correctly_from_passed_licenses()
     {
-        $license = LicenseTable::factory()->create();
+        // Prepariamo una matrice finta (mock data) coerente con LicenseResource
+        $licenses = [
+            [
+                'id' => 1,
+                'worksMap' => [
+                    ['value' => 'N', 'id' => 10],
+                    ['value' => 'N', 'id' => 11],
+                    ['value' => 'A', 'id' => 12],
+                ]
+            ]
+        ];
 
-        // Creiamo lavori di vario tipo per oggi
-        WorkAssignment::factory()->create(['license_table_id' => $license->id, 'value' => 'N', 'timestamp' => today(), 'slot' => 1]);
-        WorkAssignment::factory()->create(['license_table_id' => $license->id, 'value' => 'N', 'timestamp' => today(), 'slot' => 2]);
-        WorkAssignment::factory()->create(['license_table_id' => $license->id, 'value' => 'A', 'timestamp' => today(), 'slot' => 3]);
-
-        Livewire::test(WorkSummary::class)
+        // Testiamo il componente passando le licenze tramite mount
+        Livewire::test(WorkSummary::class, ['licenses' => $licenses])
             ->assertSet('counts.N', 2)
             ->assertSet('counts.A', 1)
-            ->assertSet('counts.X', 0)
             ->assertSet('total', 3)
-            ->assertSee('2') // Verifica che il numero appaia nel HTML
-            ->assertSee('Totale:');
+            ->assertSee('2') // Verifica render HTML per N
+            ->assertSee('1'); // Verifica render HTML per A
     }
 
     #[Test]
-    public function it_refreshes_when_notified_by_events()
+    public function it_refreshes_when_receiving_matrix_updated_event_with_payload()
     {
-        $license = LicenseTable::factory()->create();
         $component = Livewire::test(WorkSummary::class);
 
-        // All'inizio tutto a zero
+        // Stato iniziale vuoto
         $component->assertSet('total', 0);
 
-        // Simuliamo l'aggiunta di un lavoro nel database
-        WorkAssignment::factory()->create([
-            'license_table_id' => $license->id, 
-            'value' => 'X', 
-            'timestamp' => today(),
-            'slot' => 1
-        ]);
+        // Simuliamo l'evento con il payload delle licenze (come fa il padre)
+        $updatedLicenses = [
+            [
+                'id' => 1,
+                'worksMap' => [
+                    ['value' => 'X', 'id' => 99]
+                ]
+            ]
+        ];
 
-        // Scateniamo l'evento 'workAssigned' come se arrivasse dal TableSplitter
-        $component->dispatch('workAssigned');
-
-        // Verifichiamo che il componente abbia reagito
-        $component->assertSet('counts.X', 1)
+        $component->dispatch('matrix-updated', licenses: $updatedLicenses)
+                  ->assertSet('counts.X', 1)
                   ->assertSet('total', 1);
     }
 
     #[Test]
-    public function it_only_counts_assignments_from_today()
+    public function it_can_refresh_correctly_when_receiving_new_data()
     {
-        $license = LicenseTable::factory()->create();
+        // 1. Definiamo i dati finti (mock data)
+        $mockData = [
+            [
+                'worksMap' => [
+                    ['value' => 'P', 'id' => 50]
+                ]
+            ]
+        ];
 
-        // Lavoro di ieri (non deve essere contato)
-        WorkAssignment::factory()->create([
-            'license_table_id' => $license->id,
-            'value' => 'N',
-            'timestamp' => today()->subDay(),
-            'slot' => 1
-        ]);
+        // 2. Invece di forzare un evento che il componente non ha (refreshTableBoard)
+        // Testiamo la logica di aggiornamento tramite l'evento che il componente 
+        // SICURAMENTE ascolta o tramite il refresh dei parametri.
+        
+        $component = Livewire::test(WorkSummary::class);
 
-        // Lavoro di oggi
-        WorkAssignment::factory()->create([
-            'license_table_id' => $license->id,
-            'value' => 'N',
-            'timestamp' => today(),
-            'slot' => 2
-        ]);
-
-        Livewire::test(WorkSummary::class)
-            ->assertSet('counts.N', 1)
-            ->assertSet('total', 1);
+        // Simuliamo l'arrivo dei dati (che è quello che succede quando il padre aggiorna)
+        $component->dispatch('matrix-updated', licenses: $mockData)
+                ->assertSet('counts.P', 1)
+                ->assertSet('total', 1);
     }
 
     #[Test]
-    public function it_resets_to_zero_on_table_reset_event()
+    public function it_resets_counts_correctly_when_receiving_empty_matrix()
     {
-        $license = LicenseTable::factory()->create();
-        WorkAssignment::factory()->create([
-            'license_table_id' => $license->id,
-            'slot' => 1,            // Inizia al primo slot
-            'slots_occupied' => 1,  // Occupa solo uno spazio
-        ]);
+        $initialLicenses = [
+            ['worksMap' => [['value' => 'N', 'id' => 1]]]
+        ];
 
-        $component = Livewire::test(WorkSummary::class);
-        $component->assertSet('total', 1);
-
-        // Simuliamo la cancellazione fisica dei dati
-        WorkAssignment::query()->delete();
-
-        // Lanciamo l'evento di reset
-        $component->dispatch('tableReset');
-
-        $component->assertSet('total', 0)
-                  ->assertSet('counts.P', 0);
+        Livewire::test(WorkSummary::class, ['licenses' => $initialLicenses])
+            ->assertSet('total', 1)
+            ->dispatch('matrix-updated', licenses: []) // Reset tramite evento vuoto
+            ->assertSet('total', 0)
+            ->assertSet('counts.N', 0);
     }
 }

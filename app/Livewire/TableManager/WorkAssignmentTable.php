@@ -198,6 +198,8 @@ class WorkAssignmentTable extends Component
         public function refreshTable(WorkAssignmentService $service): void
         {
             $this->licenses = $service->refreshTable();
+            //evento per work summary
+            $this->dispatch('matrix-updated', licenses: $this->licenses);
         }
 
 

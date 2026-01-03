@@ -104,32 +104,43 @@
                     </div>
                 @endforeach
             </div>
-            <footer class="sticky bottom-0 z-50 bg-slate-900 text-white p-3 border-t border-slate-800 flex items-center justify-between shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+            <footer class="sticky bottom-0 z-50 bg-slate-900 text-white p-3 border-t border-slate-800 flex items-center justify-between shadow-[0_-4px_10px_rgba(0,0,0,0.3)] backdrop-blur-md bg-opacity-95">
+    
+    {{-- PARTE SINISTRA: Status Dinamico e Statistiche --}}
     <div class="flex items-center gap-6">
-        <div class="flex flex-col">
-            <span class="text-[8px] uppercase font-black text-slate-500 leading-none">Status</span>
-            <span class="text-[10px] font-bold text-emerald-400 uppercase italic tracking-tighter">Matrice Online</span>
-        </div>
-        <div class="h-6 w-px bg-slate-700"></div>
-        <livewire:component.work-summary :licenses="$licenses"/>
-        <div class="h-6 w-px bg-slate-700"></div>
-        <div class="flex gap-3">
-             <div class="flex items-center gap-1.5">
-                <span class="w-2 h-2 rounded-full bg-slate-100"></span>
-                <span class="text-[9px] font-black uppercase text-slate-300">F: Full</span>
-             </div>
-             <div class="flex items-center gap-1.5">
-                <span class="w-2 h-2 rounded-full bg-amber-400"></span>
-                <span class="text-[9px] font-black uppercase text-slate-300">M: Mattino</span>
-             </div>
-             <div class="flex items-center gap-1.5">
-                <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
-                <span class="text-[9px] font-black uppercase text-slate-300">P: Pomeriggio</span>
-             </div>
-        </div>
+        {{-- MONITOR RIUTILIZZABILE --}}
+        <x-system-monitor class="border-r border-slate-800 pr-6" />
+        {{-- Componente Statistiche Lavori (Input: $licenses) --}}
+        <livewire:component.work-summary :licenses="$licenses" :key="'summary-'.count($licenses)" />
     </div>
-    <div class="flex items-center gap-2">
-        <span class="text-[9px] font-black text-slate-500 uppercase mr-2 italic">Versione {{ config('app_settings.version')}}</span>
+
+    {{-- PARTE DESTRA: Legenda Turni e Versione --}}
+    <div class="flex items-center gap-8">
+        
+        {{-- Legenda Turni --}}
+        <div class="flex gap-5 items-center bg-slate-800/30 px-4 py-1.5 rounded-xl border border-slate-700/30">
+            <div class="flex items-center gap-2 group">
+                <span class="w-1.5 h-1.5 rounded-full bg-slate-100 shadow-[0_0_4px_rgba(255,255,255,0.4)] transition-transform group-hover:scale-125"></span>
+                <span class="text-[9px] font-black uppercase text-slate-500 group-hover:text-slate-300 transition-colors">F: Full</span>
+            </div>
+            
+            <div class="flex items-center gap-2 group">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-400 shadow-[0_0_4px_rgba(251,191,36,0.4)] transition-transform group-hover:scale-125"></span>
+                <span class="text-[9px] font-black uppercase text-slate-500 group-hover:text-slate-300 transition-colors">M: Mattino</span>
+            </div>
+            
+            <div class="flex items-center gap-2 group">
+                <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 shadow-[0_0_4px_rgba(99,102,241,0.4)] transition-transform group-hover:scale-125"></span>
+                <span class="text-[9px] font-black uppercase text-slate-500 group-hover:text-slate-300 transition-colors">P: Pomeriggio</span>
+            </div>
+        </div>
+
+        {{-- Metadati di Sistema --}}
+        <div class="flex items-center pl-4 border-l border-slate-800">
+            <span class="text-[9px] font-black text-slate-600 uppercase tracking-[0.2em]">
+                Rel. {{ config('app_settings.version') }}
+            </span>
+        </div>
     </div>
 </footer>
         </div>

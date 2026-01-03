@@ -78,8 +78,7 @@
                 {{-- FOOTER OPERATIVO --}}
                 <div class="mt-12 mb-8 py-8 border-t border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-4">
                     <div class="flex items-center gap-2">
-                        <div class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sistema Operativo Attivo</span>
+                        <x-system-monitor class="border-r border-slate-800 pr-6" />
                     </div>
                     <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">
                         Ultimo accesso: 

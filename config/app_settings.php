@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'system_title'  => 'Gondola Manager PRO',
     'works' => [
         'default_amount' => 90,
         'default_slots'  => 1,

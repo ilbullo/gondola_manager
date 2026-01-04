@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>GondolaManager | Professional Suite</title>
+    <title>{{ env('APP_NAME',config('app_settings.system_title')) }}</title>
 
     {{-- Script e Font (Invariati) --}}
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>

@@ -19,6 +19,8 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/img/favicon/apple-touch-icon.png" />
     <meta name="apple-mobile-web-app-title" content="Dogana" />
     <link rel="manifest" href="/img/favicon/site.webmanifest" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     

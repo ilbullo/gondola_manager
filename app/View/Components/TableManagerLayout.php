@@ -32,6 +32,6 @@ class TableManagerLayout extends Component
      */
     public function render(): View|Closure|string
     {
-        return view('components.table-manager-layout');
+        return view('layouts.table-manager');
     }
 }

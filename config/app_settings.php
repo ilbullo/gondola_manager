@@ -15,5 +15,6 @@ return [
         'shared_from_first' => 'Ufficio'
     ],
     'max_users_in_table'    => 25,
-    'version' => "2.10"
+    'version'               => "2.10",
+    'reset_time'            => "23:00"
 ];

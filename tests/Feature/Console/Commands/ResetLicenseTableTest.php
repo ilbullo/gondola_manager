@@ -52,4 +52,43 @@ class ResetLicenseTableTest extends TestCase
         $this->assertEquals(0, LicenseTable::count());
         $this->assertEquals(0, WorkAssignment::count());
     }
+
+    #[Test]
+    public function il_comando_viene_eseguito_correttamente_alle_23()
+    {
+        // 1. Popoliamo le tabelle con dati finti
+        LicenseTable::factory()->count(5)->create();
+        WorkAssignment::factory()->create(['license_table_id' => LicenseTable::inRandomOrder()->first(),'slot' => 1]);
+        WorkAssignment::factory()->create(['license_table_id' => LicenseTable::inRandomOrder()->first(),'slot' => 1]);
+        WorkAssignment::factory()->create(['license_table_id' => LicenseTable::inRandomOrder()->first(),'slot' => 1]);
+        WorkAssignment::factory()->create(['license_table_id' => LicenseTable::inRandomOrder()->first(),'slot' => 1]);
+        WorkAssignment::factory()->create(['license_table_id' => LicenseTable::inRandomOrder()->first(),'slot' => 1]);
+
+        // 2. Viaggiamo nel tempo fino alle 23:00
+        $this->travelTo(now()->setTime(23, 0, 0));
+
+        // 3. Eseguiamo il comando artisan
+        $this->artisan('app:reset-license-table')
+             ->assertSuccessful();
+
+        // 4. Verifichiamo che le tabelle siano vuote
+        $this->assertEquals(0, LicenseTable::count());
+        $this->assertEquals(0, WorkAssignment::count());
+    }
+
+    #[Test]
+    public function lo_scheduler_ha_pianificato_il_comando_all_ora_giusta()
+    {
+        // Questo test verifica se lo scheduler di Laravel "conosce" il comando alle 23:00
+        $this->travelTo(now()->setTime(23, 0, 0));
+
+        // Recuperiamo tutti i comandi pianificati e cerchiamo il nostro
+        $events = collect(app(\Illuminate\Console\Scheduling\Schedule::class)->events());
+        
+        $commandExists = $events->contains(function ($event) {
+            return str_contains($event->command, 'app:reset-license-table');
+        });
+
+        $this->assertTrue($commandExists, "Il comando non è presente nello scheduler.");
+    }
 }

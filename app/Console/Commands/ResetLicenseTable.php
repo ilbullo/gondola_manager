@@ -23,6 +23,8 @@ class ResetLicenseTable extends Command
      */
     public function handle()
     {
+        $this->line("----------------------------------------------------");
+        $this->info('Orario: ' . now()->toDateTimeString());
         $this->info('Inizio truncate della tabella LicenseTable...');
 
         // Disabilitiamo temporaneamente i vincoli delle chiavi esterne per evitare errori
@@ -35,5 +37,6 @@ class ResetLicenseTable extends Command
         
         Schema::enableForeignKeyConstraints();
         $this->info('Tabella WorkAssigment svuotata con successo!');
+        $this->line("----------------------------------------------------");
     }
 }

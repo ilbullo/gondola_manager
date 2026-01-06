@@ -39,7 +39,7 @@
         @media print {
             /* 1. Forza l'orientamento del foglio tramite CSS */
             @page {
-                size: A4 {{ $printData['orientation'] ?? 'portrait' }};
+                size: A4 {{ $printData['orientation'] ?? 'portrait' }} !important;
                 margin: 0mm; /* Gestiamo i margini tramite padding interno */
             }
 

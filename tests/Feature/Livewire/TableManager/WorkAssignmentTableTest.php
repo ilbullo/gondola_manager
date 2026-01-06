@@ -11,6 +11,7 @@ use App\Livewire\TableManager\WorkAssignmentTable;
 use Livewire\Livewire;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
+use App\Livewire\Ui\PdfViewerModal;
 
 class WorkAssignmentTableTest extends TestCase
 {
@@ -160,17 +161,41 @@ class WorkAssignmentTableTest extends TestCase
     }
 
     #[Test]
-    public function it_prepares_pdf_data_and_redirects_to_generator()
+    public function it_opens_the_modal_and_displays_the_correct_preview_content()
     {
-        LicenseTable::factory()->count(2)->create(['date' => today()]);
-        
-        Livewire::test(WorkAssignmentTable::class)
-            ->dispatch('printWorksTable')
-            // Verifica Redirect per Livewire v3
-            ->assertRedirect(route('generate.pdf'));
+        /** @var \App\Models\User $admin */
+        $admin = User::factory()->create(['name' => 'Mario Rossi']);
+        $this->actingAs($admin);
 
-        // Verifica Sessione
-        $this->assertTrue(session()->has('pdf_generate'));
+        // 1. Setup dati: Creiamo una licenza con un numero specifico
+        $license = LicenseTable::factory()
+            ->for(User::factory(['license_number' => '123']), 'user')
+            ->create(['date' => today()]);
+
+        $capturedData = null;
+
+        // 2. Eseguiamo il componente Tabella e intercettiamo i dati generati
+        Livewire::test(WorkAssignmentTable::class)
+            ->call('refreshTable', app(\App\Services\WorkAssignmentService::class))
+            ->call('printTable')
+            ->assertDispatched('open-print-modal', function($name, $params) use (&$capturedData) {
+                $capturedData = $params['data'] ?? $params;
+                return true; 
+            });
+
+        $this->assertNotNull($capturedData, "Dati PDF non catturati.");
+
+        // 3. Testiamo il Modale usando i dati reali
+        Livewire::test(PdfViewerModal::class)
+            ->dispatch('open-print-modal', data: $capturedData)
+            // Correzione: usiamo 'isOpen' invece di 'show'
+            ->assertSet('isOpen', true) 
+            ->assertSee('123')     
+            ->assertSee('Mario Rossi')
+            // 4. Testiamo anche la chiusura (Solid: testiamo il ciclo di vita completo)
+            ->call('close')
+            ->assertSet('isOpen', false)
+            ->assertSet('printData', null);
     }
 
     #[Test]

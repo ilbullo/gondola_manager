@@ -115,7 +115,7 @@ class TableSplitterTest extends TestCase
     }
 
     #[Test]
-    public function it_prepares_pdf_data_correctly_in_session()
+    public function it_prepares_pdf_data_correctly_for_split_table()
     {
         /** @var \App\Models\User $admin */
         $admin = User::factory()->create(['name' => 'Admin']);
@@ -123,12 +123,34 @@ class TableSplitterTest extends TestCase
         
         LicenseTable::factory()->create(['date' => today()]);
 
-        Livewire::test(TableSplitter::class)
+        $component = Livewire::test(TableSplitter::class)
             ->call('confirmBancaleCost')
-            ->call('printSplitTable')
-            ->assertRedirect(); // In Laravel 12/Livewire 3 è più sicuro verificare il redirect generico
+            ->call('printSplitTable');
 
-        $this->assertTrue(session()->has('pdf_generate'));
+        // 1. Verifica l'evento (La nostra nuova "azione" principale)
+        $component->assertDispatched('open-print-modal');
+
+        // 2. Verifica che i dati siano passati correttamente nel payload dell'evento
+        $component->assertDispatched('open-print-modal', function($name, $data) {
+            return $data['data']['view'] === 'pdf.split-table' && 
+                   $data['data']['orientation'] === 'landscape';
+        });
+    }
+
+    #[Test]
+    public function it_prepares_pdf_data_correctly_for_agency_report()
+    {
+        $admin = User::factory()->create();
+        $this->actingAs($admin);
+
+        $component = Livewire::test(TableSplitter::class)
+            ->call('confirmBancaleCost')
+            ->call('printAgencyReport');
+
+        $component->assertDispatched('open-print-modal', function($name, $data) {
+            return $data['data']['view'] === 'pdf.agency-report' && 
+                   $data['data']['orientation'] === 'portrait';
+        });
     }
 
     /**

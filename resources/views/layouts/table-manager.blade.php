@@ -20,6 +20,7 @@
 <body class="h-full bg-slate-200 font-sans antialiased text-gray-900 overflow-hidden">
     {{ $slot }}
     @stack('modals')
+    @livewire('ui.pdf-viewer-modal')
     @livewireScripts
     @stack('scripts')
 </body>

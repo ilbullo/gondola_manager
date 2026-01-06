@@ -55,4 +55,20 @@ class PdfController extends Controller
         // Restituisce il PDF come download con il nome specificato
         return $pdf->download($config['filename']);
     }
+
+    public function getPrintData()
+    {
+        if (!session()->has('pdf_generate')) {
+            return null;
+        }
+
+        // Recuperiamo i dati e puliamo la sessione (pattern pull)
+        $config = session()->pull('pdf_generate');
+
+        return [
+            'view'        => $config['view'],
+            'data'        => $config['data'],
+            'orientation' => $config['orientation'] ?? 'portrait'
+        ];
+    }
 }

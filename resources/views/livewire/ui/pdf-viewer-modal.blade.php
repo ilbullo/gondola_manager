@@ -12,15 +12,15 @@
             <button @click="$wire.close()" class="text-[10px] font-bold uppercase px-4 py-4 bg-slate-700 hover:bg-slate-600 rounded transition">
                 Chiudi
             </button>
-            <button onclick="window.print()" class="text-[10px] font-bold uppercase px-6 py-4 bg-blue-600 hover:bg-blue-500 rounded shadow-lg shadow-blue-900/50 transition">
+            <button onclick="setTimeout(() => { window.print(); }, 100);" class="text-[10px] font-bold uppercase px-6 py-4 bg-blue-600 hover:bg-blue-500 rounded shadow-lg shadow-blue-900/50 transition">
                 Stampa Documento
             </button>
         </div>
     </div>
 
     <div class="pt-20 pb-10 flex justify-center print-wrapper">
-        <div class="bg-white shadow-2xl print-area" 
-             style="width: {{ ($printData['orientation'] ?? 'portrait') === 'landscape' ? '297mm' : '210mm' }}; min-height: 297mm;">
+        <div class="bg-white shadow-2xl print-area {{ ($printData['orientation'] ?? 'portrait') }}" 
+            style="width: {{ ($printData['orientation'] ?? 'landscape') === 'landscape' ? '297mm' : '210mm' }};">
             
             @if($printData)
                 <div class="print-inner-content">
@@ -41,6 +41,25 @@
             @page {
                 size: A4 {{ $printData['orientation'] ?? 'portrait' }} !important;
                 margin: 0mm; /* Gestiamo i margini tramite padding interno */
+            }
+
+            /* Forza il contenitore a occupare l'esatta larghezza del foglio scelto */
+            .print-area.landscape {
+                width: 297mm !important;
+                max-width: 297mm !important;
+                min-width: 297mm !important;
+            }
+
+            .print-area.portrait {
+                width: 210mm !important;
+                max-width: 210mm !important;
+                min-width: 210mm !important;
+            }
+            
+            /* Rimuovi eventuali trasformazioni o scaling che Safari applica automaticamente */
+            .print-wrapper {
+                transform: none !important;
+                width: 100% !important;
             }
 
             /* 2. Nascondi tutto ciò che non è il modale */

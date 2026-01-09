@@ -12,7 +12,7 @@
             <button @click="$wire.close()" class="text-[10px] font-bold uppercase px-4 py-4 bg-slate-700 hover:bg-slate-600 rounded transition">
                 Chiudi
             </button>
-            <button onclick="setTimeout(() => { window.print(); }, 100);" class="text-[10px] font-bold uppercase px-6 py-4 bg-blue-600 hover:bg-blue-500 rounded shadow-lg shadow-blue-900/50 transition">
+            <button onclick="window.scrollTo(0,0); setTimeout(() => { window.print(); }, 500);" class="text-[10px] font-bold uppercase px-6 py-4 bg-blue-600 hover:bg-blue-500 rounded shadow-lg shadow-blue-900/50 transition">
                 Stampa Documento
             </button>
         </div>

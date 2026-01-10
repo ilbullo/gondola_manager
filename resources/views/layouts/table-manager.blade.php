@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>{{ env('APP_NAME',config('app_settings.system_title')) }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/print-js/1.6.0/print.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/print-js/1.6.0/print.min.css">
  <!--   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>-->
     <style>
         [x-cloak] { display: none !important; }
@@ -22,5 +24,42 @@
     @stack('modals')
     @livewireScripts
     @stack('scripts')
+<script>
+    document.addEventListener('livewire:init', () => {
+        Livewire.on('do-print-pdf', async (event) => {
+            // Aggiungiamo un timestamp per evitare cache
+            const url = (event.url || event[0].url) + '?t=' + new Date().getTime();
+            
+            try {
+                // 1. Scarichiamo il PDF come Blob
+                const response = await fetch(url);
+                const blob = await response.blob();
+                
+                // 2. Creiamo un URL per il Blob
+                const blobUrl = URL.createObjectURL(blob);
+
+                // 3. CREIAMO UN LINK INVISIBILE (Non un iframe!)
+                const link = document.createElement('a');
+                link.href = blobUrl;
+                link.target = '_blank'; // Fondamentale per iPad PWA
+                
+                // 4. Simuliamo il clic
+                document.body.appendChild(link);
+                link.click();
+                
+                // 5. Pulizia
+                setTimeout(() => {
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(blobUrl);
+                }, 500);
+
+            } catch (error) {
+                console.error("Errore:", error);
+                // Fallback estremo
+                window.location.href = url;
+            }
+        });
+    });
+</script>
 </body>
 </html>

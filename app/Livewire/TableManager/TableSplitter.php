@@ -246,7 +246,7 @@ public function printSplitTable()
     })->values()->toArray();
 
     // 3. Salviamo i dati in Sessione Flash per il controller che genera il PDF
-    Session::flash('pdf_generate', [
+    Session::put('pdf_generate', [
         'view' => 'pdf.split-table',
         'data' => [
             'matrix'      => $matrixData,
@@ -260,7 +260,8 @@ public function printSplitTable()
     ]);
 
     // Reindirizziamo alla rotta globale di generazione PDF
-    return $this->redirectRoute('generate.pdf');
+    //return $this->redirectRoute('generate.pdf');
+    $this->dispatch('do-print-pdf', url: route('generate.pdf'));
 }
 
     public function printAgencyReport(AgencyReportService $service): void
@@ -280,7 +281,7 @@ public function printSplitTable()
         // Il Service ora gestisce internamente flatMap, filter e groupBy
         $agencyReport = $service->generate($dataForReport);
 
-        Session::flash('pdf_generate', [
+        Session::put('pdf_generate', [
             'view' => 'pdf.agency-report',
             'data' => [
                 'agencyReport'  => $agencyReport,
@@ -291,7 +292,8 @@ public function printSplitTable()
             'filename' => 'report_agenzie_' . today()->format('Ymd') . '.pdf',
         ]);
 
-        $this->redirectRoute('generate.pdf');
+        //$this->redirectRoute('generate.pdf');
+        $this->dispatch('do-print-pdf', url: route('generate.pdf'));
     }
 
     public function render()

@@ -213,7 +213,7 @@ class WorkAssignmentTable extends Component
             // Delega la preparazione dei dati al service
             $matrixData = $service->preparePdfData($this->licenses);
 
-            Session::flash('pdf_generate', [
+            Session::put('pdf_generate', [
                 'view'        => 'pdf.work-assignment-table',
                 'data'        => [
                     'matrix'      => $matrixData,
@@ -226,7 +226,8 @@ class WorkAssignmentTable extends Component
                 'paper'       => 'a2',
             ]);
 
-            $this->redirectRoute('generate.pdf');
+            //$this->redirectRoute('generate.pdf');
+            $this->dispatch('do-print-pdf', url: route('generate.pdf'));
         }
 
         // ===================================================================

@@ -140,7 +140,7 @@ class WorkAssignmentTable extends Component
         } catch (\Exception $e) {
             $this->errorMessage = $e->getMessage();
             // Assicurati che l'errore venga notificato al browser/test
-            $this->dispatch('notify', message: $e->getMessage(), type: 'error'); 
+            $this->dispatch('notify', message: $e->getMessage(), type: 'error');
         }
     }
 
@@ -167,12 +167,12 @@ class WorkAssignmentTable extends Component
             );
 
             $this->refreshTable($service);
-            
+
             // Reset dello stato locale
             $this->errorMessage = '';
-            
+
             // Notifichiamo alla sidebar che il lavoro è stato usato (se necessario)
-            $this->dispatch('workAssigned'); 
+            $this->dispatch('workAssigned');
             $this->dispatch('notify-success', ['message' => 'Lavoro assegnato con successo']);
 
         } catch (\Exception $e) {
@@ -213,20 +213,17 @@ class WorkAssignmentTable extends Component
             // Delega la preparazione dei dati al service
             $matrixData = $service->preparePdfData($this->licenses);
 
-            Session::flash('pdf_generate', [
+            Session::put('print_payload', [
                 'view'        => 'pdf.work-assignment-table',
                 'data'        => [
                     'matrix'      => $matrixData,
                     'generatedBy' => Auth::user()->name ?? 'Sistema',
                     'generatedAt' => now()->format('d/m/Y H:i'),
                     'date'        => today()->format('d/m/Y'),
-                ],
-                'filename'    => 'tabella_assegnazione_' . today()->format('Ymd') . '.pdf',
-                'orientation' => 'landscape',
-                'paper'       => 'a2',
+                ]
             ]);
 
-            $this->redirectRoute('generate.pdf');
+            $this->dispatch('trigger-print-html', url: route('print.report'));
         }
 
         // ===================================================================

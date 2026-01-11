@@ -4,8 +4,19 @@
     <meta charset="utf-8">
     <title>Ripartizione Lavori @date($date)</title>
     <style>
+        @media print {
+            @page {
+                margin: 0;
+                size: A4 landscape;
+            }
+            body {
+                margin: 1cm; /* Margine fisico per la stampante */
+                -webkit-print-color-adjust: exact;
+            }
+            .no-print { display: none; }
+        }
         @page { margin: 5mm 5mm; size: A4 landscape; }
-        
+
         body {
             font-family: Arial, Helvetica, sans-serif;
             font-size: 8.2pt;
@@ -37,7 +48,7 @@
 
         .slot {
             width: 28px !important;
-            height: 24px; 
+            height: 24px;
             font-size: 8pt;
         }
 
@@ -69,9 +80,9 @@
         }
 
         .header-box {
-            border-bottom: 1.5pt solid #000; 
-            padding-bottom: 4px; 
-            margin-bottom: 6px; 
+            border-bottom: 1.5pt solid #000;
+            padding-bottom: 4px;
+            margin-bottom: 6px;
             width: 100%;
         }
 
@@ -110,10 +121,10 @@
         @foreach($matrix as $row)
             <tr class="{{ $loop->even ? 'row-even' : 'row-odd' }}">
                 <td class="lic">{{ $row['license_number'] }}</td>
-                
+
                 {{-- Usiamo netto_raw che viene passato dal metodo toPrintParams del DTO --}}
                 <td class="cash">@money($row['netto_raw'] ?? 0, true, false)</td>
-                
+
                 {{-- Se usi toPrintParams, le chiavi dei conteggi sono piatti (n_count, x_count, etc) --}}
                 <td class="np">@number($row['n_count'] ?? 0)</td>
                 <td class="np">@number($row['x_count'] ?? 0)</td>
@@ -165,9 +176,9 @@
 
 <div class="legenda">
     <div style="float: left; width: 75%;">
-        <strong>LEGENDA:</strong> 
-        N: Noli • X: Contanti • U: {{ config('app_settings.labels.shared_from_first') }} • P: Perdi Volta • 
-        <u>Sottolineato</u>: Fisso Licenza • 
+        <strong>LEGENDA:</strong>
+        N: Noli • X: Contanti • U: {{ config('app_settings.labels.shared_from_first') }} • P: Perdi Volta •
+        <u>Sottolineato</u>: Fisso Licenza •
         <strong>Grassetto</strong>: {{ config('app_settings.labels.shared_from_first') }}
     </div>
     <div style="float: right; width: 25%; text-align: right; color: #666; font-style: italic;">

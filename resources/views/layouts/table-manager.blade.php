@@ -22,5 +22,45 @@
     @stack('modals')
     @livewireScripts
     @stack('scripts')
+    <script>
+        window.addEventListener('trigger-print-html', event => {
+        console.log('Evento di stampa ricevuto:', event.detail.url);
+        const url = event.detail.url + '?t=' + new Date().getTime(); // Cache busting
+
+        const oldFrame = document.getElementById('print-iframe');
+        if (oldFrame) oldFrame.remove();
+
+        const iframe = document.createElement('iframe');
+        iframe.id = 'print-iframe';
+
+        // Per iPad: l'iframe deve essere "tecnicamente" visibile ma nascosto all'utente
+        iframe.style.position = 'fixed';
+        iframe.style.left = '-9999px';
+        iframe.style.top = '0';
+        iframe.style.opacity = '0.01';
+        iframe.style.width = '1px';
+        iframe.style.height = '1px';
+        iframe.src = url;
+
+        document.body.appendChild(iframe);
+
+        iframe.onload = function() {
+            console.log('Iframe caricato, lancio stampa...');
+            setTimeout(() => {
+                try {
+                    iframe.contentWindow.focus();
+                    iframe.contentWindow.print();
+                } catch (e) {
+                    console.error("Errore durante l'esecuzione di print():", e);
+                }
+
+                // Pulizia dopo 10 secondi per permettere ad AirPrint di completare
+                setTimeout(() => {
+                    if(document.body.contains(iframe)) document.body.removeChild(iframe);
+                }, 10000);
+            }, 800);
+        };
+    });
+    </script>
 </body>
 </html>

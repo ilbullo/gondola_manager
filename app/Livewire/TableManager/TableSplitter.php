@@ -19,14 +19,14 @@ class TableSplitter extends Component
 {
     public ?float $bancaleCost = 0.0;
     public bool $showBancaleModal = true;
-    
+
     public string $testScenario = ''; // Scenario di test scelto nel modale
 
     /**
      * Ora usiamo l'oggetto MatrixTable invece di un array generico.
      */
     public MatrixTable $matrixTable;
-    
+
     public array $unassignedWorks = [];
     public ?array $selectedWork = null;
 
@@ -97,7 +97,7 @@ class TableSplitter extends Component
         });
 
         $this->matrixTable = new MatrixTable($rows);
-        
+
         // Eseguiamo il ricalcolo iniziale
         $this->matrixTable->refreshAll((float) $this->bancaleCost);
 
@@ -116,14 +116,14 @@ class TableSplitter extends Component
     {
         if ($propertyName === 'bancaleCost') {
             if (is_null($this->bancaleCost)) $this->bancaleCost = 0.0;
-            
+
             // Rinfresca tutta la matrice con il nuovo costo
             $this->matrixTable->refreshAll((float) $this->bancaleCost);
         }
     }
 
     /**
-     * Rimosso il vecchio refreshAllLiquidations e calculateLiquidation 
+     * Rimosso il vecchio refreshAllLiquidations e calculateLiquidation
      * perché ora la logica risiede dentro MatrixTable e LicenseRow.
      */
 
@@ -131,7 +131,7 @@ class TableSplitter extends Component
     {
         $row = $this->matrixTable->rows->get($licenseKey);
         $work = $row->worksMap[$slotIndex] ?? null;
-        
+
         if (!$work) return;
 
         $this->dispatch('openConfirmModal', [
@@ -159,7 +159,7 @@ class TableSplitter extends Component
 
         $this->unassignedWorks[] = $work;
         $row->worksMap[$slotIndex] = null;
-        
+
         // Rinfreschiamo i calcoli della riga modificata
         $row->refresh((float) $this->bancaleCost);
 
@@ -197,7 +197,7 @@ class TableSplitter extends Component
         }
 
         $row->worksMap[$slotIndex] = $this->selectedWork;
-        
+
         $this->unassignedWorks = array_filter($this->unassignedWorks, fn ($w) => !$this->areWorksEqual($w, $this->selectedWork));
         $this->selectedWork = null;
 
@@ -211,57 +211,55 @@ class TableSplitter extends Component
         return ($a['id'] ?? null) == ($b['id'] ?? null);
     }
 
-public function printSplitTable()
-{
-    // 1. Recuperiamo la collezione delle liquidazioni per i totali a fondo pagina
-    // Usiamo pluck per estrarre solo la colonna economica
-    $liquidations = $this->matrixTable->rows->pluck('liquidation');
-    
-    // Calcoliamo i totali generali (N, X, P, Netto) usando il metodo statico del DTO
-    $totals = LiquidationResult::aggregateTotals($liquidations);
+    public function printSplitTable()
+    {
+        // 1. Recuperiamo la collezione delle liquidazioni per i totali a fondo pagina
+        // Usiamo pluck per estrarre solo la colonna economica
+        $liquidations = $this->matrixTable->rows->pluck('liquidation');
 
-    // 2. Prepariamo la matrice dei dati per la vista PDF
-    $matrixData = $this->matrixTable->rows->map(function(LicenseRow $l) {
-        $liq = $l->liquidation;
+        // Calcoliamo i totali generali (N, X, P, Netto) usando il metodo statico del DTO
+        $totals = LiquidationResult::aggregateTotals($liquidations);
 
-        // SE Livewire ha degradato l'oggetto a stdClass (accade durante l'hydration),
-        // lo ricostruiamo come LiquidationResult per riavere accesso ai suoi metodi.
-        if ($liq instanceof \stdClass) {
-            $liq = LiquidationResult::fromLivewire((array) $liq);
-        }
+        // 2. Prepariamo la matrice dei dati per la vista PDF
+        $matrixData = $this->matrixTable->rows->map(function(LicenseRow $l) {
+            $liq = $l->liquidation;
 
-        // Se per qualche motivo è null o non valido, creiamo un risultato vuoto per evitare crash
-        if (!$liq) {
-            $liq = new LiquidationResult();
-        }
+            // SE Livewire ha degradato l'oggetto a stdClass (accade durante l'hydration),
+            // lo ricostruiamo come LiquidationResult per riavere accesso ai suoi metodi.
+            if ($liq instanceof \stdClass) {
+                $liq = LiquidationResult::fromLivewire((array) $liq);
+            }
 
-        /**
-         * Usiamo il metodo toPrintParams() del DTO che centralizza tutte le chiavi 
-         * richieste dalla vista (n_count, netto_raw, ecc.) evitando duplicazione di logica.
-         */
-        return $liq->toPrintParams([
-            'license_number' => $l->user['license_number'] ?? '—',
-            'worksMap'       => $l->worksMap,
+            // Se per qualche motivo è null o non valido, creiamo un risultato vuoto per evitare crash
+            if (!$liq) {
+                $liq = new LiquidationResult();
+            }
+
+            /**
+             * Usiamo il metodo toPrintParams() del DTO che centralizza tutte le chiavi
+             * richieste dalla vista (n_count, netto_raw, ecc.) evitando duplicazione di logica.
+             */
+            return $liq->toPrintParams([
+                'license_number' => $l->user['license_number'] ?? '—',
+                'worksMap'       => $l->worksMap,
+            ]);
+        })->values()->toArray();
+
+        Session::put('print_payload', [
+            'view' => 'pdf.split-table',
+            'data' => [
+                'matrix'      => $matrixData,
+                'totals'      => $totals,
+                'bancaleCost' => (float) $this->bancaleCost,
+                'generatedBy' => Auth::user()->name ?? 'Sistema',
+                'generatedAt' => now()->format('d/m/Y H:i'),
+                'date'        => today()->format('d/m/Y'),
+            ]
         ]);
-    })->values()->toArray();
 
-    // 3. Salviamo i dati in Sessione Flash per il controller che genera il PDF
-    Session::flash('pdf_generate', [
-        'view' => 'pdf.split-table',
-        'data' => [
-            'matrix'      => $matrixData,
-            'totals'      => $totals,
-            'bancaleCost' => (float) $this->bancaleCost,
-            'generatedBy' => Auth::user()->name ?? 'Sistema',
-            'generatedAt' => now(),
-            'date'        => today(),
-        ],
-        'filename' => 'ripartizione_' . today()->format('Ymd') . '.pdf',
-    ]);
-
-    // Reindirizziamo alla rotta globale di generazione PDF
-    return $this->redirectRoute('generate.pdf');
-}
+        // Lanciamo l'evento per il JS
+        $this->dispatch('trigger-print-html', url: route('print.report'));
+    }
 
     public function printAgencyReport(AgencyReportService $service): void
     {
@@ -280,18 +278,17 @@ public function printSplitTable()
         // Il Service ora gestisce internamente flatMap, filter e groupBy
         $agencyReport = $service->generate($dataForReport);
 
-        Session::flash('pdf_generate', [
+        Session::put('print_payload', [
             'view' => 'pdf.agency-report',
             'data' => [
                 'agencyReport'  => $agencyReport,
                 'generatedBy'   => Auth::user()->name ?? 'Sistema',
                 'date'          => today()->format('d/m/Y'),
-                'generatedAt'   => now()
-            ],
-            'filename' => 'report_agenzie_' . today()->format('Ymd') . '.pdf',
+                'generatedAt'   => now()->format('d/m/Y H:i')
+            ]
         ]);
 
-        $this->redirectRoute('generate.pdf');
+        $this->dispatch('trigger-print-html', url: route('print.report'));
     }
 
     public function render()

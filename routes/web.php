@@ -26,7 +26,17 @@ Route::group(
     Route::middleware('role:admin,bancale')->group(function () {
                 Route::view('agency-manager', 'livewire.pages.agency-manager')->name('agency-manager');
                 Route::view('table-manager', 'livewire.pages.table-manager')->name('table-manager');
-                Route::get('generate-pdf', [PdfController::class, 'generate'])->name('generate.pdf');
+
+                //Route::get('generate-pdf', [PdfController::class, 'generate'])->name('generate.pdf');
+                Route::get('/print-report', function () {
+                    if (!session()->has('print_payload')) {
+                        return "Errore: Sessione di stampa scaduta o vuota.";
+                    }
+
+                    $payload = session()->get('print_payload');
+                    return view($payload['view'], $payload['data']);
+                })->name('print.report');
+
                 Route::get('/print-receipt/{license}', function ($licenseId) {
                     // Qui recuperi i dati della licenza dal database
                     // e restituisci una vista Blade pulita

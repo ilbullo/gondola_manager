@@ -5,6 +5,17 @@
     <meta charset="utf-8">
     <title>Tabella Assegnazione - {{ $date }}</title>
 <style>
+        @media print {
+            @page {
+                margin: 0;
+                size: A4 landscape;
+            }
+            body {
+                margin: 1cm; /* Margine fisico per la stampante */
+                -webkit-print-color-adjust: exact;
+            }
+            .no-print { display: none; }
+        }
     /* 1. Margini e setup pagina identici all'altro documento per coerenza di stampa */
     @page { margin: 5mm 5mm; size: A4 landscape; }
 

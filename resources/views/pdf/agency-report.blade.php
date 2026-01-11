@@ -4,6 +4,17 @@
     <meta charset="utf-8">
     <title>Report Agenzie - {{ $date }}</title>
     <style>
+        @media print {
+            @page {
+                margin: 0;
+                size: A4 landscape;
+            }
+            body {
+                margin: 1cm; /* Margine fisico per la stampante */
+                -webkit-print-color-adjust: exact;
+            }
+            .no-print { display: none; }
+        }
         body {
             font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
             font-size: 10pt;
@@ -56,7 +67,7 @@
         .time     { text-align: center; font-weight: bold; width: 60px; }
         .agency   { font-weight: bold; color: #333; }
         .voucher  { font-style: italic; color: #555; }
-        .licenses { 
+        .licenses {
             font-weight: bold;
             font-size: 11pt;
             letter-spacing: 0.5px;
@@ -78,7 +89,7 @@
             font-weight: bold;
             text-transform: uppercase;
         }
-        
+
         .footer {
             position: fixed;
             bottom: 0;

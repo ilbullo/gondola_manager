@@ -12,6 +12,20 @@
     @media print {
     @endif
 
+        html, body {
+            overflow: visible !important;
+            height: auto !important;
+            width: 100% !important;
+        }
+
+        .assignment-table-container {
+            display: block !important; /* Forza la visibilità */
+            visibility: visible !important;
+            width: 100% !important;
+            min-width: 1000px; /* Forza una larghezza minima per evitare il collasso */
+            position: relative !important;
+        }
+
         @page {
             margin: 5mm 5mm;
             size: A4 landscape;
@@ -114,7 +128,7 @@
 <body>
 @endif
 
-<div class="assignment-table-container print:block print:w-full">
+<div class="assignment-table-container print:block print:visible print:w-full">
     <div class="header-box">
         <span style="font-size: 13pt; font-weight: bold; text-transform: uppercase;">TABELLA ASSEGNAZIONE LAVORI</span>
         <span style="font-size: 8.5pt; font-weight: bold; float: right; margin-top: 4px;">

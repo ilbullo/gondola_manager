@@ -12,18 +12,28 @@
     @media print {
     @endif
 
+        /* Reset totale per Tablet e Mobile */
         html, body {
-            overflow: visible !important;
-            height: auto !important;
+            background: white !important;
+            color: black !important;
             width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: visible !important;
         }
 
         .assignment-table-container {
-            display: block !important; /* Forza la visibilità */
+            display: block !important;
             visibility: visible !important;
             width: 100% !important;
-            min-width: 1000px; /* Forza una larghezza minima per evitare il collasso */
             position: relative !important;
+            transform: none !important; /* Rimuove eventuali animazioni/scale di Tailwind */
+        }
+
+        .assignment-table-container table {
+            display: table !important; /* Forza il rendering della tabella */
+            width: 100% !important;
+            border-collapse: collapse !important;
         }
 
         @page {

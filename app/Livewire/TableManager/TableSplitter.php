@@ -319,6 +319,89 @@ public function printSplitTable()
         $this->dispatch('print-html', html: $html);
     }
 
+    public function downloadAgencyPdf(AgencyReportService $service)
+    {
+        $dataForReport = $this->matrixTable->rows->map(function(LicenseRow $row) {
+                return [
+                    'user'     => $row->user,
+                    'worksMap' => $row->worksMap,
+                ];
+            })->toArray();
+
+            // Il Service ora gestisce internamente flatMap, filter e groupBy
+            $agencyReport = $service->generate($dataForReport);
+
+            Session::flash('pdf_generate', [
+                'view' => 'pdf.agency-report',
+                'data' => [
+                    'agencyReport'  => $agencyReport,
+                    'generatedBy'   => Auth::user()->name ?? 'Sistema',
+                    'date'          => today()->format('d/m/Y'),
+                    'generatedAt'   => now(),
+                    'isPdf'         => true,
+                ],
+                'filename' => 'report_agenzie_' . today()->format('Ymd') . '.pdf',
+            ]);
+
+            $this->redirectRoute('generate.pdf');
+    }
+
+    public function downloadSplitTablePdf()
+{
+    // 1. Recuperiamo la collezione delle liquidazioni per i totali a fondo pagina
+    // Usiamo pluck per estrarre solo la colonna economica
+    $liquidations = $this->matrixTable->rows->pluck('liquidation');
+    
+    // Calcoliamo i totali generali (N, X, P, Netto) usando il metodo statico del DTO
+    $totals = LiquidationResult::aggregateTotals($liquidations);
+
+    // 2. Prepariamo la matrice dei dati per la vista PDF
+    $matrixData = $this->matrixTable->rows->map(function(LicenseRow $l) {
+        $liq = $l->liquidation;
+
+        // SE Livewire ha degradato l'oggetto a stdClass (accade durante l'hydration),
+        // lo ricostruiamo come LiquidationResult per riavere accesso ai suoi metodi.
+        if ($liq instanceof \stdClass) {
+            $liq = LiquidationResult::fromLivewire((array) $liq);
+        }
+
+        // Se per qualche motivo è null o non valido, creiamo un risultato vuoto per evitare crash
+        if (!$liq) {
+            $liq = new LiquidationResult();
+        }
+
+        /**
+         * Usiamo il metodo toPrintParams() del DTO che centralizza tutte le chiavi 
+         * richieste dalla vista (n_count, netto_raw, ecc.) evitando duplicazione di logica.
+         */
+        return $liq->toPrintParams([
+            'license_number' => $l->user['license_number'] ?? '—',
+            'worksMap'       => $l->worksMap,
+        ]);
+    })->values()->toArray();
+
+    // 3. Salviamo i dati in Sessione Flash per il controller che genera il PDF
+    Session::flash('pdf_generate', [
+        'view' => 'pdf.split-table',
+        'data' => [
+            'matrix'      => $matrixData,
+            'totals'      => $totals,
+            'bancaleCost' => (float) $this->bancaleCost,
+            'generatedBy' => Auth::user()->name ?? 'Sistema',
+            'generatedAt' => now(),
+            'date'        => today(),
+            'isPdf'         => true,
+
+        ],
+        'filename' => 'ripartizione_' . today()->format('Ymd') . '.pdf',
+    ]);
+
+    // Reindirizziamo alla rotta globale di generazione PDF
+    return $this->redirectRoute('generate.pdf');
+    
+
+}
+
     public function render()
     {
         return view('livewire.table-manager.matrix-preview');

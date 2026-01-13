@@ -239,6 +239,30 @@ class WorkAssignmentTable extends Component
             $this->dispatch('print-html', html: $html);
         }
 
+        #[On('downloadWorksTable')]
+        public function downloadTable(WorkAssignmentService $service): void
+        {
+            // Delega la preparazione dei dati al service
+            $matrixData = $service->preparePdfData($this->licenses);
+
+            Session::flash('pdf_generate', [
+                'view'        => 'pdf.work-assignment-table',
+                'data'        => [
+                    'matrix'      => $matrixData,
+                    'generatedBy' => Auth::user()->name ?? 'Sistema',
+                    'generatedAt' => now()->format('d/m/Y H:i'),
+                    'date'        => today()->format('d/m/Y'),
+                    'isPdf'         => true,
+                ],
+                'filename'    => 'tabella_assegnazione_' . today()->format('Ymd') . '.pdf',
+                'orientation' => 'landscape',
+                'paper'       => 'a2',
+            ]);
+
+            $this->redirectRoute('generate.pdf');
+
+        }
+
         // ===================================================================
         // Render
         // ===================================================================

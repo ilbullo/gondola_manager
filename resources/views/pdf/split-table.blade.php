@@ -1,21 +1,35 @@
+@if(isset($isPdf) && $isPdf)
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="utf-8">
+    <title>Ripartizione Odierna - {{ $date }}</title>
+@endif
+
 <style>
-    /* Avvolgiamo tutto in media print per isolare gli stili */
-    @media print {
-        @page { margin: 5mm 5mm; size: A4 landscape; }
+    /* Se NON è un PDF (WebApp), isoliamo con @media print */
+    @if(!isset($isPdf) || !$isPdf) 
+    @media print { 
+    @endif
+
+        @page { 
+            margin: 5mm 5mm; 
+            size: A4 landscape; 
+        }
         
-        /* Reset font e colori per la stampa */
         .print-wrapper {
             font-family: Arial, Helvetica, sans-serif;
             font-size: 8.2pt;
             line-height: 1.1;
             color: #000;
             background: white;
+            width: 100%;
         }
 
         .print-wrapper table {
             width: 100%;
             border-collapse: collapse;
-            table-layout: fixed;
+            table-layout: fixed; /* Cruciale per DomPDF in Landscape */
             border: 0.4pt solid #000;
         }
 
@@ -24,7 +38,7 @@
             text-align: center;
             vertical-align: middle;
             padding: 2px 1px;
-            font-size: 8.2pt;
+            font-size: 8pt;
         }
 
         .print-wrapper th {
@@ -32,9 +46,13 @@
             background-color: #f3f4f6 !important;
             padding: 4px 1px;
             -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
         }
 
-        .slot { width: 28px !important; height: 24px; font-size: 8pt; }
+        .slot { 
+            width: 28px !important; 
+            height: 24px; 
+        }
 
         .prev-lic-text {
             display: block;
@@ -45,24 +63,28 @@
             font-style: italic;
         }
 
-        /* Forziamo i colori di sfondo nelle righe per la stampa */
         .row-even { background-color: #ffffff !important; }
-        .row-odd { background-color: #f9fafb !important; -webkit-print-color-adjust: exact; }
+        .row-odd { 
+            background-color: #f9fafb !important; 
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
 
         .excluded { text-decoration: underline; text-decoration-thickness: 1.5pt; }
         .shared   { font-weight: bold; }
 
-        .lic  { width: 50px; font-weight: bold; background-color: #f3f4f6 !important; -webkit-print-color-adjust: exact; }
-        .cash { width: 75px; font-weight: bold; }
-        .np   { width: 28px; font-weight: bold; color: #333; }
+        .lic  { width: 45px; font-weight: bold; background-color: #f3f4f6 !important; -webkit-print-color-adjust: exact; }
+        .cash { width: 70px; font-weight: bold; }
+        .np   { width: 25px; font-weight: bold; }
 
         tfoot td {
             font-weight: bold;
             font-size: 8.5pt;
             border-top: 1.2pt solid #000;
             padding: 5px 1px;
-            background-color: #eee !important;
+            background-color: #eeeeee !important;
             -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
         }
 
         .header-box {
@@ -72,9 +94,21 @@
             width: 100%;
         }
 
-        .legenda { margin-top: 6px; font-size: 7.5pt; width: 100%; }
-    }
+        .legenda {
+            margin-top: 6px;
+            font-size: 7.5pt;
+            width: 100%;
+        }
+
+    @if(!isset($isPdf) || !$isPdf) 
+    } 
+    @endif
 </style>
+
+@if(isset($isPdf) && $isPdf)
+</head>
+<body>
+@endif
 
 <div class="print-wrapper">
     <div class="header-box">
@@ -90,10 +124,10 @@
             <tr>
                 <th class="lic">Lic.</th>
                 <th class="cash">Netto</th>
-                <th class="np">N</th>
-                <th class="np">X</th>
-                <th class="np">U</th>
-                <th class="np">P</th>
+                <th class="np" title="Noli">N</th>
+                <th class="np" title="Contanti">X</th>
+                <th class="np" title="Shared">U</th>
+                <th class="np" title="Perdi Volta">P</th>
                 @for($i = 1; $i <= config('app_settings.matrix.total_slots'); $i++)
                     <th class="slot">{{ $i }}</th>
                 @endfor
@@ -145,6 +179,7 @@
                 <td class="np">@number($totals['x'] ?? 0)</td>
                 <td class="np">@number($totals['shared'] ?? 0)</td>
                 <td class="np">@number($totals['p'] ?? 0)</td>
+                {{-- Cella vuota per gli slot --}}
                 <td colspan="{{ config('app_settings.matrix.total_slots') }}"></td>
             </tr>
         </tfoot>
@@ -154,7 +189,8 @@
         <div style="float: left; width: 75%;">
             <strong>LEGENDA:</strong> 
             N: Noli • X: Contanti • U: Shared • P: Perdi Volta • 
-            <u>Sottolineato</u>: Fisso Licenza
+            <u>Sottolineato</u>: Fisso Licenza • 
+            <strong>Grassetto</strong>: Shared
         </div>
         <div style="float: right; width: 25%; text-align: right; color: #666; font-style: italic;">
             Generato il: @dateTime($generatedAt)
@@ -162,3 +198,8 @@
         <div style="clear: both;"></div>
     </div>
 </div>
+
+@if(isset($isPdf) && $isPdf)
+</body>
+</html>
+@endif

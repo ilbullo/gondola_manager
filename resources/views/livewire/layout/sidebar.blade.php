@@ -1,5 +1,5 @@
 <header class="bg-slate-900 text-white shadow-2xl z-50 flex flex-wrap items-center px-4 py-3 gap-3 shrink-0">
-    <div class="flex gap-2 border-r border-white/10 pr-4">
+    <div class="flex gap-2 border-r border-white/10 pr-2 xl:pr-4">
         <button wire:click="editTable()" class="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center hover:bg-rose-500 transition-colors">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="3"/></svg>
         </button>
@@ -70,7 +70,7 @@
     {{-- AZIONI (Stampa / Ripartizione) --}}
     <div class="flex gap-2 ml-auto shrink-0 items-center">
     <div class="flex bg-emerald-600 rounded-xl shadow-lg overflow-hidden border border-emerald-700">
-        <button wire:click="$dispatch('printWorksTable')" 
+        <button wire:click="$dispatch('printWorksTable')"
                 wire:loading.attr="disabled"
                 class="h-[50px] pl-4 pr-3 hover:bg-emerald-500 transition-all flex items-center gap-2 group">
             <div class="relative">
@@ -87,7 +87,7 @@
             <span class="hidden xl:inline text-[11px] font-black text-white uppercase tracking-wider">Stampa Tabella</span>
         </button>
 
-        <button wire:click="$dispatch('downloadWorksTable')" 
+        <button wire:click="$dispatch('downloadWorksTable')"
                 title="Scarica PDF (Extra)"
                 class="h-[50px] px-3 bg-emerald-700/50 hover:bg-emerald-500 transition-colors border-l border-emerald-800/50 flex items-center">
             <svg class="w-4 h-4 text-emerald-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -96,7 +96,7 @@
         </button>
     </div>
 
-    <button wire:click="$dispatch('callRedistributeWorks')" 
+    <button wire:click="$dispatch('callRedistributeWorks')"
             class="h-[50px] px-4 bg-amber-500 hover:bg-amber-400 rounded-xl shadow-lg flex items-center justify-center gap-2 transition-all group">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 text-slate-900 group-hover:rotate-12 transition-transform">
             <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 0 1 0 3.75H5.625a1.875 1.875 0 0 1 0-3.75Z" />

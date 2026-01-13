@@ -7,21 +7,17 @@ use App\Http\Resources\LicenseResource;
 use Illuminate\Support\Facades\Config;
 use App\Enums\DayType;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
+use App\DataObjects\LiquidationResult;
 
 class WorkAssignmentService
 {
     /**
      * Esegue il salvataggio fisico dell'assegnazione con controllo conflitti e lock atomico.
-     * Protegge da race conditions e garantisce l'integrità spaziale degli slot.
      */
     public function saveAssignment(int $licenseTableId, int $slot, int $slotsOccupied, array $selectedWork): void
     {
-        // 1. Definizione della chiave di Lock univoca
-        // La chiave è legata alla licenza e al giorno, impedendo a due processi 
-        // di scrivere sulla stessa riga contemporaneamente.
         $lockKey = "save-assignment-license-{$licenseTableId}-" . today()->format('Y-m-d');
-        
-        // 2. Acquisizione del Lock (attesa massima 5 secondi)
         $lock = \Illuminate\Support\Facades\Cache::lock($lockKey, 5);
 
         if (!$lock->get()) {
@@ -29,48 +25,70 @@ class WorkAssignmentService
         }
 
         try {
-            // 3. Controllo sovrapposizioni slot (Integrità spaziale)
-            // Verifichiamo se esistono lavori che iniziano o finiscono nel range scelto
-            $conflict = WorkAssignment::where('license_table_id', $licenseTableId)
-                ->whereDate('timestamp', today())
-                ->where(function ($q) use ($slot, $slotsOccupied) {
-                    $q->where('slot', '<=', $slot + $slotsOccupied - 1)
-                      ->whereRaw('slot + slots_occupied - 1 >= ?', [$slot]);
-                })
-                ->exists();
+            // 1. Validazione estratti (Integrità spaziale)
+            $this->ensureNoSlotOverlap($licenseTableId, $slot, $slotsOccupied);
 
-            if ($conflict) {
-                throw new \Exception('Lo slot è già occupato o si sovrappone a un lavoro esistente.');
-            }
+            // 2. Risoluzione Agenzia
+            $agencyId = $this->resolveAgencyId($selectedWork);
 
-            // 4. Risoluzione Agenzia
-            // Se il tipo è 'A' (Agenzia), cerchiamo l'ID corrispondente dal nome ricevuto
-            $agencyId = null;
-            if (($selectedWork['value'] ?? '') === 'A' && !empty($selectedWork['agencyName'])) {
-                $agency = Agency::where('name', $selectedWork['agencyName'])->first();
-                $agencyId = $agency?->id;
-            }
-
-            // 5. Persistenza dei dati
-            // Utilizziamo create() che scatenerà eventuali eventi o mutatori del modello
-            WorkAssignment::create([
-                'license_table_id'  => $licenseTableId,
-                'agency_id'         => $agencyId,
-                'slot'              => $slot,
-                'value'             => $selectedWork['value'],
-                'amount'            => $selectedWork['amount'] ?? config('app_settings.works.default_amount', 90.0),
-                'voucher'           => $selectedWork['voucher'] ?? null,
-                'slots_occupied'    => $slotsOccupied,
-                'excluded'          => $selectedWork['excluded'] ?? false,
-                'shared_from_first' => $selectedWork['sharedFromFirst'] ?? false,
-                'timestamp'         => now(),
-            ]);
+            // 3. Persistenza (avvolta in transazione per sicurezza extra)
+            \Illuminate\Support\Facades\DB::transaction(function () use ($licenseTableId, $slot, $slotsOccupied, $selectedWork, $agencyId) {
+                WorkAssignment::create([
+                    'license_table_id'  => $licenseTableId,
+                    'agency_id'         => $agencyId,
+                    'slot'              => $slot,
+                    'value'             => $selectedWork['value'],
+                    'amount'            => $selectedWork['amount'] ?? config('app_settings.works.default_amount', 90.0),
+                    'voucher'           => $selectedWork['voucher'] ?? null,
+                    'slots_occupied'    => $slotsOccupied,
+                    'excluded'          => $selectedWork['excluded'] ?? false,
+                    'shared_from_first' => $selectedWork['sharedFromFirst'] ?? false,
+                    'timestamp'         => now(),
+                ]);
+            });
 
         } finally {
-            // 6. Rilascio del Lock
-            // Cruciale inserirlo in 'finally' per garantire lo sblocco anche in caso di eccezione
             $lock->release();
         }
+    }
+
+    /**
+     * Verifica che il range di slot richiesto non si sovrapponga a lavori esistenti.
+     * * @throws \Exception
+     */
+    private function ensureNoSlotOverlap(int $licenseTableId, int $slot, int $slotsOccupied): void
+    {
+        // Calcoliamo i confini del nuovo lavoro
+        $start = $slot;
+        $end = $slot + $slotsOccupied - 1;
+
+        $conflict = WorkAssignment::where('license_table_id', $licenseTableId)
+            ->whereDate('timestamp', today())
+            ->where(function ($q) use ($start, $end) {
+                /**
+                 * Logica di sovrapposizione:
+                 * Un lavoro esistente (E_start, E_end) confligge con il nuovo (N_start, N_end) se:
+                 * E_start <= N_end AND E_end >= N_start
+                 */
+                $q->where('slot', '<=', $end)
+                ->whereRaw('slot + slots_occupied - 1 >= ?', [$start]);
+            })
+            ->exists();
+
+        if ($conflict) {
+            throw new \Exception("Lo slot richiesto ($start-$end) è già occupato o si sovrappone a un lavoro esistente.");
+        }
+    }
+
+    /**
+     * Risolve l'ID dell'agenzia partendo dal nome.
+     */
+    private function resolveAgencyId(array $selectedWork): ?int
+    {
+        if (($selectedWork['value'] ?? '') === 'A' && !empty($selectedWork['agencyName'])) {
+            return Agency::where('name', $selectedWork['agencyName'])->value('id');
+        }
+        return null;
     }
 
     /**
@@ -179,8 +197,73 @@ class WorkAssignmentService
      */
     public function getLicenseTotal(int $licenseTableId): float
     {
-        return (float) \App\Models\WorkAssignment::where('license_table_id', $licenseTableId)
+        return (float) WorkAssignment::where('license_table_id', $licenseTableId)
             ->sum('amount');
+    }
+
+    /**
+     * Genera i parametri standard per i report della tabella assegnazione.
+     */
+    public function getAssignmentReportParams(iterable $licenses, bool $isPdf = false): array
+    {
+        return [
+            'view'        => 'pdf.work-assignment-table',
+            'data'        => [
+                'matrix'      => $this->preparePdfData($licenses),
+                'generatedBy' => Auth::user()->name ?? 'Sistema',
+                'generatedAt' => now()->format('d/m/Y H:i'),
+                'date'        => today()->format('d/m/Y'),
+                'isPdf'       => $isPdf,
+            ],
+            'filename'    => 'tabella_assegnazione_' . today()->format('Ymd') . '.pdf',
+            'orientation' => 'landscape',
+            'paper'       => 'a4', // O 'a4' a seconda delle necessità
+        ];
+    }
+
+    /**
+     * Genera i parametri completi per la Tabella Ripartizione (Split Table).
+     */
+    public function getSplitTableReportParams(iterable $rows, float $bancaleCost, bool $isPdf = false): array
+    {
+        // 1. Calcolo totali generali tramite il DTO LiquidationResult
+        $liquidations = collect($rows)->pluck('liquidation');
+        $totals = LiquidationResult::aggregateTotals($liquidations);
+
+        // 2. Trasformazione righe per la vista
+        $matrixData = collect($rows)->map(function($l) {
+            $liq = $l->liquidation;
+
+            // Gestione hydration Livewire (da stdClass a DTO)
+            if ($liq instanceof \stdClass) {
+                $liq = LiquidationResult::fromLivewire((array) $liq);
+            }
+
+            if (!$liq) {
+                $liq = new LiquidationResult();
+            }
+
+            return $liq->toPrintParams([
+                'license_number' => $l->user['license_number'] ?? '—',
+                'worksMap'       => $l->worksMap,
+            ]);
+        })->values()->toArray();
+
+        return [
+            'view' => 'pdf.split-table',
+            'data' => [
+                'matrix'      => $matrixData,
+                'totals'      => $totals,
+                'bancaleCost' => $bancaleCost,
+                'generatedBy' => Auth::user()->name ?? 'Sistema',
+                'generatedAt' => now(),
+                'date'        => today(),
+                'isPdf'       => $isPdf,
+            ],
+            'filename'    => 'ripartizione_' . today()->format('Ymd') . '.pdf',
+            'orientation' => 'landscape',
+            'paper'       => 'a4',
+        ];
     }
  
 }

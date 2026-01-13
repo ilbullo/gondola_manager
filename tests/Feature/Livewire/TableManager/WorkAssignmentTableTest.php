@@ -160,17 +160,34 @@ class WorkAssignmentTableTest extends TestCase
     }
 
     #[Test]
-    public function it_prepares_pdf_data_and_redirects_to_generator()
+    public function it_dispatches_print_event_for_browser_printing(): void
     {
+        /**@var User $admin */
+        $admin = User::factory()->create(['name' => 'Admin']);
+        $this->actingAs($admin);
         LicenseTable::factory()->count(2)->create(['date' => today()]);
         
         Livewire::test(WorkAssignmentTable::class)
-            ->dispatch('printWorksTable')
-            // Verifica Redirect per Livewire v3
+            ->call('printTable') // Metodo che genera l'HTML per la stampa
+            ->assertDispatched('print-html');
+    }
+
+    #[Test]
+    public function it_redirects_to_generator_for_pdf_download(): void
+    {
+        $admin = User::factory()->create(['name' => 'Admin']);
+        /**@var User $admin */
+        $this->actingAs($admin);
+        LicenseTable::factory()->count(2)->create(['date' => today()]);
+        
+        Livewire::test(WorkAssignmentTable::class)
+            ->call('downloadTable') // Metodo che prepara il file PDF
             ->assertRedirect(route('generate.pdf'));
 
-        // Verifica Sessione
+        // Verifica che i dati siano stati "parcheggiati" correttamente in sessione
         $this->assertTrue(session()->has('pdf_generate'));
+        $config = session()->get('pdf_generate');
+        $this->assertEquals('pdf.work-assignment-table', $config['view']);
     }
 
     #[Test]

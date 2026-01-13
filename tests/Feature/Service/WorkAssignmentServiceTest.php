@@ -3,7 +3,6 @@
 namespace Tests\Feature\Service;
 
 use Tests\TestCase;
-use App\Models\User;
 use App\Models\Agency;
 use App\Models\LicenseTable;
 use App\Models\WorkAssignment;
@@ -11,6 +10,7 @@ use App\Services\WorkAssignmentService;
 use App\Enums\DayType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Cache;
 use PHPUnit\Framework\Attributes\Test;
 
 class WorkAssignmentServiceTest extends TestCase
@@ -26,12 +26,14 @@ class WorkAssignmentServiceTest extends TestCase
         
         // Mock della configurazione per avere un valore prevedibile nei test
         Config::set('app_settings.works.default_amount', 90.0);
+        
+        // Usiamo il driver array per i test (supporta i lock in memoria)
+        config(['cache.default' => 'array']);
     }
 
     #[Test]
     public function it_persists_a_new_assignment_correctly(): void
     {
-        // Setup: usiamo le factory per creare il contesto
         $agency = Agency::factory()->create(['name' => 'Taxi Agency Venice']);
         $licenseTable = LicenseTable::factory()->create(['date' => today()]);
 
@@ -43,10 +45,8 @@ class WorkAssignmentServiceTest extends TestCase
             'sharedFromFirst' => false
         ];
 
-        // Esecuzione
         $this->service->saveAssignment($licenseTable->id, 5, 1, $selectedWork);
 
-        // Verifica
         $this->assertDatabaseHas('work_assignments', [
             'license_table_id' => $licenseTable->id,
             'agency_id'        => $agency->id,
@@ -71,9 +71,11 @@ class WorkAssignmentServiceTest extends TestCase
 
         $selectedWork = ['value' => 'X', 'amount' => 90];
 
-        // Tentativo di inserimento che collide (inizia al 12, dove il precedente non è ancora finito)
+        // Tentativo di inserimento che collide (inizia al 12)
         $this->expectException(\Exception::class);
-        $this->expectExceptionMessage('Lo slot è già occupato');
+        
+        // Usiamo la stringa aggiornata o una sottostringa univoca
+        $this->expectExceptionMessage('è già occupato o si sovrappone');
 
         $this->service->saveAssignment($licenseTable->id, 12, 1, $selectedWork);
     }
@@ -81,19 +83,14 @@ class WorkAssignmentServiceTest extends TestCase
     #[Test]
     public function it_handles_license_turn_cycling_logic(): void
     {
-        // Creiamo con l'Enum direttamente (Laravel gestirà il salvataggio del valore)
         $licenseTable = LicenseTable::factory()->create(['turn' => DayType::FULL]);
 
-        // Ciclo 1: FULL -> MORNING
         $this->service->cycleLicenseTurn($licenseTable->id);
-        // Confrontiamo l'oggetto restituito dal refresh() con l'Enum previsto
         $this->assertEquals(DayType::MORNING, $licenseTable->refresh()->turn);
 
-        // Ciclo 2: MORNING -> AFTERNOON
         $this->service->cycleLicenseTurn($licenseTable->id);
         $this->assertEquals(DayType::AFTERNOON, $licenseTable->refresh()->turn);
         
-        // Ciclo 3: AFTERNOON -> FULL
         $this->service->cycleLicenseTurn($licenseTable->id);
         $this->assertEquals(DayType::FULL, $licenseTable->refresh()->turn);
     }
@@ -101,24 +98,16 @@ class WorkAssignmentServiceTest extends TestCase
     #[Test]
     public function it_successfully_deletes_a_work_assignment()
     {
-        // 1. Setup con data odierna (coerente con i filtri del Service)
-        $today = now()->format('Y-m-d');
-        $license = LicenseTable::factory()->create(['date' => $today]);
-
-        // 2. Creiamo il lavoro in uno slot "sicuro"
+        $license = LicenseTable::factory()->create(['date' => today()]);
         $work = WorkAssignment::factory()->create([
             'license_table_id' => $license->id,
             'slot' => 1,
             'slots_occupied' => 1,
-            'timestamp' => now(), // Necessario perché il service filtra per whereDate('timestamp', today())
+            'timestamp' => now(),
         ]);
 
-        $service = app(WorkAssignmentService::class);
+        $result = $this->service->deleteAssignment($work->id);
 
-        // 3. Chiamiamo il metodo corretto: deleteAssignment()
-        $result = $service->deleteAssignment($work->id);
-
-        // 4. Verifiche
         $this->assertTrue($result);
         $this->assertDatabaseMissing('work_assignments', ['id' => $work->id]);
     }
@@ -126,7 +115,6 @@ class WorkAssignmentServiceTest extends TestCase
     #[Test]
     public function it_prepares_clean_data_for_pdf_export(): void
     {
-        // Simuliamo la struttura che arriva dalla LicenseResource
         $mockLicenses = [
             [
                 'user' => ['name' => 'Mario Rossi', 'license_number' => '42'],
@@ -146,10 +134,9 @@ class WorkAssignmentServiceTest extends TestCase
     {
         $license = LicenseTable::factory()->create();
         
-        // Creiamo tre assegnazioni con importi diversi
-        WorkAssignment::factory()->create(['license_table_id' => $license->id, 'amount' => 50.50, 'slot' => 1]);
-        WorkAssignment::factory()->create(['license_table_id' => $license->id, 'amount' => 20.00, 'slot' => 2]);
-        WorkAssignment::factory()->create(['license_table_id' => $license->id, 'amount' => 30.00, 'slot' => 3]);
+        WorkAssignment::factory()->create(['license_table_id' => $license->id, 'amount' => 50.50, 'slot' => 1, 'timestamp' => now()]);
+        WorkAssignment::factory()->create(['license_table_id' => $license->id, 'amount' => 20.00, 'slot' => 2, 'timestamp' => now()]);
+        WorkAssignment::factory()->create(['license_table_id' => $license->id, 'amount' => 30.00, 'slot' => 3, 'timestamp' => now()]);
 
         $total = $this->service->getLicenseTotal($license->id);
         
@@ -159,80 +146,89 @@ class WorkAssignmentServiceTest extends TestCase
     #[Test]
     public function it_prevents_race_conditions_using_atomic_locks()
     {
-        // 1. Forza l'uso di un driver cache che supporta i lock (array va bene per i test singoli)
-        config(['cache.default' => 'array']);
-        
         $license = LicenseTable::factory()->create();
-        $service = app(WorkAssignmentService::class);
-        $workData = [
-            'value' => 'A',
-            'amount' => 100,
-            'agencyName' => 'Agency Test'
-        ];
-
-        // 2. Genera la chiave ESATTAMENTE come fa il Service
-        // Nota: Il Service usa "save-assignment-license-..."
+        $workData = ['value' => 'A', 'amount' => 100, 'agencyName' => 'Agency Test'];
         $lockKey = "save-assignment-license-{$license->id}-" . today()->format('Y-m-d');
         
-        // 3. Acquisisci il lock PRIMA di chiamare il service
-        $lock = \Illuminate\Support\Facades\Cache::lock($lockKey, 10);
+        $lock = Cache::lock($lockKey, 10);
         $lock->get(); 
 
-        // 4. Verifica che il Service lanci l'eccezione
         $this->expectException(\Exception::class);
-        $this->expectExceptionMessage('Un altro utente sta aggiornando questa licenza. Riprova tra pochi istanti.');
+        $this->expectExceptionMessage('Un altro utente sta aggiornando questa licenza');
 
-        // 5. Questa chiamata deve fallire perché il lock è occupato
-        $service->saveAssignment($license->id, 5, 1, $workData);
+        $this->service->saveAssignment($license->id, 5, 1, $workData);
     }
 
     #[Test]
     public function it_prevents_concurrent_turn_cycling()
     {
-        config(['cache.default' => 'array']);
-        $license = LicenseTable::factory()->create(['turn' => \App\Enums\DayType::MORNING]);
-        $service = app(WorkAssignmentService::class);
-
-        // Chiave di lock specifica per il cambio turno di QUELLA licenza
+        $license = LicenseTable::factory()->create(['turn' => DayType::MORNING]);
         $lockKey = "cycle-turn-license-{$license->id}";
         
-        // Simulo che un processo stia già cambiando il turno
-        $lock = \Illuminate\Support\Facades\Cache::lock($lockKey, 5);
+        $lock = Cache::lock($lockKey, 5);
         $lock->get();
 
         $this->expectException(\Exception::class);
         $this->expectExceptionMessage('Aggiornamento turno in corso...');
 
-        // Deve fallire perché il lock è occupato
-        $service->cycleLicenseTurn($license->id);
+        $this->service->cycleLicenseTurn($license->id);
     }
 
     #[Test]
     public function it_prevents_deletion_if_assignment_is_locked()
     {
-        config(['cache.default' => 'array']);
-        
-        // 1. Creiamo prima la licenza, poi il lavoro associato
         $license = LicenseTable::factory()->create();
         $work = WorkAssignment::factory()->create([
             'license_table_id' => $license->id,
-            'slot' => 1,            // Inizia all'inizio
-            'slots_occupied' => 1,  // Dura solo uno slot
+            'slot' => 1,
+            'slots_occupied' => 1,
         ]);
         
-        $service = app(WorkAssignmentService::class);
-
-        // 2. Usiamo la chiave di lock coerente con l'ID del lavoro
         $lockKey = "action-assignment-{$work->id}";
-        
-        // 3. Simuliamo un lock attivo
-        $lock = \Illuminate\Support\Facades\Cache::lock($lockKey, 5);
+        $lock = Cache::lock($lockKey, 5);
         $lock->get();
 
         $this->expectException(\Exception::class);
         $this->expectExceptionMessage('Impossibile eliminare: operazione in corso su questo lavoro.');
 
-        // 4. Deve fallire
-        $service->deleteAssignment($work->id);
+        $this->service->deleteAssignment($work->id);
+    }
+
+    #[Test]
+    public function it_allows_assignment_immediately_after_another(): void
+    {
+        $licenseTable = LicenseTable::factory()->create(['date' => today()]);
+
+        // Lavoro che finisce allo slot 10
+        WorkAssignment::factory()->create([
+            'license_table_id' => $licenseTable->id,
+            'slot'             => 9,
+            'slots_occupied'   => 2, // Slot 9 e 10
+            'timestamp'        => now(),
+        ]);
+
+        // Nuovo lavoro che inizia allo slot 11 (Libero)
+        $this->service->saveAssignment($licenseTable->id, 11, 1, ['value' => 'X', 'amount' => 90]);
+
+        $this->assertDatabaseCount('work_assignments', 2);
+    }
+
+    #[Test]
+    public function it_allows_assignment_immediately_before_another(): void
+    {
+        $licenseTable = LicenseTable::factory()->create(['date' => today()]);
+
+        // Lavoro che inizia allo slot 10
+        WorkAssignment::factory()->create([
+            'license_table_id' => $licenseTable->id,
+            'slot'             => 10,
+            'slots_occupied'   => 2, // Slot 10 e 11
+            'timestamp'        => now(),
+        ]);
+
+        // Nuovo lavoro che finisce allo slot 9 (Libero)
+        $this->service->saveAssignment($licenseTable->id, 8, 2, ['value' => 'X', 'amount' => 90]);
+
+        $this->assertDatabaseCount('work_assignments', 2);
     }
 }

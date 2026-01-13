@@ -210,57 +210,23 @@ class WorkAssignmentTable extends Component
         #[On('printWorksTable')]
         public function printTable(WorkAssignmentService $service): void
         {
-            // Delega la preparazione dei dati al service
-            $matrixData = $service->preparePdfData($this->licenses);
-
-            /*Session::flash('pdf_generate', [
-                'view'        => 'pdf.work-assignment-table',
-                'data'        => [
-                    'matrix'      => $matrixData,
-                    'generatedBy' => Auth::user()->name ?? 'Sistema',
-                    'generatedAt' => now()->format('d/m/Y H:i'),
-                    'date'        => today()->format('d/m/Y'),
-                ],
-                'filename'    => 'tabella_assegnazione_' . today()->format('Ymd') . '.pdf',
-                'orientation' => 'landscape',
-                'paper'       => 'a2',
-            ]);
-
-            $this->redirectRoute('generate.pdf');*/
-            // Trasformiamo la vista Blade in una stringa HTML
-            $html = view('pdf.work-assignment-table', [
-                'matrix' => $matrixData,
-                'date' => today()->format('d/m/Y'),
-                'generatedBy' => Auth::user()->name ?? 'Sistema',
-                'generatedAt' => now()->format('d/m/Y H:i'),
-            ])->render();
-
-            // Inviamo l'HTML direttamente al Javascript
+           $params = $service->getAssignmentReportParams($this->licenses, isPdf: false);
+    
+            // Generiamo l'HTML e lo inviamo al browser
+            $html = view($params['view'], $params['data'])->render();
             $this->dispatch('print-html', html: $html);
+            
         }
 
         #[On('downloadWorksTable')]
         public function downloadTable(WorkAssignmentService $service): void
         {
-            // Delega la preparazione dei dati al service
-            $matrixData = $service->preparePdfData($this->licenses);
+            $params = $service->getAssignmentReportParams($this->licenses, isPdf: true);
 
-            Session::flash('pdf_generate', [
-                'view'        => 'pdf.work-assignment-table',
-                'data'        => [
-                    'matrix'      => $matrixData,
-                    'generatedBy' => Auth::user()->name ?? 'Sistema',
-                    'generatedAt' => now()->format('d/m/Y H:i'),
-                    'date'        => today()->format('d/m/Y'),
-                    'isPdf'         => true,
-                ],
-                'filename'    => 'tabella_assegnazione_' . today()->format('Ymd') . '.pdf',
-                'orientation' => 'landscape',
-                'paper'       => 'a2',
-            ]);
+            // Salviamo in sessione per il controller DomPDF
+            Session::flash('pdf_generate', $params);
 
             $this->redirectRoute('generate.pdf');
-
         }
 
         // ===================================================================

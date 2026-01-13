@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Illuminate\Support\Collection;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class AgencyReportService
 {
@@ -63,5 +64,36 @@ class AgencyReportService
             // 5. Torniamo a un array semplice per la vista
             ->values()
             ->toArray();
+    }
+
+    /**
+     * Genera i parametri completi per il report agenzie (stampa o download).
+     */
+    public function getAgencyReportParams(iterable $matrixRows, bool $isPdf = false): array
+    {
+        // Trasformazione dati (Logica estratta dal componente)
+        $dataForReport = collect($matrixRows)->map(function($row) {
+            return [
+                'user'     => $row->user,
+                'worksMap' => $row->worksMap,
+            ];
+        })->toArray();
+
+        // Generazione del report raggruppato
+        $agencyReport = $this->generate($dataForReport);
+
+        return [
+            'view' => 'pdf.agency-report',
+            'data' => [
+                'agencyReport'  => $agencyReport,
+                'generatedBy'   => Auth::user()->name ?? 'Sistema',
+                'date'          => today()->format('d/m/Y'),
+                'generatedAt'   => now()->format('d/m/Y H:i'),
+                'isPdf'         => $isPdf,
+            ],
+            'filename'    => 'report_agenzie_' . today()->format('Ymd') . '.pdf',
+            'orientation' => 'portrait', // Le liste agenzie solitamente sono meglio in verticale
+            'paper'       => 'a4',
+        ];
     }
 }

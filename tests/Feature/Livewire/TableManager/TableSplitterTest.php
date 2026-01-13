@@ -115,18 +115,32 @@ class TableSplitterTest extends TestCase
     }
 
     #[Test]
-    public function it_prepares_pdf_data_correctly_in_session()
+    public function it_dispatches_print_event_for_table_printing(): void
     {
-        /** @var \App\Models\User $admin */
+        /**@var User $admin */
         $admin = User::factory()->create(['name' => 'Admin']);
         $this->actingAs($admin);
-        
         LicenseTable::factory()->create(['date' => today()]);
 
         Livewire::test(TableSplitter::class)
             ->call('confirmBancaleCost')
             ->call('printSplitTable')
-            ->assertRedirect(); // In Laravel 12/Livewire 3 è più sicuro verificare il redirect generico
+            // Invece di assertRedirect, verifichiamo il dispatch dell'evento
+            ->assertDispatched('print-html'); 
+    }
+
+    #[Test]
+    public function it_redirects_and_flashes_session_for_pdf_download(): void
+    {
+        /**@var User $admin */
+        $admin = User::factory()->create(['name' => 'Admin']);
+        $this->actingAs($admin);
+        LicenseTable::factory()->create(['date' => today()]);
+
+        Livewire::test(TableSplitter::class)
+            ->call('confirmBancaleCost')
+            ->call('downloadSplitTablePdf') // Usiamo il metodo che fa download
+            ->assertRedirect(route('generate.pdf')); 
 
         $this->assertTrue(session()->has('pdf_generate'));
     }

@@ -3,16 +3,13 @@
 namespace App\Livewire\TableManager;
 
 use App\Models\LicenseTable;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Livewire\Attributes\On;
 use Livewire\Component;
-use App\Services\LiquidationService;
+use App\Services\WorkAssignmentService;
 use App\Services\AgencyReportService;
-use App\DataObjects\LiquidationResult;
 use App\DataObjects\MatrixTable;
 use App\DataObjects\LicenseRow;
-use Carbon\Carbon;
 use App\Helpers\Format;
 
 class TableSplitter extends Component
@@ -211,196 +208,51 @@ class TableSplitter extends Component
         return ($a['id'] ?? null) == ($b['id'] ?? null);
     }
 
-public function printSplitTable()
+public function printSplitTable(WorkAssignmentService $service): void
 {
-    // 1. Recuperiamo la collezione delle liquidazioni per i totali a fondo pagina
-    // Usiamo pluck per estrarre solo la colonna economica
-    $liquidations = $this->matrixTable->rows->pluck('liquidation');
-    
-    // Calcoliamo i totali generali (N, X, P, Netto) usando il metodo statico del DTO
-    $totals = LiquidationResult::aggregateTotals($liquidations);
+    $params = $service->getSplitTableReportParams(
+        $this->matrixTable->rows, 
+        (float) $this->bancaleCost, 
+        isPdf: false
+    );
 
-    // 2. Prepariamo la matrice dei dati per la vista PDF
-    $matrixData = $this->matrixTable->rows->map(function(LicenseRow $l) {
-        $liq = $l->liquidation;
-
-        // SE Livewire ha degradato l'oggetto a stdClass (accade durante l'hydration),
-        // lo ricostruiamo come LiquidationResult per riavere accesso ai suoi metodi.
-        if ($liq instanceof \stdClass) {
-            $liq = LiquidationResult::fromLivewire((array) $liq);
-        }
-
-        // Se per qualche motivo è null o non valido, creiamo un risultato vuoto per evitare crash
-        if (!$liq) {
-            $liq = new LiquidationResult();
-        }
-
-        /**
-         * Usiamo il metodo toPrintParams() del DTO che centralizza tutte le chiavi 
-         * richieste dalla vista (n_count, netto_raw, ecc.) evitando duplicazione di logica.
-         */
-        return $liq->toPrintParams([
-            'license_number' => $l->user['license_number'] ?? '—',
-            'worksMap'       => $l->worksMap,
-        ]);
-    })->values()->toArray();
-
-    // 3. Salviamo i dati in Sessione Flash per il controller che genera il PDF
-    /*Session::flash('pdf_generate', [
-        'view' => 'pdf.split-table',
-        'data' => [
-            'matrix'      => $matrixData,
-            'totals'      => $totals,
-            'bancaleCost' => (float) $this->bancaleCost,
-            'generatedBy' => Auth::user()->name ?? 'Sistema',
-            'generatedAt' => now(),
-            'date'        => today(),
-        ],
-        'filename' => 'ripartizione_' . today()->format('Ymd') . '.pdf',
-    ]);
-
-    // Reindirizziamo alla rotta globale di generazione PDF
-    return $this->redirectRoute('generate.pdf');
-    */
-
-    // Renderizziamo la vista specifica per lo splitter
-    $html = view('pdf.split-table', [
-        'matrix'      => $matrixData,
-        'totals'      => $totals,
-        'bancaleCost' => (float) $this->bancaleCost,
-        'generatedBy' => Auth::user()->name ?? 'Sistema',
-        'generatedAt' => now(),
-        'date'        => today(),
-    ])->render();
-
-    // Lanciamo lo stesso evento della tabella principale
+    $html = view($params['view'], $params['data'])->render();
     $this->dispatch('print-html', html: $html);
+}
+
+public function downloadSplitTablePdf(WorkAssignmentService $service): void
+{
+    $params = $service->getSplitTableReportParams(
+        $this->matrixTable->rows, 
+        (float) $this->bancaleCost, 
+        isPdf: true
+    );
+
+    Session::flash('pdf_generate', $params);
+    $this->redirectRoute('generate.pdf');
 }
 
     public function printAgencyReport(AgencyReportService $service): void
     {
-        /**
-         * Trasformiamo la collezione di oggetti LicenseRow in un array semplice.
-         * Il nuovo AgencyReportService si aspetta la struttura originale (user + worksMap)
-         * per poter gestire autonomamente il filtraggio e il raggruppamento.
-         */
-        $dataForReport = $this->matrixTable->rows->map(function(LicenseRow $row) {
-            return [
-                'user'     => $row->user,
-                'worksMap' => $row->worksMap,
-            ];
-        })->toArray();
+        // Otteniamo i parametri pronti dal service
+        $params = $service->getAgencyReportParams($this->matrixTable->rows, isPdf: false);
 
-        // Il Service ora gestisce internamente flatMap, filter e groupBy
-        $agencyReport = $service->generate($dataForReport);
+        // Renderizziamo l'HTML per la stampa rapida
+        $html = view($params['view'], $params['data'])->render();
 
-        /*Session::flash('pdf_generate', [
-            'view' => 'pdf.agency-report',
-            'data' => [
-                'agencyReport'  => $agencyReport,
-                'generatedBy'   => Auth::user()->name ?? 'Sistema',
-                'date'          => today()->format('d/m/Y'),
-                'generatedAt'   => now()
-            ],
-            'filename' => 'report_agenzie_' . today()->format('Ymd') . '.pdf',
-        ]);
-
-        $this->redirectRoute('generate.pdf');*/
-
-        // Renderizziamo la vista specifica per lo splitter
-        $html = view('pdf.agency-report', [
-            'agencyReport'  => $agencyReport,
-            'generatedBy'   => Auth::user()->name ?? 'Sistema',
-            'date'          => today()->format('d/m/Y'),
-            'generatedAt'   => now()
-        ])->render();
-
-        // Lanciamo lo stesso evento della tabella principale
         $this->dispatch('print-html', html: $html);
     }
 
-    public function downloadAgencyPdf(AgencyReportService $service)
+    public function downloadAgencyPdf(AgencyReportService $service): void
     {
-        $dataForReport = $this->matrixTable->rows->map(function(LicenseRow $row) {
-                return [
-                    'user'     => $row->user,
-                    'worksMap' => $row->worksMap,
-                ];
-            })->toArray();
+        // Otteniamo i parametri pronti dal service con flag PDF attivo
+        $params = $service->getAgencyReportParams($this->matrixTable->rows, isPdf: true);
 
-            // Il Service ora gestisce internamente flatMap, filter e groupBy
-            $agencyReport = $service->generate($dataForReport);
+        // Salvataggio in sessione e redirect
+        Session::flash('pdf_generate', $params);
 
-            Session::flash('pdf_generate', [
-                'view' => 'pdf.agency-report',
-                'data' => [
-                    'agencyReport'  => $agencyReport,
-                    'generatedBy'   => Auth::user()->name ?? 'Sistema',
-                    'date'          => today()->format('d/m/Y'),
-                    'generatedAt'   => now(),
-                    'isPdf'         => true,
-                ],
-                'filename' => 'report_agenzie_' . today()->format('Ymd') . '.pdf',
-            ]);
-
-            $this->redirectRoute('generate.pdf');
+        $this->redirectRoute('generate.pdf');
     }
-
-    public function downloadSplitTablePdf()
-{
-    // 1. Recuperiamo la collezione delle liquidazioni per i totali a fondo pagina
-    // Usiamo pluck per estrarre solo la colonna economica
-    $liquidations = $this->matrixTable->rows->pluck('liquidation');
-    
-    // Calcoliamo i totali generali (N, X, P, Netto) usando il metodo statico del DTO
-    $totals = LiquidationResult::aggregateTotals($liquidations);
-
-    // 2. Prepariamo la matrice dei dati per la vista PDF
-    $matrixData = $this->matrixTable->rows->map(function(LicenseRow $l) {
-        $liq = $l->liquidation;
-
-        // SE Livewire ha degradato l'oggetto a stdClass (accade durante l'hydration),
-        // lo ricostruiamo come LiquidationResult per riavere accesso ai suoi metodi.
-        if ($liq instanceof \stdClass) {
-            $liq = LiquidationResult::fromLivewire((array) $liq);
-        }
-
-        // Se per qualche motivo è null o non valido, creiamo un risultato vuoto per evitare crash
-        if (!$liq) {
-            $liq = new LiquidationResult();
-        }
-
-        /**
-         * Usiamo il metodo toPrintParams() del DTO che centralizza tutte le chiavi 
-         * richieste dalla vista (n_count, netto_raw, ecc.) evitando duplicazione di logica.
-         */
-        return $liq->toPrintParams([
-            'license_number' => $l->user['license_number'] ?? '—',
-            'worksMap'       => $l->worksMap,
-        ]);
-    })->values()->toArray();
-
-    // 3. Salviamo i dati in Sessione Flash per il controller che genera il PDF
-    Session::flash('pdf_generate', [
-        'view' => 'pdf.split-table',
-        'data' => [
-            'matrix'      => $matrixData,
-            'totals'      => $totals,
-            'bancaleCost' => (float) $this->bancaleCost,
-            'generatedBy' => Auth::user()->name ?? 'Sistema',
-            'generatedAt' => now(),
-            'date'        => today(),
-            'isPdf'         => true,
-
-        ],
-        'filename' => 'ripartizione_' . today()->format('Ymd') . '.pdf',
-    ]);
-
-    // Reindirizziamo alla rotta globale di generazione PDF
-    return $this->redirectRoute('generate.pdf');
-    
-
-}
 
     public function render()
     {

@@ -5,125 +5,103 @@
     <title>Report Servizi Agenzia - {{ $date }}</title>
 
 <style>
+    /* --- CONFIGURAZIONE PAGINA --- */
+    @page {
+        margin: 8mm; /* Leggermente più margine per il formato portrait */
+        size: A4 portrait;
+    }
 
-        @page {
-            margin: 5mm 5mm;
-            size: A4 portrait;
+    /* --- STILI DI BASE --- */
+    .agency-report-container {
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        font-size: 10pt;
+        line-height: 1.32;
+        color: #000;
+        background: white;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+
+    .agency-report-container h1 {
+        text-align: center;
+        font-size: 14pt;
+        font-weight: bold;
+        margin: 0 0 4mm 0;
+        padding-bottom: 3mm;
+        border-bottom: 2px solid #000 !important; /* Bordo più marcato */
+        text-transform: uppercase;
+    }
+
+    .agency-report-container .header {
+        text-align: center;
+        font-size: 10pt;
+        margin: 4mm 0 6mm 0;
+        line-height: 1.4;
+    }
+
+    .agency-report-container table {
+        width: 100%;
+        border-collapse: collapse !important; /* Fondamentale per i bordi */
+        margin-top: 3mm;
+        border: 1px solid #000 !important;
+    }
+
+    .agency-report-container th {
+        border-bottom: 2px solid #000 !important;
+        padding: 8px 6px;
+        text-align: left;
+        font-weight: bold;
+        background-color: #f3f3f3 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        text-transform: uppercase;
+        font-size: 9pt;
+    }
+
+    .agency-report-container td {
+        padding: 7px 6px;
+        vertical-align: middle;
+        border-bottom: 1px solid #ccc !important; /* Bordo riga più visibile */
+        border-right: 1px solid #eee !important; /* Bordo colonna più visibile */
+        font-size: 10pt;
+    }
+
+    .agency-report-container td:last-child {
+        border-right: none !important;
+    }
+
+    .agency-report-container .time {
+        text-align: center;
+        font-weight: bold;
+        width: 65px;
+    }
+
+    .agency-report-container .agency {
+        font-weight: bold;
+        color: #000;
+    }
+
+    /* ... resto degli stili ... */
+    .agency-report-container .voucher { font-style: italic; color: #444; }
+    .agency-report-container .licenses { font-weight: bold; font-size: 11pt; letter-spacing: 0.3px; }
+    .agency-report-container .total-box { margin-top: 10mm; border-top: 2px solid #000 !important; padding-top: 4mm; }
+    .agency-report-container .total-row { text-align: right; font-size: 11pt; margin-bottom: 2mm; }
+    .agency-report-container .total-final { text-align: right; font-size: 13pt; font-weight: bold; text-transform: uppercase; }
+    .agency-report-container .footer { margin-top: 15mm; text-align: center; font-size: 8pt; color: #666; border-top: 1px solid #ccc !important; padding-top: 3mm; }
+
+    /* --- FIX SPECIFICO PER STAMPA BROWSER --- */
+    @media print {
+        * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
         }
 
+        /* Forza la visibilità della tabella se usata dentro iframe */
         .agency-report-container {
-            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-            font-size: 10pt;
-            line-height: 1.32;
-            color: #000;
-            background: white;
-            width: 100%;
-            margin: 0;
-            padding: 0;
+            visibility: visible !important;
         }
-
-        .agency-report-container h1 {
-            text-align: center;
-            font-size: 14pt;
-            font-weight: bold;
-            margin: 0 0 4mm 0;
-            padding-bottom: 3mm;
-            border-bottom: 1.5pt solid #000;
-            text-transform: uppercase;
-        }
-
-        .agency-report-container .header {
-            text-align: center;
-            font-size: 10pt;
-            margin: 4mm 0 6mm 0;
-            line-height: 1.4;
-        }
-
-        .agency-report-container .header strong {
-            font-weight: bold;
-        }
-
-        .agency-report-container table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 3mm;
-            border: 0.8pt solid #444;
-        }
-
-        .agency-report-container th {
-            border-bottom: 1.5pt solid #000;
-            padding: 8px 6px;
-            text-align: left;
-            font-weight: bold;
-            background-color: #f3f3f3 !important;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-            text-transform: uppercase;
-            font-size: 9pt;
-        }
-
-        .agency-report-container td {
-            padding: 7px 6px;
-            vertical-align: middle;
-            border-bottom: 0.5pt solid #bbb;
-            border-right: 0.5pt solid #ddd;
-            font-size: 10pt;
-        }
-
-        .agency-report-container td:last-child {
-            border-right: none;
-        }
-
-        .agency-report-container .time {
-            text-align: center;
-            font-weight: bold;
-            width: 65px;
-        }
-
-        .agency-report-container .agency {
-            font-weight: bold;
-            color: #000;
-        }
-
-        .agency-report-container .voucher {
-            font-style: italic;
-            color: #444;
-        }
-
-        .agency-report-container .licenses {
-            font-weight: bold;
-            font-size: 11pt;
-            letter-spacing: 0.3px;
-        }
-
-        .agency-report-container .total-box {
-            margin-top: 10mm;
-            border-top: 1.5pt solid #000;
-            padding-top: 4mm;
-        }
-
-        .agency-report-container .total-row {
-            text-align: right;
-            font-size: 11pt;
-            margin-bottom: 2mm;
-        }
-
-        .agency-report-container .total-final {
-            text-align: right;
-            font-size: 13pt;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-
-        .agency-report-container .footer {
-            margin-top: 15mm;
-            text-align: center;
-            font-size: 8pt;
-            color: #666;
-            border-top: 0.5pt solid #ccc;
-            padding-top: 3mm;
-        }
-
+    }
 </style>
 
 </head>

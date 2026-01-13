@@ -213,7 +213,7 @@ class WorkAssignmentTable extends Component
             // Delega la preparazione dei dati al service
             $matrixData = $service->preparePdfData($this->licenses);
 
-            Session::flash('pdf_generate', [
+            /*Session::flash('pdf_generate', [
                 'view'        => 'pdf.work-assignment-table',
                 'data'        => [
                     'matrix'      => $matrixData,
@@ -226,7 +226,17 @@ class WorkAssignmentTable extends Component
                 'paper'       => 'a2',
             ]);
 
-            $this->redirectRoute('generate.pdf');
+            $this->redirectRoute('generate.pdf');*/
+            // Trasformiamo la vista Blade in una stringa HTML
+            $html = view('pdf.work-assignment-table', [
+                'matrix' => $matrixData,
+                'date' => today()->format('d/m/Y'),
+                'generatedBy' => Auth::user()->name ?? 'Sistema',
+                'generatedAt' => now()->format('d/m/Y H:i'),
+            ])->render();
+
+            // Inviamo l'HTML direttamente al Javascript
+            $this->dispatch('print-html', html: $html);
         }
 
         // ===================================================================

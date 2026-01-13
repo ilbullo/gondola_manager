@@ -1,9 +1,5 @@
 {{-- resources/views/pdf/work-assignment-table.blade.php --}}
-<!DOCTYPE html>
-<html lang="it">
-<head>
-    <meta charset="utf-8">
-    <title>Tabella Assegnazione - {{ $date }}</title>
+
 <style>
     /* 1. Margini e setup pagina identici all'altro documento per coerenza di stampa */
     @page { margin: 5mm 5mm; size: A4 landscape; }
@@ -77,8 +73,7 @@
 
     .empty { color: #ccc; font-size: 7pt; }
 </style>
-</head>
-<body>
+
 
 <div class="header-box">
     <span style="font-size: 13pt; font-weight: bold; text-transform: uppercase;">TABELLA ASSEGNAZIONE LAVORI</span>
@@ -150,5 +145,4 @@
     <div style="clear: both;"></div>
 </div>
 
-</body>
-</html>
+

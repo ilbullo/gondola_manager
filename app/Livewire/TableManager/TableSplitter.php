@@ -246,7 +246,7 @@ public function printSplitTable()
     })->values()->toArray();
 
     // 3. Salviamo i dati in Sessione Flash per il controller che genera il PDF
-    Session::flash('pdf_generate', [
+    /*Session::flash('pdf_generate', [
         'view' => 'pdf.split-table',
         'data' => [
             'matrix'      => $matrixData,
@@ -261,6 +261,20 @@ public function printSplitTable()
 
     // Reindirizziamo alla rotta globale di generazione PDF
     return $this->redirectRoute('generate.pdf');
+    */
+
+    // Renderizziamo la vista specifica per lo splitter
+    $html = view('pdf.split-table', [
+        'matrix'      => $matrixData,
+        'totals'      => $totals,
+        'bancaleCost' => (float) $this->bancaleCost,
+        'generatedBy' => Auth::user()->name ?? 'Sistema',
+        'generatedAt' => now(),
+        'date'        => today(),
+    ])->render();
+
+    // Lanciamo lo stesso evento della tabella principale
+    $this->dispatch('print-html', html: $html);
 }
 
     public function printAgencyReport(AgencyReportService $service): void
@@ -280,7 +294,7 @@ public function printSplitTable()
         // Il Service ora gestisce internamente flatMap, filter e groupBy
         $agencyReport = $service->generate($dataForReport);
 
-        Session::flash('pdf_generate', [
+        /*Session::flash('pdf_generate', [
             'view' => 'pdf.agency-report',
             'data' => [
                 'agencyReport'  => $agencyReport,
@@ -291,7 +305,18 @@ public function printSplitTable()
             'filename' => 'report_agenzie_' . today()->format('Ymd') . '.pdf',
         ]);
 
-        $this->redirectRoute('generate.pdf');
+        $this->redirectRoute('generate.pdf');*/
+
+        // Renderizziamo la vista specifica per lo splitter
+        $html = view('pdf.agency-report', [
+            'agencyReport'  => $agencyReport,
+            'generatedBy'   => Auth::user()->name ?? 'Sistema',
+            'date'          => today()->format('d/m/Y'),
+            'generatedAt'   => now()
+        ])->render();
+
+        // Lanciamo lo stesso evento della tabella principale
+        $this->dispatch('print-html', html: $html);
     }
 
     public function render()

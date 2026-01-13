@@ -32,6 +32,18 @@ Route::group(
                     // e restituisci una vista Blade pulita
                     return view('print.thermal', ['id' => $licenseId]);
                 })->name('print.receipt');
+
+                Route::get('/print-report', function () {
+                    $config = session()->get('pdf_generate'); // Usa get invece di pull
+
+                    if (!$config || !isset($config['view'])) {
+                        // Invece di un errore 500, restituiamo un messaggio leggibile
+                        return "Errore: Dati di stampa non trovati in sessione. Riprova dalla tabella.";
+                    }
+
+                    $data = $config['data'];
+                    return view($config['view'], $data);
+                })->name('print.report');
     });
 
     // Solo Admin

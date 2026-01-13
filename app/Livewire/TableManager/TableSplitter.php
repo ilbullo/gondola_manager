@@ -16,14 +16,14 @@ class TableSplitter extends Component
 {
     public ?float $bancaleCost = 0.0;
     public bool $showBancaleModal = true;
-    
+
     public string $testScenario = ''; // Scenario di test scelto nel modale
 
     /**
      * Ora usiamo l'oggetto MatrixTable invece di un array generico.
      */
     public MatrixTable $matrixTable;
-    
+
     public array $unassignedWorks = [];
     public ?array $selectedWork = null;
 
@@ -94,7 +94,7 @@ class TableSplitter extends Component
         });
 
         $this->matrixTable = new MatrixTable($rows);
-        
+
         // Eseguiamo il ricalcolo iniziale
         $this->matrixTable->refreshAll((float) $this->bancaleCost);
 
@@ -113,14 +113,14 @@ class TableSplitter extends Component
     {
         if ($propertyName === 'bancaleCost') {
             if (is_null($this->bancaleCost)) $this->bancaleCost = 0.0;
-            
+
             // Rinfresca tutta la matrice con il nuovo costo
             $this->matrixTable->refreshAll((float) $this->bancaleCost);
         }
     }
 
     /**
-     * Rimosso il vecchio refreshAllLiquidations e calculateLiquidation 
+     * Rimosso il vecchio refreshAllLiquidations e calculateLiquidation
      * perché ora la logica risiede dentro MatrixTable e LicenseRow.
      */
 
@@ -128,7 +128,7 @@ class TableSplitter extends Component
     {
         $row = $this->matrixTable->rows->get($licenseKey);
         $work = $row->worksMap[$slotIndex] ?? null;
-        
+
         if (!$work) return;
 
         $this->dispatch('openConfirmModal', [
@@ -156,7 +156,7 @@ class TableSplitter extends Component
 
         $this->unassignedWorks[] = $work;
         $row->worksMap[$slotIndex] = null;
-        
+
         // Rinfreschiamo i calcoli della riga modificata
         $row->refresh((float) $this->bancaleCost);
 
@@ -194,7 +194,7 @@ class TableSplitter extends Component
         }
 
         $row->worksMap[$slotIndex] = $this->selectedWork;
-        
+
         $this->unassignedWorks = array_filter($this->unassignedWorks, fn ($w) => !$this->areWorksEqual($w, $this->selectedWork));
         $this->selectedWork = null;
 
@@ -211,21 +211,22 @@ class TableSplitter extends Component
 public function printSplitTable(WorkAssignmentService $service): void
 {
     $params = $service->getSplitTableReportParams(
-        $this->matrixTable->rows, 
-        (float) $this->bancaleCost, 
-        isPdf: false
+        $this->matrixTable->rows,
+        (float) $this->bancaleCost,
     );
 
-    $html = view($params['view'], $params['data'])->render();
-    $this->dispatch('print-html', html: $html);
+    //$html = view($params['view'], $params['data'])->render();
+    Session::put('pdf_generate', $params);
+    //$this->dispatch('print-html', html: $html);
+    $this->dispatch('trigger-print', url: route('print.report'));
+
 }
 
 public function downloadSplitTablePdf(WorkAssignmentService $service): void
 {
     $params = $service->getSplitTableReportParams(
-        $this->matrixTable->rows, 
-        (float) $this->bancaleCost, 
-        isPdf: true
+        $this->matrixTable->rows,
+        (float) $this->bancaleCost,
     );
 
     Session::flash('pdf_generate', $params);
@@ -235,18 +236,20 @@ public function downloadSplitTablePdf(WorkAssignmentService $service): void
     public function printAgencyReport(AgencyReportService $service): void
     {
         // Otteniamo i parametri pronti dal service
-        $params = $service->getAgencyReportParams($this->matrixTable->rows, isPdf: false);
+        $params = $service->getAgencyReportParams($this->matrixTable->rows);
 
         // Renderizziamo l'HTML per la stampa rapida
-        $html = view($params['view'], $params['data'])->render();
+        //$html = view($params['view'], $params['data'])->render();
+        Session::put('pdf_generate', $params);
+        //$this->dispatch('print-html', html: $html);
+        $this->dispatch('trigger-print', url: route('print.report'));
 
-        $this->dispatch('print-html', html: $html);
     }
 
     public function downloadAgencyPdf(AgencyReportService $service): void
     {
         // Otteniamo i parametri pronti dal service con flag PDF attivo
-        $params = $service->getAgencyReportParams($this->matrixTable->rows, isPdf: true);
+        $params = $service->getAgencyReportParams($this->matrixTable->rows);
 
         // Salvataggio in sessione e redirect
         Session::flash('pdf_generate', $params);

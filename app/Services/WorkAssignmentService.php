@@ -113,7 +113,7 @@ class WorkAssignmentService
             ];
         })
         // Non usiamo sortBy('license_number') se vogliamo mantenere l'ordine operativo (turno/bancale)
-        ->values() 
+        ->values()
         ->toArray();
     }
 
@@ -131,7 +131,7 @@ class WorkAssignmentService
 
         try {
             $license = LicenseTable::findOrFail($licenseId);
-            
+
             $currentTurn = $license->turn instanceof DayType ? $license->turn : DayType::from($license->turn);
 
             $newTurn = match($currentTurn) {
@@ -204,7 +204,7 @@ class WorkAssignmentService
     /**
      * Genera i parametri standard per i report della tabella assegnazione.
      */
-    public function getAssignmentReportParams(iterable $licenses, bool $isPdf = false): array
+    public function getAssignmentReportParams(iterable $licenses): array
     {
         return [
             'view'        => 'pdf.work-assignment-table',
@@ -212,8 +212,7 @@ class WorkAssignmentService
                 'matrix'      => $this->preparePdfData($licenses),
                 'generatedBy' => Auth::user()->name ?? 'Sistema',
                 'generatedAt' => now()->format('d/m/Y H:i'),
-                'date'        => today()->format('d/m/Y'),
-                'isPdf'       => $isPdf,
+                'date'        => today()->format('d/m/Y')
             ],
             'filename'    => 'tabella_assegnazione_' . today()->format('Ymd') . '.pdf',
             'orientation' => 'landscape',
@@ -224,7 +223,7 @@ class WorkAssignmentService
     /**
      * Genera i parametri completi per la Tabella Ripartizione (Split Table).
      */
-    public function getSplitTableReportParams(iterable $rows, float $bancaleCost, bool $isPdf = false): array
+    public function getSplitTableReportParams(iterable $rows, float $bancaleCost): array
     {
         // 1. Calcolo totali generali tramite il DTO LiquidationResult
         $liquidations = collect($rows)->pluck('liquidation');
@@ -257,13 +256,12 @@ class WorkAssignmentService
                 'bancaleCost' => $bancaleCost,
                 'generatedBy' => Auth::user()->name ?? 'Sistema',
                 'generatedAt' => now(),
-                'date'        => today(),
-                'isPdf'       => $isPdf,
+                'date'        => today()
             ],
             'filename'    => 'ripartizione_' . today()->format('Ymd') . '.pdf',
             'orientation' => 'landscape',
             'paper'       => 'a4',
         ];
     }
- 
+
 }

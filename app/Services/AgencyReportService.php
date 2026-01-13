@@ -69,7 +69,7 @@ class AgencyReportService
     /**
      * Genera i parametri completi per il report agenzie (stampa o download).
      */
-    public function getAgencyReportParams(iterable $matrixRows, bool $isPdf = false): array
+    public function getAgencyReportParams(iterable $matrixRows): array
     {
         // Trasformazione dati (Logica estratta dal componente)
         $dataForReport = collect($matrixRows)->map(function($row) {
@@ -89,7 +89,6 @@ class AgencyReportService
                 'generatedBy'   => Auth::user()->name ?? 'Sistema',
                 'date'          => today()->format('d/m/Y'),
                 'generatedAt'   => now()->format('d/m/Y H:i'),
-                'isPdf'         => $isPdf,
             ],
             'filename'    => 'report_agenzie_' . today()->format('Ymd') . '.pdf',
             'orientation' => 'portrait', // Le liste agenzie solitamente sono meglio in verticale

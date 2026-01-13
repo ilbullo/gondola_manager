@@ -1,10 +1,8 @@
-@if(isset($isPdf) && $isPdf)
 <!DOCTYPE html>
 <html lang="it">
 <head>
     <meta charset="utf-8">
     <title>Tabella Assegnazione - {{ $date }}</title>
-@endif
 
 <style>
     /* --- STILI DI BASE (Vengono usati sia per PDF che per Stampa Web) --- */
@@ -70,7 +68,6 @@
     .assignment-table-container .empty { color: #ccc; font-size: 7pt; }
 
     /* --- REGOLE SPECIFICHE PER LA STAMPA WEB (MOBILE/DESKTOP) --- */
-    @if(!isset($isPdf) || !$isPdf)
     @media print {
 
         /* 1. RESET TOTALE DELLA PAGINA */
@@ -109,13 +106,10 @@
             display: none !important;
         }
     }
-    @endif
 </style>
 
-@if(isset($isPdf) && $isPdf)
 </head>
 <body>
-@endif
 
 <div class="assignment-table-container print:block print:visible print:w-full"  onload="window.print();" onafterprint="window.close();">
     <div class="header-box">
@@ -189,7 +183,5 @@
     </div>
 </div>
 
-@if(isset($isPdf) && $isPdf)
 </body>
 </html>
-@endif

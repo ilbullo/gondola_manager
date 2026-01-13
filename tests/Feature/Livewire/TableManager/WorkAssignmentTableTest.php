@@ -36,7 +36,7 @@ class WorkAssignmentTableTest extends TestCase
             ->set('selectedWork', null)
             ->call('assignWork', $license->id, 1)
             ->assertDispatched('notify', function($event, $params) {
-                // In Livewire v3 con dispatch nominale, i parametri sono spesso 
+                // In Livewire v3 con dispatch nominale, i parametri sono spesso
                 // accessibili direttamente o tramite il primo elemento dell'array
                 $message = $params['message'] ?? $params[0]['message'] ?? '';
                 return str_contains($message, 'Seleziona un lavoro');
@@ -48,7 +48,7 @@ class WorkAssignmentTableTest extends TestCase
     {
         $license = LicenseTable::factory()->create();
         $agency = Agency::factory()->create();
-        
+
         $workData = [
             'value' => 'A',
             'agency_id' => $agency->id,
@@ -73,7 +73,7 @@ class WorkAssignmentTableTest extends TestCase
     public function it_handles_service_exceptions_gracefully()
     {
         $license = LicenseTable::factory()->create();
-        
+
         // 1. Occupiamo gli slot 1 e 2 con un lavoro esistente
         WorkAssignment::factory()->create([
             'license_table_id' => $license->id,
@@ -82,7 +82,7 @@ class WorkAssignmentTableTest extends TestCase
         ]);
 
         // 2. Tentiamo di sovrapporre un nuovo lavoro nello slot 2
-        $workData = ['value' => 'N', 'slotsOccupied' => 1]; 
+        $workData = ['value' => 'N', 'slotsOccupied' => 1];
 
         Livewire::test(WorkAssignmentTable::class)
             ->set('selectedWork', $workData)
@@ -130,11 +130,11 @@ class WorkAssignmentTableTest extends TestCase
         ->assertDispatched('notify', function($event, $params) {
             $message = $params['message'] ?? $params[0]['message'] ?? '';
             $type = $params['type'] ?? $params[0]['type'] ?? '';
-            
+
             // Verifica che sia un errore e che contenga un riferimento al fallimento
             return $type === 'error' && (
-                str_contains($message, '99999') || 
-                str_contains($message, 'mancante') || 
+                str_contains($message, '99999') ||
+                str_contains($message, 'mancante') ||
                 str_contains($message, 'No query results')
             );
         });
@@ -150,7 +150,7 @@ class WorkAssignmentTableTest extends TestCase
             ->assertHasNoErrors();
 
         $this->assertTrue($license->refresh()->only_cash_works);
-        
+
         // Toggle di ritorno
         Livewire::test(WorkAssignmentTable::class)
             ->call('toggleOnlyCash', $license->id)
@@ -160,16 +160,27 @@ class WorkAssignmentTableTest extends TestCase
     }
 
     #[Test]
-    public function it_dispatches_print_event_for_browser_printing(): void
+    public function it_dispatches_print_event_for_browser_printing()
     {
-        /**@var User $admin */
-        $admin = User::factory()->create(['name' => 'Admin']);
+        // 1. Setup Utente Autenticato
+        $admin = User::factory()->create();
         $this->actingAs($admin);
-        LicenseTable::factory()->count(2)->create(['date' => today()]);
-        
-        Livewire::test(WorkAssignmentTable::class)
-            ->call('printTable') // Metodo che genera l'HTML per la stampa
-            ->assertDispatched('print-html');
+
+        // 2. Test del componente
+        Livewire::actingAs($admin)
+            ->test(WorkAssignmentTable::class)
+            // Assicuriamoci che ci siano dati nel componente se il metodo li usa
+            ->set('licenses', [])
+            ->call('printTable')
+            // Asserzione sull'evento browser per l'iframe
+            ->assertDispatched('trigger-print')
+            // Asserzione sulla sessione (fondamentale per la rotta /print-report)
+            ->assertSessionHas('pdf_generate');
+
+        // Verifica finale: controlliamo che la sessione contenga effettivamente i dati della matrice
+        $sessionData = session('pdf_generate');
+        $this->assertArrayHasKey('view', $sessionData);
+        $this->assertArrayHasKey('data', $sessionData);
     }
 
     #[Test]
@@ -179,7 +190,7 @@ class WorkAssignmentTableTest extends TestCase
         /**@var User $admin */
         $this->actingAs($admin);
         LicenseTable::factory()->count(2)->create(['date' => today()]);
-        
+
         Livewire::test(WorkAssignmentTable::class)
             ->call('downloadTable') // Metodo che prepara il file PDF
             ->assertRedirect(route('generate.pdf'));
@@ -194,7 +205,7 @@ class WorkAssignmentTableTest extends TestCase
     public function it_resets_error_message_when_new_work_is_selected()
     {
         $component = Livewire::test(WorkAssignmentTable::class);
-        
+
         // Simuliamo uno stato di errore precedente
         $component->set('errorMessage', 'Errore precedente');
 

@@ -1,22 +1,15 @@
-@if(isset($isPdf) && $isPdf)
 <!DOCTYPE html>
 <html lang="it">
 <head>
     <meta charset="utf-8">
     <title>Ripartizione Odierna - {{ $date }}</title>
-@endif
 
 <style>
-    /* Se NON è un PDF (WebApp), isoliamo con @media print */
-    @if(!isset($isPdf) || !$isPdf) 
-    @media print { 
-    @endif
-
-        @page { 
-            margin: 5mm 5mm; 
-            size: A4 landscape; 
+        @page {
+            margin: 5mm 5mm;
+            size: A4 landscape;
         }
-        
+
         .print-wrapper {
             font-family: Arial, Helvetica, sans-serif;
             font-size: 8.2pt;
@@ -49,9 +42,9 @@
             print-color-adjust: exact;
         }
 
-        .slot { 
-            width: 28px !important; 
-            height: 24px; 
+        .slot {
+            width: 28px !important;
+            height: 24px;
         }
 
         .prev-lic-text {
@@ -64,8 +57,8 @@
         }
 
         .row-even { background-color: #ffffff !important; }
-        .row-odd { 
-            background-color: #f9fafb !important; 
+        .row-odd {
+            background-color: #f9fafb !important;
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
         }
@@ -88,9 +81,9 @@
         }
 
         .header-box {
-            border-bottom: 1.5pt solid #000; 
-            padding-bottom: 4px; 
-            margin-bottom: 6px; 
+            border-bottom: 1.5pt solid #000;
+            padding-bottom: 4px;
+            margin-bottom: 6px;
             width: 100%;
         }
 
@@ -99,16 +92,10 @@
             font-size: 7.5pt;
             width: 100%;
         }
-
-    @if(!isset($isPdf) || !$isPdf) 
-    } 
-    @endif
 </style>
 
-@if(isset($isPdf) && $isPdf)
 </head>
 <body>
-@endif
 
 <div class="print-wrapper">
     <div class="header-box">
@@ -187,9 +174,9 @@
 
     <div class="legenda">
         <div style="float: left; width: 75%;">
-            <strong>LEGENDA:</strong> 
-            N: Noli • X: Contanti • U: Shared • P: Perdi Volta • 
-            <u>Sottolineato</u>: Fisso Licenza • 
+            <strong>LEGENDA:</strong>
+            N: Noli • X: Contanti • U: Shared • P: Perdi Volta •
+            <u>Sottolineato</u>: Fisso Licenza •
             <strong>Grassetto</strong>: Shared
         </div>
         <div style="float: right; width: 25%; text-align: right; color: #666; font-style: italic;">
@@ -199,7 +186,5 @@
     </div>
 </div>
 
-@if(isset($isPdf) && $isPdf)
 </body>
 </html>
-@endif

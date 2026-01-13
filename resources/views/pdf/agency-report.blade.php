@@ -1,20 +1,14 @@
-@if(isset($isPdf) && $isPdf)
 <!DOCTYPE html>
 <html lang="it">
 <head>
     <meta charset="utf-8">
     <title>Report Servizi Agenzia - {{ $date }}</title>
-@endif
 
 <style>
-    /* Se NON è un PDF, avvolgiamo tutto in @media print per proteggere la WebApp */
-    @if(!isset($isPdf) || !$isPdf) 
-    @media print { 
-    @endif
 
-        @page { 
-            margin: 5mm 5mm; 
-            size: A4 portrait; 
+        @page {
+            margin: 5mm 5mm;
+            size: A4 portrait;
         }
 
         .agency-report-container {
@@ -45,8 +39,8 @@
             line-height: 1.4;
         }
 
-        .agency-report-container .header strong { 
-            font-weight: bold; 
+        .agency-report-container .header strong {
+            font-weight: bold;
         }
 
         .agency-report-container table {
@@ -76,29 +70,29 @@
             font-size: 10pt;
         }
 
-        .agency-report-container td:last-child { 
-            border-right: none; 
+        .agency-report-container td:last-child {
+            border-right: none;
         }
 
-        .agency-report-container .time { 
-            text-align: center; 
-            font-weight: bold; 
-            width: 65px; 
+        .agency-report-container .time {
+            text-align: center;
+            font-weight: bold;
+            width: 65px;
         }
 
-        .agency-report-container .agency { 
-            font-weight: bold; 
-            color: #000; 
+        .agency-report-container .agency {
+            font-weight: bold;
+            color: #000;
         }
 
-        .agency-report-container .voucher { 
-            font-style: italic; 
-            color: #444; 
+        .agency-report-container .voucher {
+            font-style: italic;
+            color: #444;
         }
 
-        .agency-report-container .licenses { 
-            font-weight: bold; 
-            font-size: 11pt; 
+        .agency-report-container .licenses {
+            font-weight: bold;
+            font-size: 11pt;
             letter-spacing: 0.3px;
         }
 
@@ -130,15 +124,10 @@
             padding-top: 3mm;
         }
 
-    @if(!isset($isPdf) || !$isPdf) 
-    } 
-    @endif
 </style>
 
-@if(isset($isPdf) && $isPdf)
 </head>
 <body>
-@endif
 
 <div class="agency-report-container">
     <h1>Report Servizi Agenzia</h1>
@@ -194,7 +183,5 @@
     </div>
 </div>
 
-@if(isset($isPdf) && $isPdf)
 </body>
 </html>
-@endif

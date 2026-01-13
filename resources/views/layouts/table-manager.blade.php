@@ -13,19 +13,19 @@
         .job-pill { cursor: pointer; transition: transform 0.1s; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1; }
         .config-item { height: 50px; display: flex; align-items: center; }
     /* 1. NESSUNA regola fuori da @media print deve toccare elementi esistenti */
-    #print-container { 
-        display: none; 
+    #print-container {
+        display: none;
     }
 
     @media print {
         /* 2. Nascondi l'interfaccia interattiva solo in fase di stampa */
-        body > *:not(#print-container) { 
-            display: none !important; 
+        body > *:not(#print-container) {
+            display: none !important;
         }
 
         /* 3. Mostra il report */
-        #print-container { 
-            display: block !important; 
+        #print-container {
+            display: block !important;
             position: absolute;
             top: 0;
             left: 0;
@@ -37,11 +37,11 @@
         #print-container table { display: table !important; width: 100% !important; }
         #print-container tr { display: table-row !important; }
         #print-container td, #print-container th { display: table-cell !important; }
-        
+
         /* 5. Reset strutturale per la stampante */
-        html, body { 
-            overflow: visible !important; 
-            height: auto !important; 
+        html, body {
+            overflow: visible !important;
+            height: auto !important;
         }
     }
 </style>
@@ -55,25 +55,38 @@
     @livewireScripts
     @stack('scripts')
     <script>
-       window.addEventListener('print-html', event => {
-            let printContainer = document.getElementById('print-container');
-            if (!printContainer) {
-                printContainer = document.createElement('div');
-                printContainer.id = 'print-container';
-                document.body.appendChild(printContainer);
-            }
+    window.addEventListener('trigger-print', event => {
+        const url = event.detail.url;
 
-            printContainer.innerHTML = event.detail.html;
+        let printFrame = document.getElementById('hiddenPrintFrame');
+        if (!printFrame) {
+            printFrame = document.createElement('iframe');
+            printFrame.id = 'hiddenPrintFrame';
 
-            // Lanciamo la stampa
-            window.print();
+            // Invece di display:none, usiamo un trucco per renderlo
+            // "tecnicamente" visibile ma invisibile all'utente
+            printFrame.style.position = 'fixed';
+            printFrame.style.right = '0';
+            printFrame.style.bottom = '0';
+            printFrame.style.width = '1px';
+            printFrame.style.height = '1px';
+            printFrame.style.border = 'none';
+            printFrame.style.opacity = '0';
 
-            // Pulizia immediata: non appena la finestra di stampa si chiude, 
-            // svuotiamo il contenitore. 50ms sono sufficienti per evitare glitch.
-            setTimeout(() => {
-                printContainer.innerHTML = '';
-            }, 50); 
-        });
-    </script>
+            document.body.appendChild(printFrame);
+        }
+
+        // Quando l'iframe ha finito di caricare la pagina...
+        printFrame.onload = function() {
+            setTimeout(function() {
+                // Lanciamo la stampa direttamente dal contenuto dell'iframe
+                printFrame.contentWindow.focus();
+                printFrame.contentWindow.print();
+            }, 500);
+        };
+
+        printFrame.src = url;
+    });
+</script>
 </body>
 </html>

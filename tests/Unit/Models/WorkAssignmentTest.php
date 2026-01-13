@@ -29,12 +29,12 @@ class WorkAssignmentTest extends TestCase
         $this->expectExceptionMessage("Errore Spaziale: la durata del lavoro eccede il limite del tabellone");
 
         $license = LicenseTable::factory()->create();
-        
+
         // Questo fa finire il lavoro allo slot 26, scatenando l'eccezione
         WorkAssignment::factory()->create([
             'license_table_id' => $license->id,
             'slot' => 22,
-            'slots_occupied' => 5 
+            'slots_occupied' => 5
         ]);
     }
 
@@ -58,7 +58,7 @@ class WorkAssignmentTest extends TestCase
     public function it_validates_work_type_via_mutator()
     {
         $work = new WorkAssignment();
-        
+
         // Valore valido
         $work->value = 'A';
         $this->assertEquals('A', $work->value);
@@ -74,7 +74,9 @@ class WorkAssignmentTest extends TestCase
         $agency = \App\Models\Agency::factory()->create(['name' => 'Hotel Roma', 'code' => 'HR']);
         $work = WorkAssignment::factory()->create([
             'license_table_id' => $this->license->id,
-            'agency_id' => $agency->id
+            'agency_id' => $agency->id,
+            'slot' => 1,  // Inizia all'1
+            'slots_occupied'      => 1,  // Dura solo 1 slot
         ]);
 
         $this->assertEquals('Hotel Roma', $work->agency_name);
@@ -98,7 +100,7 @@ class WorkAssignmentTest extends TestCase
             'value' => 'X'
         ]);
 
-        // fresh() ricarica il modello dal database per essere sicuri 
+        // fresh() ricarica il modello dal database per essere sicuri
         // che il casting di Eloquent non ci stia ingannando
         $this->assertEquals($largeAmount, (float) $work->fresh()->amount);
     }
@@ -111,7 +113,7 @@ class WorkAssignmentTest extends TestCase
         // Tentativo di mettere 'shared_from_first' su un lavoro 'N' (Cash)
         // Secondo le tue regole nel modello, questo deve fallire.
         $this->expectException(\Exception::class);
-        
+
         WorkAssignment::create([
             'license_table_id' => $license->id,
             'value' => 'N',

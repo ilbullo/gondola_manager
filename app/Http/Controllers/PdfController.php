@@ -21,11 +21,9 @@ class PdfController extends Controller
 
         /**
          * SICUREZZA & COERENZA (SOLID):
-         * Forziamo isPdf a true nel caso in cui il Service si sia dimenticato.
          * Questo garantisce che la vista Blade carichi i tag <html> e <body> necessari a DomPDF.
          */
         $data = $config['data'] ?? [];
-        $data['isPdf'] = true;
 
         // Creazione istanza PDF
         $pdf = Pdf::loadView($config['view'], $data);

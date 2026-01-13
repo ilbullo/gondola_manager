@@ -140,7 +140,7 @@ class WorkAssignmentTable extends Component
         } catch (\Exception $e) {
             $this->errorMessage = $e->getMessage();
             // Assicurati che l'errore venga notificato al browser/test
-            $this->dispatch('notify', message: $e->getMessage(), type: 'error'); 
+            $this->dispatch('notify', message: $e->getMessage(), type: 'error');
         }
     }
 
@@ -167,12 +167,12 @@ class WorkAssignmentTable extends Component
             );
 
             $this->refreshTable($service);
-            
+
             // Reset dello stato locale
             $this->errorMessage = '';
-            
+
             // Notifichiamo alla sidebar che il lavoro è stato usato (se necessario)
-            $this->dispatch('workAssigned'); 
+            $this->dispatch('workAssigned');
             $this->dispatch('notify-success', ['message' => 'Lavoro assegnato con successo']);
 
         } catch (\Exception $e) {
@@ -210,18 +210,21 @@ class WorkAssignmentTable extends Component
         #[On('printWorksTable')]
         public function printTable(WorkAssignmentService $service): void
         {
-           $params = $service->getAssignmentReportParams($this->licenses, isPdf: false);
-    
+           $params = $service->getAssignmentReportParams($this->licenses);
+
             // Generiamo l'HTML e lo inviamo al browser
-            $html = view($params['view'], $params['data'])->render();
-            $this->dispatch('print-html', html: $html);
-            
+            //$html = view($params['view'], $params['data'])->render();
+            //$this->dispatch('print-html', html: $html);
+            Session::put('pdf_generate', $params);
+            //$this->redirectRoute('print.report');
+            $this->dispatch('trigger-print', url: route('print.report'));
+
         }
 
         #[On('downloadWorksTable')]
         public function downloadTable(WorkAssignmentService $service): void
         {
-            $params = $service->getAssignmentReportParams($this->licenses, isPdf: true);
+            $params = $service->getAssignmentReportParams($this->licenses);
 
             // Salviamo in sessione per il controller DomPDF
             Session::flash('pdf_generate', $params);

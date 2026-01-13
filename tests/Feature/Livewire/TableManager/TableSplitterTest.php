@@ -9,7 +9,7 @@ use App\Models\User;
 use App\Models\Agency;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
-use \Carbon\Carbon; 
+use \Carbon\Carbon;
 use Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -36,7 +36,7 @@ class TableSplitterTest extends TestCase
             ->call('confirmBancaleCost');
 
         $component->assertSet('showBancaleModal', false);
-        
+
         // Correzione: Recuperiamo l'oggetto e verifichiamo che non sia vuoto
         $matrix = $component->get('matrixTable');
         $this->assertNotNull($matrix);
@@ -53,7 +53,7 @@ class TableSplitterTest extends TestCase
             'date' => today(),
             'order' => 1
         ]);
-        
+
         WorkAssignment::factory()->create([
             'license_table_id' => $licenseTable->id,
             'slot' => 1,
@@ -86,7 +86,7 @@ class TableSplitterTest extends TestCase
         $unassigned = $component->get('unassignedWorks');
         $this->assertCount(1, $unassigned);
         $this->assertEquals('10', $unassigned[0]['prev_license_number']);
-        
+
         // Verifica che lo slot sulla riga sia ora vuoto
         $this->assertNull($component->get('matrixTable')->rows->get($realKey)->worksMap[1]);
     }
@@ -105,28 +105,36 @@ class TableSplitterTest extends TestCase
     public function it_updates_liquidations_when_bancale_cost_changes()
     {
         LicenseTable::factory()->create(['date' => today()]);
-        
+
         $component = Livewire::test(TableSplitter::class)
             ->call('confirmBancaleCost')
-            ->set('bancaleCost', 100.00); 
+            ->set('bancaleCost', 100.00);
 
         // Verifichiamo che la proprietà sia aggiornata
         $this->assertEquals(100.00, $component->get('bancaleCost'));
     }
 
     #[Test]
-    public function it_dispatches_print_event_for_table_printing(): void
+    public function it_dispatches_print_event_for_table_printing()
     {
-        /**@var User $admin */
-        $admin = User::factory()->create(['name' => 'Admin']);
+        // 1. Creiamo un utente con i permessi necessari (visto nel tuo web.php)
+        $admin = User::factory()->create();
         $this->actingAs($admin);
-        LicenseTable::factory()->create(['date' => today()]);
 
-        Livewire::test(TableSplitter::class)
-            ->call('confirmBancaleCost')
+        // 2. Setup dei dati (simuliamo delle licenze caricate nel componente)
+        $licenses = []; // Aggiungi qui dati di esempio se il tuo service li richiede
+
+        Livewire::actingAs($admin)
+            ->test(TableSplitter::class, ['licenses' => $licenses])
             ->call('printSplitTable')
-            // Invece di assertRedirect, verifichiamo il dispatch dell'evento
-            ->assertDispatched('print-html'); 
+            // Verifica che l'evento corretto sia stato lanciato
+            ->assertDispatched('trigger-print', function($eventName, $params) {
+                return str_contains($params['url'], route('print.report'));
+            })
+            // Verifica che i dati siano stati salvati correttamente in sessione
+            ->assertSessionHas('pdf_generate', function($sessionData) {
+                return isset($sessionData['view']) && isset($sessionData['data']);
+            });
     }
 
     #[Test]
@@ -140,7 +148,7 @@ class TableSplitterTest extends TestCase
         Livewire::test(TableSplitter::class)
             ->call('confirmBancaleCost')
             ->call('downloadSplitTablePdf') // Usiamo il metodo che fa download
-            ->assertRedirect(route('generate.pdf')); 
+            ->assertRedirect(route('generate.pdf'));
 
         $this->assertTrue(session()->has('pdf_generate'));
     }
@@ -154,7 +162,7 @@ class TableSplitterTest extends TestCase
     {
         $user = User::factory()->create();
         $license = LicenseTable::factory()->create(['user_id' => $user->id, 'date' => today()]);
-        
+
         WorkAssignment::factory()->create(['license_table_id' => $license->id, 'value' => 'N', 'amount' => 10.33, 'slot' => 1, 'timestamp' => today()]);
         WorkAssignment::factory()->create(['license_table_id' => $license->id, 'value' => 'N', 'amount' => 20.66, 'slot' => 10, 'timestamp' => today()]);
 
@@ -163,7 +171,7 @@ class TableSplitterTest extends TestCase
             ->call('confirmBancaleCost');
 
         $row = $component->get('matrixTable')->rows->first();
-        
+
         // Verifichiamo il totale (usa net_amount o cash_due in base al tuo DTO)
         // Se il tuo DTO usa 'cash_due', assicurati che esista, altrimenti usa quella corretta
         $actual = (float) ($row->liquidation->cash_due ?? $row->liquidation->net_amount ?? 25.49);
@@ -183,15 +191,15 @@ class TableSplitterTest extends TestCase
             'user_id' => $user->id,
             'date'    => $targetDate,
         ]);
-        
+
         $agency = Agency::factory()->create(['code' => 'TEST']);
-        
+
         // Rimosso 'user_id' perché non presente in tabella
         WorkAssignment::factory()->create([
             'license_table_id' => $license->id,
             'slot'             => 5,
             'slots_occupied'   => 3,
-            'value'            => 'A', 
+            'value'            => 'A',
             'agency_id'        => $agency->id,
             'timestamp'        => $targetDate . ' 12:00:00',
         ]);
@@ -200,9 +208,9 @@ class TableSplitterTest extends TestCase
             ->call('confirmBancaleCost');
 
         $row = $component->get('matrixTable')->rows->firstWhere('id', $license->id);
-        
+
         $this->assertNotNull($row, "Licenza non caricata.");
-        
+
         // Poiché il Service esegue compactMatrix(), il lavoro finirà nello slot 1
         $this->assertNotNull($row->worksMap[1], "Il lavoro dovrebbe essere stato compattato nello slot 1.");
         $this->assertEquals('A', $row->worksMap[1]['value']);
@@ -217,11 +225,11 @@ class TableSplitterTest extends TestCase
     {
         $targetDate = now()->format('Y-m-d');
         $license = LicenseTable::factory()->create(['date' => $targetDate]);
-        
+
         WorkAssignment::factory()->create([
-            'license_table_id' => $license->id, 
-            'slot'             => 1, 
-            'value'            => 'N', 
+            'license_table_id' => $license->id,
+            'slot'             => 1,
+            'value'            => 'N',
             'timestamp'        => $targetDate . ' 10:00:00'
         ]);
 
@@ -235,7 +243,7 @@ class TableSplitterTest extends TestCase
         $this->assertNotNull($rows[$realKey]->worksMap[1], "Setup fallito: slot 1 vuoto.");
 
         $component->set('selectedWork', ['id' => 999, 'value' => 'X']);
-        
+
         // Tentativo di assegnazione su slot già occupato (1)
         $component->call('assignToSlot', $realKey, 1);
 
@@ -251,8 +259,8 @@ class TableSplitterTest extends TestCase
     public function it_toggles_selection_on_repeated_clicks()
     {
         $work = [
-            'id' => 500, 
-            'value' => 'P', 
+            'id' => 500,
+            'value' => 'P',
             'timestamp' => now()->toDateTimeString(),
             'agency_code' => '—'
         ];
@@ -277,7 +285,7 @@ class TableSplitterTest extends TestCase
         $license = LicenseTable::factory()->create([
             'date'  => today()
         ]);
-        
+
         // 2. Pulizia di sicurezza: eliminiamo eventuali lavori rimasti orfani per questa licenza
         WorkAssignment::where('license_table_id', $license->id)->delete();
 
@@ -300,12 +308,12 @@ class TableSplitterTest extends TestCase
             // Invece di guardare il totale generale, guardiamo il netto di QUESTA riga
             $matrix = $c->get('matrixTable');
             $row = collect($matrix->rows)->firstWhere('id', $license->id);
-            
+
             if (!$row) return 0;
 
             // Forza il refresh del calcolo sulla riga con il costo bancale attuale
             $row->refresh((float) $c->get('bancaleCost'));
-            
+
             $liq = $row->liquidation;
             return (float) ($liq->money['netto'] ?? $liq->net_amount ?? $liq->cash_due ?? 0);
         };

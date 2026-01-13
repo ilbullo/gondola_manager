@@ -26,11 +26,14 @@
 
     .assignment-table-container th,
     .assignment-table-container td {
-        border: 0.4pt solid #000;
+        border: 0.4pt solid #000 !important;
         text-align: center;
         vertical-align: middle;
         padding: 1.5px 1px;
         font-size: 8.4pt;
+        /* Forza la resa del colore dei bordi nei browser */
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
     }
 
     .assignment-table-container th {

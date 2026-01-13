@@ -8,13 +8,13 @@
 
 <style>
     /* Se NON è un PDF (WebApp), isoliamo con @media print */
-    @if(!isset($isPdf) || !$isPdf) 
-    @media print { 
+    @if(!isset($isPdf) || !$isPdf)
+    @media print {
     @endif
 
-        @page { 
-            margin: 5mm 5mm; 
-            size: A4 landscape; 
+        @page {
+            margin: 5mm 5mm;
+            size: A4 landscape;
         }
 
         .assignment-table-container {
@@ -34,7 +34,7 @@
             border: 0.4pt solid #000;
         }
 
-        .assignment-table-container th, 
+        .assignment-table-container th,
         .assignment-table-container td {
             border: 0.4pt solid #000;
             text-align: center;
@@ -68,20 +68,20 @@
         }
 
         .assignment-table-container .row-even { background-color: #ffffff !important; }
-        .assignment-table-container .row-odd { 
-            background-color: #fcfcfc !important; 
+        .assignment-table-container .row-odd {
+            background-color: #fcfcfc !important;
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
         }
 
-        .assignment-table-container .excluded { 
-            text-decoration: underline; 
-            text-decoration-thickness: 1.8pt; 
+        .assignment-table-container .excluded {
+            text-decoration: underline;
+            text-decoration-thickness: 1.8pt;
         }
-        
-        .assignment-table-container .shared { 
-            font-weight: bold; 
-            color: #444; 
+
+        .assignment-table-container .shared {
+            font-weight: bold;
+            color: #444;
         }
 
         .assignment-table-container .lic {
@@ -99,13 +99,13 @@
             width: 100%;
         }
 
-        .assignment-table-container .empty { 
-            color: #ccc; 
-            font-size: 7pt; 
+        .assignment-table-container .empty {
+            color: #ccc;
+            font-size: 7pt;
         }
 
-    @if(!isset($isPdf) || !$isPdf) 
-    } 
+    @if(!isset($isPdf) || !$isPdf)
+    }
     @endif
 </style>
 
@@ -114,7 +114,7 @@
 <body>
 @endif
 
-<div class="assignment-table-container">
+<div class="assignment-table-container print:block print:w-full">
     <div class="header-box">
         <span style="font-size: 13pt; font-weight: bold; text-transform: uppercase;">TABELLA ASSEGNAZIONE LAVORI</span>
         <span style="font-size: 8.5pt; font-weight: bold; float: right; margin-top: 4px;">

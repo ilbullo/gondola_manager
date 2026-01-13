@@ -117,7 +117,7 @@
 <body>
 @endif
 
-<div class="assignment-table-container print:block print:visible print:w-full">
+<div class="assignment-table-container print:block print:visible print:w-full"  onload="window.print();" onafterprint="window.close();">
     <div class="header-box">
         <span style="font-size: 13pt; font-weight: bold; text-transform: uppercase;">TABELLA ASSEGNAZIONE LAVORI</span>
         <span style="font-size: 8.5pt; font-weight: bold; float: right; margin-top: 4px;">

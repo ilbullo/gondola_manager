@@ -5,9 +5,7 @@
     <title>Tabella Assegnazione - {{ $date }}</title>
 
 <style>
-    /* --- STILI DI BASE (Vengono usati sia per PDF che per Stampa Web) --- */
-
-    /* Regole comuni per la tabella */
+    /* --- STILI DI BASE --- */
     .assignment-table-container {
         font-family: Arial, Helvetica, sans-serif;
         font-size: 8.2pt;
@@ -19,63 +17,42 @@
 
     .assignment-table-container table {
         width: 100%;
-        border-collapse: collapse;
+        border-collapse: collapse !important; /* Forza il collasso dei bordi */
         table-layout: fixed;
-        border: 0.4pt solid #000;
+        border: 1px solid #000 !important;
     }
 
     .assignment-table-container th,
     .assignment-table-container td {
-        border: 0.4pt solid #000 !important;
+        border: 1px solid #000 !important; /* Bordo forzato per ogni cella */
         text-align: center;
         vertical-align: middle;
         padding: 1.5px 1px;
         font-size: 8.4pt;
-        /* Forza la resa del colore dei bordi nei browser */
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
     }
 
     .assignment-table-container th {
         font-weight: bold;
-        border-bottom: 1.5pt solid #000;
-        background-color: #f3f4f6 !important; /* Grigio chiaro per header */
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
+        border-bottom: 2px solid #000 !important; /* Header più marcato */
+        background-color: #f3f4f6 !important;
     }
 
-    .assignment-table-container .slot {
-        width: 29px !important;
-        height: 25px;
-    }
-
-    .assignment-table-container .voucher-text {
-        display: block;
-        font-size: 6.5pt;
-        color: #444;
-        line-height: 1;
-        margin-top: -1px;
-    }
-
+    /* ... resto dei tuoi stili (.slot, .voucher-text, ecc.) ... */
+    .assignment-table-container .slot { width: 29px !important; height: 25px; }
+    .assignment-table-container .voucher-text { display: block; font-size: 6.5pt; color: #444; line-height: 1; margin-top: -1px; }
     .assignment-table-container .row-even { background-color: #ffffff !important; }
-    .assignment-table-container .row-odd {
-        background-color: #fcfcfc !important;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-    }
-
+    .assignment-table-container .row-odd { background-color: #fcfcfc !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .assignment-table-container .excluded { text-decoration: underline; text-decoration-thickness: 1.8pt; }
     .assignment-table-container .shared { font-weight: bold; color: #444; }
     .assignment-table-container .lic { width: 55px; font-weight: bold; background-color: #f9fafb !important; }
     .assignment-table-container .header-box { border-bottom: 1.5pt solid #000; padding-bottom: 3px; margin-bottom: 5px; width: 100%; }
     .assignment-table-container .empty { color: #ccc; font-size: 7pt; }
 
-    /* --- REGOLE SPECIFICHE PER LA STAMPA WEB (MOBILE/DESKTOP) --- */
     @media print {
-
-        /* 1. RESET TOTALE DELLA PAGINA */
         html, body {
-            visibility: hidden; /* Nasconde tutto il sito */
+            visibility: hidden;
             height: auto !important;
             overflow: visible !important;
             margin: 0 !important;
@@ -83,13 +60,11 @@
             background: white !important;
         }
 
-        /* 2. RENDI VISIBILE SOLO LA TABELLA */
         .assignment-table-container,
         .assignment-table-container * {
-            visibility: visible !important; /* Mostra solo la tabella e i suoi figli */
+            visibility: visible !important;
         }
 
-        /* 3. POSIZIONAMENTO ASSOLUTO PER ESTRARLA DAL FLUSSO */
         .assignment-table-container {
             position: absolute !important;
             left: 0 !important;
@@ -98,15 +73,9 @@
             margin: 0 !important;
         }
 
-        /* 4. IMPOSTAZIONI PAGINA */
         @page {
             size: A4 landscape;
             margin: 5mm;
-        }
-
-        /* Nascondi elementi di disturbo noti */
-        nav, header, footer, .sidebar, .fixed {
-            display: none !important;
         }
     }
 </style>
@@ -114,7 +83,8 @@
 </head>
 <body>
 
-<div class="assignment-table-container print:block print:visible print:w-full"  onload="window.print();" onafterprint="window.close();">
+{{-- NOTA: Rimosso onload e onafterprint perché gestiti dall'iframe genitore --}}
+<div class="assignment-table-container">
     <div class="header-box">
         <span style="font-size: 13pt; font-weight: bold; text-transform: uppercase;">TABELLA ASSEGNAZIONE LAVORI</span>
         <span style="font-size: 8.5pt; font-weight: bold; float: right; margin-top: 4px;">
@@ -134,12 +104,8 @@
         </thead>
         <tbody>
             @foreach($matrix as $row)
-                @php
-                    $rowClass = $loop->index % 2 == 0 ? 'row-even' : 'row-odd';
-                @endphp
-                <tr class="{{ $rowClass }}">
+                <tr class="{{ $loop->index % 2 == 0 ? 'row-even' : 'row-odd' }}">
                     <td class="lic">{{ $row['license_number'] }}</td>
-
                     @for($slot = 0; $slot < config('app_settings.matrix.total_slots'); $slot++)
                         @php
                             $work = $row['worksMap'][$slot] ?? null;

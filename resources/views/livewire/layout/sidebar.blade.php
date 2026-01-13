@@ -61,31 +61,49 @@
         </button>
     </div>
 
-    <button @click="$dispatch('open-info-modal')" class="h-[50px] w-10 hidden lg:block flex items-center justify-center rounded-xl  hover:text-white transition-all shadow-lg">
+    <button @click="$dispatch('open-info-modal')" class="h-[50px] w-10 hidden xl:block flex items-center justify-center rounded-xl  hover:text-white transition-all shadow-lg">
         <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
     </button>
 
     {{-- AZIONI (Stampa / Ripartizione) --}}
-    <div class="flex gap-2 ml-auto shrink-0">
-        <button wire:click="$dispatch('printWorksTable')" class="h-[50px] lg:px-4 p-2 bg-emerald-600 hover:bg-emerald-500 rounded-xl shadow-lg flex items-center justify-center gap-2 transition-all">
-            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
-            <span class="hidden xl:inline text-[10px] font-black text-white uppercase">Stampa</span>
+    <div class="flex gap-2 ml-auto shrink-0 items-center">
+    <div class="flex bg-emerald-600 rounded-xl shadow-lg overflow-hidden border border-emerald-700">
+        <button wire:click="$dispatch('printWorksTable')" 
+                wire:loading.attr="disabled"
+                class="h-[50px] pl-4 pr-3 hover:bg-emerald-500 transition-all flex items-center gap-2 group">
+            <div class="relative">
+                <svg class="w-5 h-5 text-white group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                </svg>
+                <div wire:loading wire:target="printTable" class="absolute -top-1 -right-1">
+                    <span class="flex h-2 w-2 relative">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+                    </span>
+                </div>
+            </div>
+            <span class="hidden xl:inline text-[11px] font-black text-white uppercase tracking-wider">Stampa Tabella</span>
         </button>
 
-        <button wire:click="$dispatch('downloadWorksTable')" class="h-[50px] lg:px-4 p-2 bg-emerald-600 hover:bg-emerald-500 rounded-xl shadow-lg flex items-center justify-center gap-2 transition-all">
-            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
-            <span class="hidden xl:inline text-[10px] font-black text-white uppercase">Download</span>
-        </button>
-
-        <button wire:click="$dispatch('callRedistributeWorks')" class="h-[50px] lg:px-4 p-2 bg-amber-500 hover:bg-amber-400 rounded-xl shadow-lg flex items-center justify-center gap-2 transition-all">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-slate-900">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 15.75V18m-7.5-6.75h.008v.008H8.25v-.008Zm0 2.25h.008v.008H8.25V13.5Zm0 2.25h.008v.008H8.25v-.008Zm0 2.25h.008v.008H8.25V18Zm2.498-6.75h.007v.008h-.007v-.008Zm0 2.25h.007v.008h-.007V13.5Zm0 2.25h.007v.008h-.007v-.008Zm0 2.25h.007v.008h-.007V18Zm2.504-6.75h.008v.008h-.008v-.008Zm0 2.25h.008v.008h-.008V13.5Zm0 2.25h.008v.008h-.008v-.008Zm0 2.25h.008v.008h-.008V18Zm2.498-6.75h.008v.008h-.008v-.008Zm0 2.25h.008v.008h-.008V13.5ZM8.25 6h7.5v2.25h-7.5V6ZM12 2.25c-1.892 0-3.758.11-5.593.322C5.307 2.7 4.5 3.65 4.5 4.757V19.5a2.25 2.25 0 0 0 2.25 2.25h10.5a2.25 2.25 0 0 0 2.25-2.25V4.757c0-1.108-.806-2.057-1.907-2.185A48.507 48.507 0 0 0 12 2.25Z" />
+        <button wire:click="$dispatch('downloadWorksTable')" 
+                title="Scarica PDF (Extra)"
+                class="h-[50px] px-3 bg-emerald-700/50 hover:bg-emerald-500 transition-colors border-l border-emerald-800/50 flex items-center">
+            <svg class="w-4 h-4 text-emerald-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
             </svg>
-            <span class="hidden xl:inline text-[10px] font-black text-slate-900 uppercase">Ripartizione</span>
         </button>
     </div>
+
+    <button wire:click="$dispatch('callRedistributeWorks')" 
+            class="h-[50px] px-4 bg-amber-500 hover:bg-amber-400 rounded-xl shadow-lg flex items-center justify-center gap-2 transition-all group">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 text-slate-900 group-hover:rotate-12 transition-transform">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 0 1 0 3.75H5.625a1.875 1.875 0 0 1 0-3.75Z" />
+        </svg>
+        <span class="hidden xl:inline text-[11px] font-black text-slate-900 uppercase tracking-wider">Ripartizione</span>
+    </button>
+</div>
 </header>
 
 @push('modals')

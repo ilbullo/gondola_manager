@@ -58,47 +58,37 @@
     @stack('scripts')
     <script>
     window.addEventListener('trigger-print', event => {
-    const url = event.detail.url;
+        const url = event.detail.url;
 
-    // 1. Rileviamo se siamo in modalità WebApp (Standalone) o Browser normale
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
-                         || window.navigator.standalone 
-                         || document.referrer.includes('android-app://');
-    
-    // 2. Rileviamo se è un dispositivo mobile
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        let printFrame = document.getElementById('hiddenPrintFrame');
+        if (!printFrame) {
+            printFrame = document.createElement('iframe');
+            printFrame.id = 'hiddenPrintFrame';
 
-    // Se siamo su Browser Mobile NORMALE (non WebApp), usiamo window.open
-    // Perché gli iframe nascosti vengono "congelati" dai browser mobile
-    if (isMobile && !isStandalone) {
-        const printWindow = window.open(url, '_blank');
-        if (!printWindow) {
-            alert("Per favore, consenti i popup per la stampa.");
+            // Invece di display:none, usiamo un trucco per renderlo
+            // "tecnicamente" visibile ma invisibile all'utente
+            printFrame.style.position = 'fixed';
+            printFrame.style.right = '0';
+            printFrame.style.bottom = '0';
+            printFrame.style.width = '1px';
+            printFrame.style.height = '1px';
+            printFrame.style.border = 'none';
+            printFrame.style.opacity = '0';
+
+            document.body.appendChild(printFrame);
         }
-        return;
-    }
 
-    // --- LOGICA IFRAME (Per Desktop, Tablet e WebApp installata) ---
-    let printFrame = document.getElementById('hiddenPrintFrame');
-    if (!printFrame) {
-        printFrame = document.createElement('iframe');
-        printFrame.id = 'hiddenPrintFrame';
-        Object.assign(printFrame.style, {
-            position: 'fixed', right: '0', bottom: '0',
-            width: '1px', height: '1px', border: 'none', opacity: '0'
-        });
-        document.body.appendChild(printFrame);
-    }
+        // Quando l'iframe ha finito di caricare la pagina...
+        printFrame.onload = function() {
+            setTimeout(function() {
+                // Lanciamo la stampa direttamente dal contenuto dell'iframe
+                printFrame.contentWindow.focus();
+                printFrame.contentWindow.print();
+            }, 500);
+        };
 
-    printFrame.onload = function() {
-        setTimeout(() => {
-            printFrame.contentWindow.focus();
-            printFrame.contentWindow.print();
-        }, 600);
-    };
-
-    printFrame.src = url;
-});
+        printFrame.src = url;
+    });
 </script>
 </body>
 </html>

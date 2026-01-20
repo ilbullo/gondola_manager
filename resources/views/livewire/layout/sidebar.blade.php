@@ -67,6 +67,26 @@
         </svg>
     </button>
 
+    {{-- TASTO REFRESH --}}
+    <button wire:click="$dispatch('refreshTableBoard')" 
+            wire:loading.class="pointer-events-none"
+            class="h-[50px] w-10 flex items-center justify-center rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all group shadow-lg">
+        
+        <div wire:loading.remove wire:target="$refresh">
+            <svg class="w-5 h-5 text-slate-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+        </div>
+
+        {{-- Spinner che appare solo durante il refresh --}}
+        <div wire:loading wire:target="$refresh">
+            <svg class="w-5 h-5 text-emerald-400 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+        </div>
+    </button>
+
     {{-- AZIONI (Stampa / Ripartizione) --}}
     <div class="flex gap-2 ml-auto shrink-0 items-center">
     <div class="flex bg-emerald-600 rounded-xl shadow-lg overflow-hidden border border-emerald-700">

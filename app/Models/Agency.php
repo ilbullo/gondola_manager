@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 
 /**
  * Class Agency
@@ -41,6 +42,7 @@ class Agency extends Model
     // Attributi assegnabili in massa
     protected $fillable = [
         'name',  // Nome dell'agenzia
+        'colour',
         'code',  // Codice identificativo dell'agenzia
     ];
 
@@ -108,4 +110,38 @@ class Agency extends Model
         return $code ? static::where('code', $code)->first() : null;
     }
 
+    /**
+     * Restituisce il colore salvato o quello di default.
+     * Accessibile tramite: $agency->effective_colour
+     */
+    protected function effectiveColour(): Attribute
+    {
+        return Attribute::get(fn () =>
+            $this->colour ?? config('app_settings.agencies.default_colour', '#6366f1')
+        );
+    }
+
+    /**
+     * Calcola il contrasto (Bianco o Nero) in base al colore effettivo.
+     * Accessibile tramite: $agency->contrast_text
+     */
+    protected function contrastText(): Attribute
+    {
+        return Attribute::get(function () {
+            // Usiamo l'attributo appena creato sopra
+            $hex = str_replace('#', '', $this->effective_colour);
+
+            // Gestione fallback se l'hex è malformato
+            if (strlen($hex) !== 6) return '#ffffff';
+
+            $r = hexdec(substr($hex, 0, 2));
+            $g = hexdec(substr($hex, 2, 2));
+            $b = hexdec(substr($hex, 4, 2));
+
+            // Formula YIQ (Standard di accessibilità)
+            $yiq = (($r * 299) + ($g * 587) + ($b * 114)) / 1000;
+
+            return ($yiq >= 128) ? '#0f172a' : '#ffffff';
+        });
+    }
 }

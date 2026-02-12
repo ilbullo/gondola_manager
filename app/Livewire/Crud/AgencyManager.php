@@ -48,6 +48,7 @@ class AgencyManager extends Component
     // Form fields
     public ?string $name = null;
     public ?string $code = null;
+    public ?string $colour = null;
     public ?int $editingId = null;
 
     protected function rules(): array
@@ -58,6 +59,7 @@ class AgencyManager extends Component
                 'required', 'string', 'max:4', 'regex:/^[A-Z0-9]+$/',
                 'unique:agencies,code' . ($this->editingId ? ',' . $this->editingId : ''),
             ],
+            'colour' => 'nullable|regex:/^#([A-Fa-f0-9]{6})$/', // Validazione HEX
         ];
     }
 
@@ -93,6 +95,7 @@ class AgencyManager extends Component
         Agency::create([
             'name' => $this->name,
             'code' => $this->code,
+            'colour' => $this->colour ?: null, // Salva null se vuoto
         ]);
 
         $this->afterMutation('Agenzia creata con successo.');
@@ -104,6 +107,7 @@ class AgencyManager extends Component
         $this->editingId = $id;
         $this->name = $agency->name;
         $this->code = $agency->code;
+        $this->colour = $agency->colour;
 
         $this->showEditForm = true;
         $this->showCreateForm = false;
@@ -116,6 +120,7 @@ class AgencyManager extends Component
         Agency::findOrFail($this->editingId)->update([
             'name' => $this->name,
             'code' => $this->code,
+            'colour' => $this->colour ?: null,
         ]);
 
         $this->afterMutation('Agenzia aggiornata con successo.');
@@ -163,7 +168,7 @@ class AgencyManager extends Component
 
     public function resetForm(): void
     {
-        $this->reset(['name', 'code', 'editingId']);
+        $this->reset(['name', 'code', 'colour','editingId']);
     }
 
     private function notify(string $message, string $title = 'SUCCESSO'): void

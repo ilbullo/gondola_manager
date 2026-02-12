@@ -167,22 +167,36 @@
 
                         <div>
                             <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Colore Identificativo</label>
-                            <div class="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                                <input type="color" wire:model="colour"
-                                    class="w-12 h-12 bg-transparent border-none cursor-pointer p-0">
+                            <select wire:model="colour" 
+                                    class="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl font-black text-slate-700 uppercase outline-none focus:ring-4 focus:ring-indigo-100 transition-all">
+                                <option value="">Default (Indigo)</option>
+            
+                                <optgroup label="Colori Disponibili">
+                                    <option value="blue">Blue</option>
+                                    <option value="sky">Sky</option>
+                                    <option value="cyan">Cyan</option>
+                                    <option value="teal">Teal</option>
+                                    <option value="green">Green</option>
+                                    <option value="lime">Lime</option>
+                                    <option value="amber">Amber</option>
+                                    <option value="orange">Orange</option>
+                                    <option value="red">Red</option>
+                                    <option value="pink">Pink</option>
+                                    <option value="fuchsia">Fuchsia</option>
+                                    <option value="purple">Purple</option>
+                                    <option value="violet">Violet</option>
+                                </optgroup>
 
-                                <div class="flex-1">
-                                    <p class="text-[10px] font-black text-slate-700 uppercase">Seleziona Colore</p>
-                                    <p class="text-[9px] text-slate-400 uppercase">Verrà usato nella matrice servizi</p>
-                                </div>
-
-                                @if($colour)
-                                    <button type="button" wire:click="$set('colour', null)" class="text-[9px] font-black text-rose-500 uppercase hover:underline">
-                                        Reset
-                                    </button>
-                                @endif
-                            </div>
+                                <optgroup label="Toni Neutri">
+                                    <option value="slate">Slate</option>
+                                    <option value="gray">Gray</option>
+                                    <option value="zinc">Zinc</option>
+                                    <option value="neutral">Neutral</option>
+                                    <option value="stone">Stone</option>
+                                </optgroup>
+                            </select>
                             @error('colour') <p class="text-rose-600 text-[10px] font-black mt-2 uppercase italic tracking-tighter">! {{ $message }}</p> @enderror
+
                         </div>
                     </div>
 

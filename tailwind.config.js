@@ -27,10 +27,10 @@ export default {
     'bg-yellow-500',
     
     // Pattern: ad esempio tutti i bg-* e text-*
-    { pattern: /^bg-(amber|red|green|blue|yellow|orange|gray|purple|pink|rose|indigo|emerald|teal)-\d{3}$/ },
-    { pattern: /^text-(amber|red|green|blue|yellow|orange|gray|purple|pink|rose|indigo|emerald|teal)-\d{3}$/ },
-    { pattern: /^ring-(amber|red|green|blue|yellow|orange|gray|purple|pink|rose|indigo|emerald|teal)-\d{3}$/ },
-    
+    { pattern: /^bg-(blue|sky|cyan|teal|green|lime|amber|orange|red|pink|fuchsia|purple|violet|indigo|slate|gray|zinc|neutral|stone|emerald|yellow|rose)-\d{3}$/ },
+    { pattern: /^text-(blue|sky|cyan|teal|green|lime|amber|orange|red|pink|fuchsia|purple|violet|indigo|slate|gray|zinc|neutral|stone|emerald|yellow|rose)-\d{3}$/ },
+    { pattern: /^ring-(blue|sky|cyan|teal|green|lime|amber|orange|red|pink|fuchsia|purple|violet|indigo|slate|gray|zinc|neutral|stone|emerald|yellow|rose)-\d{3}$/ },
+
     // Classi che cambiano in base a condizioni dinamiche
     'hidden',
     'block',

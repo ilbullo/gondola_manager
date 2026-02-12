@@ -184,6 +184,7 @@ class LicenseTable extends Model
                     'value'             => $work->value,
                     'agency_code'       => $work->agency?->code,
                     'agency'            => $work->agency?->name,
+                    'agency_colour'     => $work->agency?->colour,
                     'amount'            => $work->amount,
                     'voucher'           => $work->voucher,
                     'excluded'          => $work->excluded,

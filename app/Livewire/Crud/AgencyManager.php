@@ -59,7 +59,7 @@ class AgencyManager extends Component
                 'required', 'string', 'max:4', 'regex:/^[A-Z0-9]+$/',
                 'unique:agencies,code' . ($this->editingId ? ',' . $this->editingId : ''),
             ],
-            'colour' => 'nullable|regex:/^#([A-Fa-f0-9]{6})$/', // Validazione HEX
+            'colour' => 'string|nullable',
         ];
     }
 

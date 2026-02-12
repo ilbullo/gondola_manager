@@ -70,11 +70,25 @@
                                 @php
                                     $index = $i + 1;
                                     $work = $license['worksMap'][$i] ?? null;
+                                    $type = $work ? \App\Enums\WorkType::tryFrom($work['value']) : null;
+    
+                                    // Logica dinamica
+                                    $colorClass = "";
+                                    if ($work) {
+                                        if ($type === \App\Enums\WorkType::AGENCY) {
+                                            // Prendiamo il colore dal DB (tramite l'array che passi alla view)
+                                            $agencyColor = $work['agency_colour'] ?? 'indigo';
+                                            $colorClass = "bg-{$agencyColor}-600 text-white";
+                                        } else {
+                                            // Altrimenti prendiamo la classe standard dall'Enum
+                                            $colorClass = $type?->colourButtonsClass() . " text-white";
+                                        }
+                                    }
                                 @endphp
                                 <div class="w-13 h-13 flex justify-center items-center">
                                     @if($work)
                                         <div wire:click="openInfoBox({{ $work['id'] }})"
-                                             class="job-pill relative cursor-pointer w-11 h-11 rounded-xl text-white shadow-md flex flex-col items-center justify-center {{ \App\Enums\WorkType::tryFrom($work['value'])?->colourButtonsClass() }}">
+                                             class="job-pill relative cursor-pointer w-11 h-11 rounded-xl text-white shadow-md flex flex-col items-center justify-center {{ $colorClass }}">
 
                                             {{-- Indicatore EXCLUDED (Pallino o Icona in alto a sinistra) --}}
                                             @if($work['excluded'])

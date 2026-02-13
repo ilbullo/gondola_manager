@@ -87,14 +87,18 @@ class UserManager extends Component
         // Aggiorna anche qui nel reset
         $this->reset(['name', 'email', 'password', 'role', 'type', 'license_number', 'userId', 'editing']);
         $this->resetValidation();
-        $this->role = UserRole::BANCALE->value;
-        // Impostiamo la password predefinita al reset (creazione nuovo utente)
-        $this->password = 'password';
+
+        $this->role = UserRole::USER->value;
+        $this->type = LicenseType::SUBSTITUTE->value;
     }
 
     public function create(): void
     {
         $this->resetForm();
+        
+        // Impostiamo la password predefinita al reset (creazione nuovo utente)
+        $this->password = 'password';
+        
         $this->editing = true;
     }
 
@@ -109,7 +113,7 @@ class UserManager extends Component
         $this->role           = $user->role->value ?? '';
         $this->type           = $user->type->value ?? null;
         $this->license_number = $user->license_number;
-
+        $this->password       = null;
         $this->editing = true;
     }
 

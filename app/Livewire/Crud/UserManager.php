@@ -70,12 +70,26 @@ class UserManager extends Component
         );
     }
 
+    /**
+     * Hook di Livewire: viene eseguito ogni volta che $license_number cambia nel frontend
+     */
+    public function updatedLicenseNumber($value): void
+    {
+        // Autocompila l'email solo se stiamo creando un nuovo utente (userId === 0)
+        // o se l'email è vuota, per evitare di sovrascrivere dati esistenti involontariamente.
+        if ($this->userId === 0 && !empty($value)) {
+            $this->email = strtolower(trim($value)) . '@dogana.it';
+        }
+    }
+
     public function resetForm(): void
     {
         // Aggiorna anche qui nel reset
         $this->reset(['name', 'email', 'password', 'role', 'type', 'license_number', 'userId', 'editing']);
         $this->resetValidation();
         $this->role = UserRole::BANCALE->value;
+        // Impostiamo la password predefinita al reset (creazione nuovo utente)
+        $this->password = 'password';
     }
 
     public function create(): void
@@ -105,7 +119,7 @@ class UserManager extends Component
             'name'           => 'required|string|max:255',
             'role'           => 'required|string',
             'type'           => 'nullable|string',
-            'license_number' => 'nullable|string|max:255',
+            'license_number' => 'required|string|max:255',
             'email' => [
                 'required', 'string', 'email', 'max:255',
                 ValidationRule::unique('users', 'email')->ignore($this->userId)

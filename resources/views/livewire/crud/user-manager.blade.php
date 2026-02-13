@@ -113,6 +113,11 @@
                 <div class="p-8 overflow-y-auto space-y-5 bg-white custom-scrollbar flex-1">
                     {{-- Campi Input --}}
                     <div>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Numero Licenza</label>
+                        <input type="text" placeholder="Es. 140" wire:model.live="license_number" class="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl focus:ring-4 focus:ring-indigo-100 font-black text-slate-700 uppercase outline-none transition-all">
+                        @error('license_number') <p class="text-rose-600 text-[10px] font-black mt-2 uppercase italic">! {{ $message }}</p> @enderror
+                    </div>
+                    <div>
                         <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Nome e Cognome</label>
                         <input type="text" wire:model="name" class="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl focus:ring-4 focus:ring-indigo-100 font-black text-slate-700 uppercase outline-none transition-all">
                         @error('name') <p class="text-rose-600 text-[10px] font-black mt-2 uppercase italic">! {{ $message }}</p> @enderror
@@ -148,11 +153,6 @@
                                 @endforeach
                             </select>
                         </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Numero Licenza</label>
-                        <input type="text" wire:model="license_number" class="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl focus:ring-4 focus:ring-indigo-100 font-black text-slate-700 uppercase outline-none transition-all">
                     </div>
                 </div>
 

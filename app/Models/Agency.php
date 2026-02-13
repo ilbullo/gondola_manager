@@ -44,6 +44,11 @@ class Agency extends Model
         'name',  // Nome dell'agenzia
         'colour',
         'code',  // Codice identificativo dell'agenzia
+        'show_in_reports'
+    ];
+
+    protected $casts = [
+        'show_in_reports' => 'boolean',
     ];
 
     // ===================================================================
@@ -108,6 +113,11 @@ class Agency extends Model
     public static function findByCode(?string $code): ?self
     {
         return $code ? static::where('code', $code)->first() : null;
+    }
+
+    public function scopeForReports($query)
+    {
+        return $query->where('show_in_reports', true);
     }
 
 }

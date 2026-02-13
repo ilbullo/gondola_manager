@@ -198,6 +198,28 @@
                             @error('colour') <p class="text-rose-600 text-[10px] font-black mt-2 uppercase italic tracking-tighter">! {{ $message }}</p> @enderror
 
                         </div>
+                        <div class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100 mt-4">
+                            <div class="flex flex-col">
+                                <label for="show_in_reports" class="text-[10px] font-black text-slate-700 uppercase tracking-widest cursor-pointer select-none">
+                                    Includi nei Report
+                                </label>
+                                <span class="text-[9px] text-slate-400 font-bold uppercase">Visibilità nelle statistiche</span>
+                            </div>
+
+                            <div class="relative inline-flex items-center h-6">
+                                {{-- L'input DEVE essere visibile o comunque cliccabile per Livewire --}}
+                                <input type="checkbox" 
+                                    wire:model.live="show_in_reports" 
+                                    id="show_in_reports" 
+                                    class="absolute opacity-0 w-11 h-6 cursor-pointer z-10">
+                                
+                                {{-- Lo sfondo del toggle reagisce al valore PHP --}}
+                                <div class="w-11 h-6 rounded-full transition-colors duration-200 {{ $show_in_reports ? 'bg-indigo-600' : 'bg-slate-300' }}">
+                                    {{-- Il pallino scorre in base al valore PHP --}}
+                                    <div class="absolute top-[2px] left-[2px] bg-white w-5 h-5 rounded-full transition-transform duration-200 shadow-sm {{ $show_in_reports ? 'translate-x-5' : 'translate-x-0' }}"></div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="px-8 pb-8 flex flex-col gap-3">

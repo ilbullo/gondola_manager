@@ -49,6 +49,7 @@ class AgencyManager extends Component
     public ?string $name = null;
     public ?string $code = null;
     public ?string $colour = null;
+    public bool $show_in_reports = true;
     public ?int $editingId = null;
 
     protected function rules(): array
@@ -60,6 +61,7 @@ class AgencyManager extends Component
                 'unique:agencies,code' . ($this->editingId ? ',' . $this->editingId : ''),
             ],
             'colour' => 'string|nullable',
+            'show_in_reports' => 'boolean'
         ];
     }
 
@@ -74,6 +76,12 @@ class AgencyManager extends Component
     {
         $this->showDeleted = !$this->showDeleted;
         $this->resetPage(); // Importante per non restare su una pagina vuota
+    }
+
+    public function updatedShowInReports($value)
+    {
+        // Forza il cast a booleano quando il checkbox viene toccato
+        $this->show_in_reports = (bool) $value;
     }
 
     /**
@@ -96,6 +104,7 @@ class AgencyManager extends Component
             'name' => $this->name,
             'code' => $this->code,
             'colour' => $this->colour ?: null, // Salva null se vuoto
+            'show_in_reports' => (bool) $this->show_in_reports,
         ]);
 
         $this->afterMutation('Agenzia creata con successo.');
@@ -108,7 +117,7 @@ class AgencyManager extends Component
         $this->name = $agency->name;
         $this->code = $agency->code;
         $this->colour = $agency->colour;
-
+        $this->show_in_reports = $agency->show_in_reports;
         $this->showEditForm = true;
         $this->showCreateForm = false;
     }
@@ -121,6 +130,7 @@ class AgencyManager extends Component
             'name' => $this->name,
             'code' => $this->code,
             'colour' => $this->colour ?: null,
+            'show_in_reports' => $this->show_in_reports,
         ]);
 
         $this->afterMutation('Agenzia aggiornata con successo.');
@@ -169,6 +179,7 @@ class AgencyManager extends Component
     public function resetForm(): void
     {
         $this->reset(['name', 'code', 'colour','editingId']);
+        $this->show_in_reports = true;
     }
 
     private function notify(string $message, string $title = 'SUCCESSO'): void

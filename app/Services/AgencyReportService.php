@@ -23,6 +23,7 @@ class AgencyReportService
                 return collect($row['worksMap'])
                     // Filtriamo: solo lavori di tipo Agenzia (A) non nulli
                     ->filter(fn($work) => !empty($work) && ($work['value'] ?? '') === 'A')
+                    ->filter(fn($work) => ($work['agency_show_in_reports'] ?? true) === true)
                     // Arricchiamo ogni lavoro con il numero di licenza del conducente
                     ->map(function ($work) use ($licenseNumber) {
                         $work['_license'] = $licenseNumber;
@@ -81,7 +82,6 @@ class AgencyReportService
 
         // Generazione del report raggruppato
         $agencyReport = $this->generate($dataForReport);
-
         return [
             'view' => 'pdf.agency-report',
             'data' => [

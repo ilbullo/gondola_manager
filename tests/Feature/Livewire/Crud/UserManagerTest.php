@@ -40,16 +40,16 @@ class UserManagerTest extends TestCase
     {
         Livewire::test(UserManager::class)
             ->set('name', 'Mario Rossi')
-            ->set('email', 'mario@example.com')
-            ->set('license_number','123')
+            ->set('license_number','567')
+            ->set('email', 'bepi@example.com')
             ->set('password', 'secret123')
-            ->set('role', UserRole::BANCALE->value)
+            ->set('role', UserRole::USER->value)
             // Aggiungiamo il tipo per evitare l'errore di integrità DB
             ->set('type', LicenseType::OWNER->value) 
             ->call('save')
             ->assertDispatched('notify');
 
-        $user = User::where('email', 'mario@example.com')->first();
+        $user = User::where('email', 'bepi@example.com')->first();
         $this->assertNotNull($user);
         $this->assertTrue(Hash::check('secret123', $user->password));
     }

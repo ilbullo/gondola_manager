@@ -179,21 +179,22 @@ class LicenseTable extends Model
                 }
 
                 $map[$i] = [
-                    'id'                => $work->id,
-                    'license_table_id'  => $work->license_table_id,
-                    'value'             => $work->value,
-                    'agency_code'       => $work->agency?->code,
-                    'agency'            => $work->agency?->name,
-                    'agency_colour'     => $work->agency?->colour,
-                    'amount'            => $work->amount,
-                    'voucher'           => $work->voucher,
-                    'excluded'          => $work->excluded,
-                    'slot'              => $work->slot,
-                    'slots_occupied'    => $work->slots_occupied,
-                    'shared_from_first' => $work->shared_from_first,
-                    'timestamp'         => $work->timestamp?->toDateTimeString(),
-                    'created_at'        => $work->created_at?->toDateTimeString(),
-                    'updated_at'        => $work->updated_at?->toDateTimeString(),
+                    'id'                        => $work->id,
+                    'license_table_id'          => $work->license_table_id,
+                    'value'                     => $work->value,
+                    'agency_code'               => $work->agency?->code,
+                    'agency'                    => $work->agency?->name,
+                    'agency_colour'             => $work->agency?->colour,
+                    'agency_show_in_reports'    => $work->agency?->show_in_reports,
+                    'amount'                    => $work->amount,
+                    'voucher'                   => $work->voucher,
+                    'excluded'                  => $work->excluded,
+                    'slot'                      => $work->slot,
+                    'slots_occupied'            => $work->slots_occupied,
+                    'shared_from_first'         => $work->shared_from_first,
+                    'timestamp'                 => $work->timestamp?->toDateTimeString(),
+                    'created_at'                => $work->created_at?->toDateTimeString(),
+                    'updated_at'                => $work->updated_at?->toDateTimeString(),
                 ];
             }
         }

@@ -14,6 +14,9 @@ return [
     'labels'    => [
         'shared_from_first' => 'Ufficio'
     ],
+    'agencies' => [
+        'default_colour' => '#6366f1', // Indigo-500 di default
+    ],
     'max_users_in_table'    => 25,
     'version'               => "2.10",
     'reset_time'            => "23:00"

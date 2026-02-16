@@ -165,7 +165,7 @@ class WorkAssignmentService
             'user:id,name,license_number',
             'works' => fn($q) => $q->whereDate('timestamp', today())
                 ->orderBy('slot')
-                ->with('agency:id,name,code'),
+                ->with('agency:id,name,code,colour'),
         ])
         ->whereDate('date', today())
         ->orderBy('order'); // Mantiene l'ordine stabilito dal "Bancale"

@@ -71,7 +71,7 @@ class TableSplitter extends Component
             'user:id,license_number',
             'works' => fn ($q) => $q->whereDate('timestamp', today())
                 ->orderBy('slot')
-                ->with('agency:id,name,code'),
+                ->with('agency:id,name,code,colour,show_in_reports'),
         ])
             ->whereDate('date', today())
             ->orderBy('order')

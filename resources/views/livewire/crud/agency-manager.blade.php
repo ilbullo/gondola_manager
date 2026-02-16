@@ -42,7 +42,7 @@
     {{-- CORPO TABELLA (SCREVEVOLE INDIPENDENTE) --}}
     <div class="flex-1 overflow-hidden p-4 sm:p-8 pt-0 bg-slate-100">
         <div class="max-w-6xl mx-auto h-full flex flex-col bg-white rounded-[2.5rem] shadow-2xl border border-slate-200 overflow-hidden">
-            
+
             <div class="flex-1 overflow-y-auto custom-scrollbar">
                 <table class="w-full border-separate border-spacing-0">
                     <thead class="sticky top-0 z-10">
@@ -56,13 +56,36 @@
                         @forelse ($agencies as $agency)
                             <tr class="{{ $agency->trashed() ? 'bg-rose-50/50' : 'hover:bg-slate-50/50' }} transition-colors">
                                 <td class="px-8 py-5">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center font-black text-[10px] text-slate-400 uppercase shadow-sm">
-                                            {{ substr($agency->name, 0, 2) }}
-                                        </div>
-                                        <span class="text-sm font-black {{ $agency->trashed() ? 'text-rose-400' : 'text-slate-700' }} uppercase italic">{{ $agency->name }}</span>
-                                    </div>
-                                </td>
+    <div class="flex items-center gap-4">
+        {{-- QUADRATO COLORE AGENZIA --}}
+        <div class="relative group">
+            <div class="w-10 h-10 rounded-xl shadow-sm border border-slate-200 flex-shrink-0 transition-transform group-hover:scale-110"
+                 style="background-color: {{ $agency->colour }};"
+                 title="Colore: {{ $agency->colour }}">
+
+                {{-- Opzionale: Iniziali all'interno con contrasto dinamico --}}
+                <div class="flex items-center justify-center h-full font-black text-[10px] uppercase italic"
+                     style="color: {{ $agency->contrast_text }};">
+                    {{ substr($agency->name, 0, 2) }}
+                </div>
+            </div>
+
+            {{-- Indicatore per agenzie eliminate --}}
+            @if($agency->trashed())
+                <div class="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 border-2 border-white rounded-full"></div>
+            @endif
+        </div>
+
+        <div class="flex flex-col">
+            <span class="text-sm font-black {{ $agency->trashed() ? 'text-rose-400' : 'text-slate-700' }} uppercase italic leading-none">
+                {{ $agency->name }}
+            </span>
+            <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter mt-1">
+                HEX: {{ $agency->colour }}
+            </span>
+        </div>
+    </div>
+</td>
                                 <td class="px-8 py-5">
                                     <span class="px-3 py-1 {{ $agency->trashed() ? 'bg-rose-100 text-rose-400' : 'bg-slate-100 text-slate-500' }} font-mono font-bold rounded-lg text-xs">{{ $agency->code }}</span>
                                 </td>
@@ -108,9 +131,9 @@
 
     {{-- MODALE CREATE/EDIT (INVARATO NELLA LOGICA, AGGIUSTATO OVERLAY) --}}
     @if ($showCreateForm || $showEditForm)
-        <div class="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-md" 
+        <div class="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-md"
         x-cloak
-        x-init="document.body.classList.add('overflow-hidden')" 
+        x-init="document.body.classList.add('overflow-hidden')"
          x-on:destroy="document.body.classList.remove('overflow-hidden')"
         >
             <div class="w-full max-w-md bg-white rounded-[3rem] shadow-2xl overflow-hidden border border-white/10 animate-in zoom-in duration-300" @click.away="$wire.closeForms()">
@@ -140,6 +163,62 @@
                             <input type="text" wire:model="code" maxlength="10"
                                 class="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-indigo-100 font-black text-slate-700 uppercase tracking-widest font-mono outline-none transition-all" placeholder="COD001">
                             @error('code') <p class="text-rose-600 text-[10px] font-black mt-2 uppercase italic tracking-tighter">! {{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Colore Identificativo</label>
+                            <select wire:model="colour" 
+                                    class="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl font-black text-slate-700 uppercase outline-none focus:ring-4 focus:ring-indigo-100 transition-all">
+                                <option value="">Default (Indigo)</option>
+            
+                                <optgroup label="Colori Disponibili">
+                                    <option value="blue">Blue</option>
+                                    <option value="sky">Sky</option>
+                                    <option value="cyan">Cyan</option>
+                                    <option value="teal">Teal</option>
+                                    <option value="green">Green</option>
+                                    <option value="lime">Lime</option>
+                                    <option value="amber">Amber</option>
+                                    <option value="orange">Orange</option>
+                                    <option value="red">Red</option>
+                                    <option value="pink">Pink</option>
+                                    <option value="fuchsia">Fuchsia</option>
+                                    <option value="purple">Purple</option>
+                                    <option value="violet">Violet</option>
+                                </optgroup>
+
+                                <optgroup label="Toni Neutri">
+                                    <option value="slate">Slate</option>
+                                    <option value="gray">Gray</option>
+                                    <option value="zinc">Zinc</option>
+                                    <option value="neutral">Neutral</option>
+                                    <option value="stone">Stone</option>
+                                </optgroup>
+                            </select>
+                            @error('colour') <p class="text-rose-600 text-[10px] font-black mt-2 uppercase italic tracking-tighter">! {{ $message }}</p> @enderror
+
+                        </div>
+                        <div class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100 mt-4">
+                            <div class="flex flex-col">
+                                <label for="show_in_reports" class="text-[10px] font-black text-slate-700 uppercase tracking-widest cursor-pointer select-none">
+                                    Includi nei Report
+                                </label>
+                                <span class="text-[9px] text-slate-400 font-bold uppercase">Visibilità nel report agenzie</span>
+                            </div>
+
+                            <div class="relative inline-flex items-center h-6">
+                                {{-- L'input DEVE essere visibile o comunque cliccabile per Livewire --}}
+                                <input type="checkbox" 
+                                    wire:model.live="show_in_reports" 
+                                    id="show_in_reports" 
+                                    class="absolute opacity-0 w-11 h-6 cursor-pointer z-10">
+                                
+                                {{-- Lo sfondo del toggle reagisce al valore PHP --}}
+                                <div class="w-11 h-6 rounded-full transition-colors duration-200 {{ $show_in_reports ? 'bg-indigo-600' : 'bg-slate-300' }}">
+                                    {{-- Il pallino scorre in base al valore PHP --}}
+                                    <div class="absolute top-[2px] left-[2px] bg-white w-5 h-5 rounded-full transition-transform duration-200 shadow-sm {{ $show_in_reports ? 'translate-x-5' : 'translate-x-0' }}"></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 

@@ -227,31 +227,23 @@
                                 @for ($slotIndex = 1; $slotIndex <= config('app_settings.matrix.total_slots'); $slotIndex++)
                                     @php
                                         $work = $row->worksMap[$slotIndex] ?? null;
-                                        $isEmpty = is_null($work);
                                     @endphp
                                     <td class="p-1.5 border-r border-slate-100 w-13 h-13 min-w-[3.25rem]">
                                         @if ($work)
-                                            <div wire:key="work-{{ $row->id }}-{{ $slotIndex }}"
+                                            <x-work-cell 
+                                                :work="$work" 
+                                                mode="matrix" 
+                                                wire:key="work-{{ $row->id }}-{{ $slotIndex }}"
                                                 wire:click="removeWork({{ $licenseKey }}, {{ $slotIndex }})"
-                                                class="job-pill relative cursor-pointer w-11 h-11 rounded-xl text-white shadow-md flex flex-col items-center justify-center transition-transform active:scale-90 {{ \App\Enums\WorkType::tryFrom($work['value'])?->colourButtonsClass() }}">
-
-                                                @if ($work['excluded'] ?? false)
-                                                    <x-badge name="excluded" />
-                                                @endif
-                                                @if ($work['shared_from_first'] ?? false)
-                                                    <x-badge name="shared_ff" />
-                                                @endif
-
-                                                <span class="text-[10px] font-black leading-none uppercase">
-                                                    {{ $work['value'] === 'A' ? Str::limit($work['agency_code'] ?? 'A', 4, '') : $work['value'] }}
-                                                </span>
-
+                                                class="cursor-pointer active:scale-90"
+                                            >
+                                                {{-- Slot per mostrare il "DA: Numero Licenza" specifico dello splitter --}}
                                                 @if ($work['prev_license_number'] ?? null)
-                                                    <span
-                                                        class="text-[6px] font-black opacity-80 italic mt-0.5 leading-none tracking-tighter">DA:
-                                                        {{ $work['prev_license_number'] }}</span>
+                                                    <span class="text-[6px] font-black opacity-80 italic mt-0.5 leading-none tracking-tighter">
+                                                        DA: {{ $work['prev_license_number'] }}
+                                                    </span>
                                                 @endif
-                                            </div>
+                                            </x-work-cell>
                                         @else
                                             <div wire:click="assignToSlot({{ $licenseKey }}, {{ $slotIndex }})"
                                                 class="w-11 h-11 border border-slate-200 bg-slate-50 rounded-xl flex items-center justify-center text-slate-300 text-xl font-light hover:border-indigo-400 hover:bg-indigo-50 cursor-pointer transition-all">

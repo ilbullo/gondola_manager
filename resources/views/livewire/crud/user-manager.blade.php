@@ -102,7 +102,7 @@
                         <h3 class="text-xl font-black uppercase italic tracking-tighter leading-none">
                             {{ $userId ? 'Modifica Profilo' : 'Nuovo Utente' }}
                         </h3>
-                        <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mt-2">Dati anagrafici e permessi</p>
+                        <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mt-2">Configurazione rapida</p>
                     </div>
                     <button type="button" wire:click="resetForm" class="text-slate-500 hover:text-white transition p-2">
                         <x-icon name="close" class="w-6 h-6" />
@@ -110,49 +110,68 @@
                 </div>
 
                 {{-- Corpo Scrollabile --}}
-                <div class="p-8 overflow-y-auto space-y-5 bg-white custom-scrollbar flex-1">
-                    {{-- Campi Input --}}
-                    <div>
-                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Nome e Cognome</label>
-                        <input type="text" wire:model="name" class="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl focus:ring-4 focus:ring-indigo-100 font-black text-slate-700 uppercase outline-none transition-all">
-                        @error('name') <p class="text-rose-600 text-[10px] font-black mt-2 uppercase italic">! {{ $message }}</p> @enderror
-                    </div>
+                <div class="p-8 overflow-y-auto bg-white custom-scrollbar flex-1" x-data="{ advanced: false }">
+                    
+                    {{-- SEZIONE PRINCIPALE: SEMPRE VISIBILE --}}
+                    <div class="space-y-5 mb-6">
+                        <div>
+                            <label class="block text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-2 ml-1">Numero Licenza</label>
+                            <input type="text" placeholder="Es. 140" wire:model.live="license_number" 
+                                class="w-full px-5 py-4 bg-indigo-50 border-2 border-indigo-100 rounded-2xl focus:border-indigo-500 font-black text-xl text-slate-700 uppercase outline-none transition-all">
+                            @error('license_number') <p class="text-rose-600 text-[10px] font-black mt-2 uppercase italic">! {{ $message }}</p> @enderror
+                        </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Email</label>
-                            <input type="email" wire:model="email" class="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl focus:ring-4 focus:ring-indigo-100 font-black text-slate-700 outline-none transition-all">
-                            @error('email') <p class="text-rose-600 text-[10px] font-black mt-2 uppercase italic">! {{ $message }}</p> @enderror
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Password</label>
-                            <input type="password" wire:model="password" placeholder="{{ $userId ? 'LASCIA VUOTA' : '••••••' }}" class="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl focus:ring-4 focus:ring-indigo-100 font-black text-slate-700 outline-none transition-all">
-                            @error('password') <p class="text-rose-600 text-[10px] font-black mt-2 uppercase italic">! {{ $message }}</p> @enderror
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Ruolo</label>
-                            <select wire:model="role" class="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl focus:ring-4 focus:ring-indigo-100 font-black text-slate-700 uppercase outline-none cursor-pointer">
-                                @foreach($roles as $roleEnum)
-                                    <option value="{{ $roleEnum->value }}">{{ $roleEnum->label() }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Tipo Licenza</label>
-                            <select wire:model="type" class="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl focus:ring-4 focus:ring-indigo-100 font-black text-slate-700 uppercase outline-none cursor-pointer">
-                                @foreach($licenseTypes as $typeEnum)
-                                    <option value="{{ $typeEnum->value }}">{{ $typeEnum->label() }}</option>
-                                @endforeach
-                            </select>
+                            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Nome e Cognome</label>
+                            <input type="text" placeholder="MARIO ROSSI" wire:model="name" 
+                                class="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl focus:ring-4 focus:ring-indigo-100 font-black text-slate-700 uppercase outline-none transition-all">
+                            @error('name') <p class="text-rose-600 text-[10px] font-black mt-2 uppercase italic">! {{ $message }}</p> @enderror
                         </div>
                     </div>
 
-                    <div>
-                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Numero Licenza</label>
-                        <input type="text" wire:model="license_number" class="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl focus:ring-4 focus:ring-indigo-100 font-black text-slate-700 uppercase outline-none transition-all">
+                    {{-- SEZIONE SECONDARIA: ACCORDEON --}}
+                    <div class="border-t border-slate-100 pt-4">
+                        <button type="button" @click="advanced = !advanced" 
+                            class="flex items-center justify-between w-full py-2 group">
+                            <span class="text-[10px] font-black text-slate-400 group-hover:text-indigo-600 transition-colors uppercase tracking-[0.2em]">Impostazioni Avanzate</span>
+                            <x-icon name="chevron-down" class="w-4 h-4 text-slate-300 transition-transform duration-300" x-bind:class="advanced ? 'rotate-180 text-indigo-600' : ''" />
+                        </button>
+
+                        <div x-show="advanced" x-collapse x-cloak class="pt-6 space-y-5">
+                            
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Email</label>
+                                    <input type="email" wire:model="email" class="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl focus:ring-4 focus:ring-indigo-100 font-bold text-slate-600 text-xs outline-none transition-all">
+                                    @error('email') <p class="text-rose-600 text-[10px] font-black mt-2 uppercase italic">! {{ $message }}</p> @enderror
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Password</label>
+                                    <input type="password" wire:model="password" class="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl focus:ring-4 focus:ring-indigo-100 font-bold text-slate-600 text-xs outline-none transition-all">
+                                    <p class="text-[8px] font-bold text-slate-300 uppercase italic mt-1">Default: "password"</p>
+                                    @error('password') <p class="text-rose-600 text-[10px] font-black mt-2 uppercase italic">! {{ $message }}</p> @enderror
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Ruolo</label>
+                                    <select wire:model="role" class="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl focus:ring-4 focus:ring-indigo-100 font-black text-slate-700 uppercase text-[10px] outline-none cursor-pointer">
+                                        @foreach($roles as $roleEnum)
+                                            <option value="{{ $roleEnum->value }}">{{ $roleEnum->label() }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Tipo Licenza</label>
+                                    <select wire:model="type" class="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl focus:ring-4 focus:ring-indigo-100 font-black text-slate-700 uppercase text-[10px] outline-none cursor-pointer">
+                                        @foreach($licenseTypes as $typeEnum)
+                                            <option value="{{ $typeEnum->value }}">{{ $typeEnum->label() }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -161,7 +180,7 @@
                     <button type="submit" class="w-full py-5 bg-indigo-600 text-white font-black uppercase text-xs rounded-2xl shadow-lg active:scale-95 transition-all">
                         {{ $userId ? 'Salva Modifiche' : 'Crea Utente' }}
                     </button>
-                    <button type="button" wire:click="resetForm" class="text-slate-400 font-black uppercase text-[10px] tracking-widest hover:text-slate-600 transition-colors text-center text-center">Annulla</button>
+                    <button type="button" wire:click="resetForm" class="text-slate-400 font-black uppercase text-[10px] tracking-widest hover:text-slate-600 transition-colors text-center">Annulla</button>
                 </div>
             </form>
         </div>

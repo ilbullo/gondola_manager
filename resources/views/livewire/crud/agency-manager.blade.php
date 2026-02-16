@@ -203,7 +203,7 @@
                                 <label for="show_in_reports" class="text-[10px] font-black text-slate-700 uppercase tracking-widest cursor-pointer select-none">
                                     Includi nei Report
                                 </label>
-                                <span class="text-[9px] text-slate-400 font-bold uppercase">Visibilità nelle statistiche</span>
+                                <span class="text-[9px] text-slate-400 font-bold uppercase">Visibilità nel report agenzie</span>
                             </div>
 
                             <div class="relative inline-flex items-center h-6">

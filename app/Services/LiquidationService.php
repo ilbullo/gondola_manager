@@ -62,7 +62,10 @@ class LiquidationService
             ],
             lists: [
                 'shared_vouchers' => $sharedFF->pluck('voucher')->filter()->toArray(),
-                'agencies' => $agencies->mapWithKeys(fn($w) => [$w['agency'] => $w['voucher']])->toArray(),
+                'agencies' => $agencies
+                                ->groupBy('agency')
+                                ->map(fn($items) => $items->pluck('voucher'))
+                                ->toArray(),
             ]
         );
     }

@@ -51,8 +51,8 @@
                         <div class="space-y-1">
                             @forelse($this->liquidation->lists['agencies'] as $name => $voucher)
                                 <div class="flex justify-between items-center bg-slate-50 px-3 py-2 rounded-xl border border-slate-100 text-[10px]">
-                                    <span class="font-bold text-slate-600 uppercase">@trim($name, 25)</span>
-                                    <span class="font-black text-indigo-500">{{ $voucher ?: '---' }}</span>
+                                    <span class="font-bold text-slate-600 uppercase">{{ count($voucher) }} X @trim($name, 25) </span>
+                                    <span class="font-black text-indigo-500">{{ $voucher[0] ?: '---' }}</span>
                                 </div>
                             @empty
                                 <div class="text-[8px] text-slate-300 italic px-1 uppercase text-center">Nessuna agenzia</div>

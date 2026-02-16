@@ -2,11 +2,9 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Scontrino Licenza {{ request('license') }}</title>
+    <title>Scontrino Licenza {{ request('license', 'N/D') }}</title>
     <style>
-        @page {
-            margin: 0;
-        }
+        @page { margin: 0; }
         body {
             font-family: 'Courier New', Courier, monospace;
             width: 72mm;
@@ -18,12 +16,10 @@
             background-color: #fff;
         }
         .text-center { text-align: center; }
-        .text-right { text-align: right; }
         .bold { font-weight: bold; }
         .italic { font-style: italic; }
         .uppercase { text-transform: uppercase; }
 
-        /* Divider tratteggiato tipico delle stampanti termiche */
         .divider {
             border-bottom: 1px dashed #000;
             margin: 8px 0;
@@ -61,7 +57,6 @@
 
         .small { font-size: 10px; line-height: 1.2; }
 
-        /* Gestione nomi agenzia lunghi */
         .item-name {
             flex: 1;
             overflow: hidden;
@@ -78,77 +73,101 @@
 
     <div class="text-center">
         <span class="bold header-title">LIQUIDAZIONE TURNO</span>
-        <span class="bold">LICENZA N. {{ request('license') }}</span>
+        <span class="bold">LICENZA N. {{ request('license', '---') }}</span>
     </div>
 
     <div class="divider"></div>
 
-    <div class="flex"><span>DATA:</span> <span class="bold">{{ request('date') }}</span></div>
-    <div class="flex"><span>OPERATORE:</span> <span class="bold">{{ request('op') }}</span></div>
+    <div class="flex"><span>DATA:</span> <span class="bold">{{ request('date', date('d/m/Y')) }}</span></div>
+    <div class="flex"><span>OPERATORE:</span> <span class="bold">{{ request('op', '---') }}</span></div>
 
     <div class="divider"></div>
 
-    {{-- VOLUMI --}}
-    <div class="flex"><span>NOLI EFFETTIVI (N):</span> <span class="bold">{{ request('n_count') }}</span></div>
-    <div class="flex"><span>CONTANTI (X):</span> <span class="bold">{{ request('x_count') }}</span></div>
-    {{-- PERDI VOLTA SE PRESENTI --}}
-    @if(request('p_count')>0)
+    {{-- VOLUMI DI TRAFFICO --}}
+    <div class="flex"><span>NOLI EFFETTIVI (N):</span> <span class="bold">{{ request('n_count', 0) }}</span></div>
+    <div class="flex"><span>CONTANTI (X):</span> <span class="bold">{{ request('x_count', 0) }}</span></div>
+    
+    @if(request('p_count') > 0)
         <div class="flex"><span>PERDI VOLTA (P):</span> <span class="bold">{{ request('p_count') }}</span></div>
     @endif
+
     {{-- CREDITI FUTURI (Shared FF) --}}
     @if(request('shared_ff') > 0)
         <div class="divider"></div>
         <div class="flex bold uppercase">
-            <span>{{ config('app_settings.labels.shared_from_first') }}:</span>
+            <span>{{ config('app_settings.labels.shared_from_first', 'CREDITO FF') }}:</span>
             <span>{{ request('shared_ff') }}</span>
         </div>
         <div class="small italic" style="margin-top: 2px;">
-            Voucher: {{ implode(', ', (array)request('shared_vouchers')) }}
+            Voucher: {{ implode(', ', (array)request('shared_vouchers', [])) }}
         </div>
     @endif
 
     <div class="divider"></div>
 
-    {{-- AGENZIE --}}
+    {{-- SEZIONE AGENZIE --}}
     @if(request('agencies') && is_array(request('agencies')))
         <div class="bold section-title">RIEPILOGO AGENZIE</div>
-        @foreach(request('agencies') as $name => $voucher)
+        
+        @foreach(request('agencies') as $name => $vouchers)
+            @php
+                $vouchers = array_filter((array)$vouchers);
+                $count = count($vouchers);
+                $displayVoucher = $count > 0 ? trim($vouchers[0]) : '---';
+            @endphp
+            
             <div class="flex">
-                <span class="item-name">{{ strtoupper($name) }}</span>
-                <span class="bold">{{ $voucher ?: '---' }}</span>
+                <span class="item-name">
+                    {{ strtoupper($name) }}
+                    @if($count > 1)
+                        <span class="bold italic"> x{{ $count }}</span>
+                    @endif
+                </span>
+                <span class="bold">{{ $displayVoucher }}</span>
             </div>
         @endforeach
         <div class="divider"></div>
     @endif
 
-    {{-- DETTAGLIO CASSA --}}
+    {{-- DETTAGLIO ECONOMICO --}}
     <div class="flex">
         <span>TOTALE LAVORI CASH:</span>
-        <span class="bold">{{ \App\Helpers\Format::currency(request('x_amount'),true,true)}}</span>
+        <span class="bold">{{ \App\Helpers\Format::currency(request('x_amount', 0), true, true) }}</span>
     </div>
+    
     <div class="flex">
-        <span>CONGUAGLIO PORTAFOGLIO:</span>
-        <span class="bold">{{ \App\Helpers\Format::currency(request('wallet_diff'),true,true) }}</span>
+        <span>CONGUAGLIO PORT.:</span>
+        <span class="bold">{{ \App\Helpers\Format::currency(request('wallet_diff', 0), true, true) }}</span>
     </div>
 
-    @if(request('bancale') && request('bancale') != '0' && request('bancale') != '0,00')
+    @php 
+        $bancaleRaw = str_replace(',', '.', request('bancale', 0));
+        $bancaleValue = (float) $bancaleRaw; 
+    @endphp
+    
+    @if($bancaleValue != 0)
         <div class="flex">
             <span>BANCALE:</span>
-            <span class="bold">-{{\App\Helpers\Format::currency(request('bancale'),true,true)}}</span>
+            <span class="bold">-{{ \App\Helpers\Format::currency(request('bancale'), true, true) }}</span>
         </div>
     @endif
 
     <div class="flex total-box bold">
         <span>NETTO PAGATO:</span>
-        <span>{{ \App\Helpers\Format::currency(request('final'),true,true) }}</span>
+        <span>{{ \App\Helpers\Format::currency(request('final', 0), true, true) }}</span>
     </div>
 
     <div style="margin-top: 20px;"></div>
+    
     <div class="text-center small italic">
-        I lavori 'N', 'A' e '{{ config('app_settings.labels.shared_from_first') }}' sono crediti<br>
-        o attività esclusi dal contante attuale.<br>
-        <div class="bold" style="margin-top: 5px; font-style: normal;">*** DOCUMENTO GESTIONALE ***</div>
+        I lavori 'N', 'A' e '{{ config('app_settings.labels.shared_from_first', 'FF') }}' sono crediti<br>
+        esclusi dal contante attuale.<br>
+        <div class="bold" style="margin-top: 8px; font-style: normal; font-size: 11px;">
+            *** DOCUMENTO GESTIONALE ***
+        </div>
     </div>
+
+    <div style="height: 10mm;"></div>
 
 </body>
 </html>

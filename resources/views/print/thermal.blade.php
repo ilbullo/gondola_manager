@@ -111,16 +111,18 @@
         
         @foreach(request('agencies') as $name => $vouchers)
             @php
-                $vouchers = array_filter((array)$vouchers);
-                $count = count($vouchers);
-                $displayVoucher = $count > 0 ? trim($vouchers[0]) : '---';
+                $vArray = (array)$vouchers;
+                $count = count($vArray);
+                // Poiché sono tutti uguali per logica di raggruppamento, prendiamo il primo
+                $val = $vArray[0] ?? null;
+                $displayVoucher = !empty($val) ? trim($val) : '---';
             @endphp
             
             <div class="flex">
                 <span class="item-name">
                     {{ strtoupper($name) }}
                     @if($count > 1)
-                        <span class="bold italic"> x{{ $count }}</span>
+                        <span class="italic"> x {{ $count }}</span>
                     @endif
                 </span>
                 <span class="bold">{{ $displayVoucher }}</span>
